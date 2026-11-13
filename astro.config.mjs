@@ -16,7 +16,7 @@ const redirects = Object.fromEntries(
 );
 
 export default defineConfig({
-  site: 'https://yinx0004.github.io',
+  site: 'https://solidstack.io',
   base: BASE,
   trailingSlash: 'always',
   build: { format: 'directory' },
