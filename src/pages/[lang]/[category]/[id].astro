@@ -7,6 +7,7 @@ import { pairMappings } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
 import { equivalence, fieldRows } from '../../../lib/pair';
 import { categoryHref, editUrl, entryHref, langHome, lastUpdated, newIssueUrl } from '../../../lib/site';
+import { entryVerification } from '../../../lib/verification';
 
 export function getStaticPaths() {
   const ds = loadDataset();
@@ -37,6 +38,18 @@ const notes = [
 ];
 const alternatives = tgt?.alternatives ?? [];
 const refs = [...src.refs, ...(tgt?.refs ?? [])];
+
+// Lab results: "MySQL 5.7 · 8.0 ／ MongoDB 6.0 · 7.0", or unverified when the lab has not run.
+const srcV = entryVerification(m.id, source);
+const tgtV = entryVerification(m.id, target);
+const verifiedParts = [
+  [S, srcV],
+  [T, tgtV],
+]
+  .filter(([, v]) => v && (v as NonNullable<typeof srcV>).versions.length)
+  .map(([name, v]) => `${name} ${(v as NonNullable<typeof srcV>).versions.join(' · ')}`);
+const anySkipped = [src, tgt].some((d) => d?.commands.some((c) => c.skip));
+const verifiedLabel = verifiedParts.length ? ui.verifiedOn(verifiedParts.join(' ／ ')) : ui.unverified;
 
 // Titles read better without statement terminators: "SHOW SLAVE STATUS", not "SHOW SLAVE STATUS\G".
 const bare = (cmd: string) => cmd.replace(/\s*(\\G|;)\s*$/, '');
@@ -76,13 +89,14 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
       <p class="lede">{t(m.summary, lang)}</p>
       <div class="meta">
         <EqBadge lang={lang} eq={eq} large />
-        <span>{ui.unverified}</span>
+        <span class:list={{ 'verified-label': verifiedParts.length > 0 }}>{verifiedLabel}</span>
+        {anySkipped && <span>（{ui.someSkipped}）</span>}
         {updated && <span>· 更新于 {updated}</span>}
       </div>
     </section>
 
     <section class="panels">
-      <CommandPanel lang={lang} role="source" dbName={S} commands={src.commands} />
+      <CommandPanel lang={lang} role="source" dbName={S} commands={src.commands} verification={srcV} />
       {
         eq === 'none' ? (
           <div class="card panel panel-none">
@@ -113,7 +127,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
             </div>
           </div>
         ) : (
-          <CommandPanel lang={lang} role="target" dbName={T} commands={tgt!.commands} />
+          <CommandPanel lang={lang} role="target" dbName={T} commands={tgt!.commands} verification={tgtV} />
         )
       }
     </section>

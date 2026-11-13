@@ -15,7 +15,7 @@ databases:
       - cmd: SELECT * FROM performance_schema.data_lock_waits;
         since: '8.0'
       - cmd: SELECT * FROM information_schema.INNODB_LOCK_WAITS;
-        until: '8.0'
+        removed_in: '8.0'
         note: {zh: 8.0 起移除}
     refs:
       - title: 'MySQL: sys.innodb_lock_waits'

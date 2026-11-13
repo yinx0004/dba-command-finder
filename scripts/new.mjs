@@ -27,7 +27,9 @@ const dbBlock = (db) => `  ${db}:
     commands:
       - cmd: TODO
         # since: '8.0'   # first version that has it
-        # until: '8.0'   # first version that no longer has it
+        # deprecated_in: '8.0'   # still works, shown as outdated
+        # removed_in: '8.4'      # first version where it fails
+        # skip: {zh: ...}         # why the lab cannot run it
         # note: {zh: ...}
     # fields: {elapsed: Time}   # this database's name for each task field
     # notes: [{zh: ...}]        # required for partial and none

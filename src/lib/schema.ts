@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { compareVersions } from './version';
 
 // Text shown to readers. Chinese is required; English is filled in later.
 export const Text = z.strictObject({
@@ -20,8 +21,18 @@ const Version = z.string().regex(/^\d+(\.\d+){0,2}$/, 'version must look like 8.
 const Command = z.strictObject({
   cmd: z.string().min(1),
   since: Version.optional(), // first version that has it
-  until: Version.optional(), // first version that no longer has it (renamed or removed)
+  deprecated_in: Version.optional(), // still works from here on, but shown as outdated
+  removed_in: Version.optional(), // first version where it no longer works; the lab expects it to fail
   note: Text.optional(),
+  // Why the lab does not run this command (e.g. it needs a second connection). Shown on the page.
+  skip: Text.optional(),
+});
+
+// How the lab prepares a database before running this entry's commands.
+const Verify = z.strictObject({
+  setup: z.string().min(1).optional(), // run first, in an empty database of its own
+  vars: z.record(z.string().regex(/^[a-z][a-z0-9_.]*$/i), z.string()).default({}), // fills <name> placeholders
+  teardown: z.string().min(1).optional(), // run last; errors are ignored
 });
 
 // What to look at instead, used mainly when a database cannot do the task.
@@ -55,8 +66,17 @@ export const DatabaseEntry = z
     notes: z.array(Text).default([]),
     alternatives: z.array(Alternative).default([]),
     refs: z.array(Ref).default([]),
+    verify: Verify.optional(),
   })
   .superRefine((d, ctx) => {
+    d.commands.forEach((c, i) => {
+      const order = [c.since, c.deprecated_in, c.removed_in].filter((v): v is string => !!v);
+      for (let k = 1; k < order.length; k++) {
+        if (compareVersions(order[k - 1], order[k]) >= 0) {
+          ctx.addIssue({ code: 'custom', path: ['commands', i], message: 'versions must increase: since < deprecated_in < removed_in' });
+        }
+      }
+    });
     if (d.support === 'none') {
       if (d.commands.length > 0) ctx.addIssue({ code: 'custom', path: ['commands'], message: 'support "none" must not list commands; use alternatives' });
       if (d.notes.length === 0) ctx.addIssue({ code: 'custom', path: ['notes'], message: 'support "none" must explain why in notes' });
@@ -98,6 +118,8 @@ export const Mapping = z
 export const Database = z.strictObject({
   id: Slug,
   name: z.string().min(1),
+  // Versions the lab runs every command against; also the CI job matrix.
+  lab_versions: z.array(Version).default([]),
 });
 
 export const Category = z.strictObject({

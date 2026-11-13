@@ -1,6 +1,7 @@
 ---
 import { t, UI, type Lang } from '../lib/i18n';
 import type { Command } from '../lib/schema';
+import type { EntryVerification } from '../lib/verification';
 
 interface Props {
   lang: Lang;
@@ -8,14 +9,15 @@ interface Props {
   role: 'source' | 'target';
   dbName: string;
   commands: Command[];
+  verification?: EntryVerification;
 }
-const { lang, role, dbName, commands } = Astro.props;
+const { lang, role, dbName, commands, verification } = Astro.props;
 const ui = UI[lang];
 
 function versionLabel(c: Command): string {
-  if (c.since && c.until) return `${c.since} – ${c.until}`;
+  if (c.since && c.removed_in) return `${c.since} – ${c.removed_in}`;
   if (c.since) return ui.since(c.since);
-  if (c.until) return ui.until(c.until);
+  if (c.removed_in) return ui.until(c.removed_in);
   return ui.allVersions;
 }
 ---
@@ -35,6 +37,13 @@ function versionLabel(c: Command): string {
         </div>
         <div class="cmd-meta">
           <span class="tag">{versionLabel(c)}</span>
+          {c.deprecated_in && <span class="badge badge-approx">{ui.deprecatedIn(c.deprecated_in)}</span>}
+          {(() => {
+            const v = verification?.commands[c.cmd];
+            if (c.skip) return <span class="badge badge-missing">{ui.notRunByLab(t(c.skip, lang))}</span>;
+            if (v?.verified.length) return <span class="badge badge-exact">✓ {v.verified.join(' · ')}</span>;
+            return null;
+          })()}
           {c.note && <span>{t(c.note, lang)}</span>}
         </div>
       </div>

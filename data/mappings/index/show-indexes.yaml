@@ -28,6 +28,9 @@ databases:
     refs:
       - title: 'MySQL: SHOW INDEX'
         url: https://dev.mysql.com/doc/refman/8.4/en/show-index.html
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a));
+      vars: {table: t}
   mongodb:
     support: partial
     commands:
@@ -51,4 +54,7 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/method/db.collection.getIndexes/
       - title: 'MongoDB: $indexStats'
         url: https://www.mongodb.com/docs/manual/reference/operator/aggregation/indexStats/
+    verify:
+      setup: 'db.t.createIndex({ a: 1 })'
+      vars: {collection: t}
 related: [list-tables, explain]

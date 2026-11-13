@@ -11,8 +11,10 @@ databases:
     support: full
     commands:
       - cmd: KILL <processlist_id>;
+        skip: {zh: 需要另开一个连接作为终止对象}
         note: {zh: 终止语句并断开连接}
       - cmd: KILL QUERY <processlist_id>;
+        skip: {zh: 需要另开一个连接作为终止对象}
         note: {zh: 只终止当前语句，连接保留}
     refs:
       - title: 'MySQL: KILL'
@@ -21,8 +23,10 @@ databases:
     support: partial
     commands:
       - cmd: db.killOp(<opid>)
+        skip: {zh: 需要另开一个连接作为终止对象}
         note: {zh: opid 从 db.currentOp() 的结果里取}
       - cmd: 'db.adminCommand({ killSessions: [ { id: <lsid.id> } ] })'
+        skip: {zh: 需要另开一个连接作为终止对象}
         since: '3.6'
         note: {zh: 终止某个逻辑会话下的全部操作，包括未提交的事务}
     notes:

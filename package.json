@@ -7,7 +7,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run",
-    "new": "node scripts/new.mjs"
+    "new": "node scripts/new.mjs",
+    "lab": "tsx lab/run.ts",
+    "lab:merge": "tsx lab/merge.ts"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -23,6 +25,7 @@
   "devDependencies": {
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "tsx": "^4.23.15",
     "vite": "^7.3.8",
     "vitest": "^5.1.0"
   },

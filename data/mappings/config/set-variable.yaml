@@ -18,6 +18,8 @@ databases:
     refs:
       - title: 'MySQL: SET PERSIST'
         url: https://dev.mysql.com/doc/refman/8.4/en/persisted-system-variables.html
+    verify:
+      vars: {variable: max_connections, value: '200'}
   mongodb:
     support: partial
     commands:
@@ -30,4 +32,6 @@ databases:
     refs:
       - title: 'MongoDB: setParameter'
         url: https://www.mongodb.com/docs/manual/reference/command/setParameter/
+    verify:
+      vars: {name: logLevel, value: '0'}
 related: [show-variables]
