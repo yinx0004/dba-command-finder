@@ -30,8 +30,8 @@ databases:
       - cmd: SELECT * FROM information_schema.PROCESSLIST WHERE COMMAND <> 'Sleep';
         note: {zh: 可以用 WHERE 过滤、排序}
       - cmd: SELECT * FROM performance_schema.processlist;
-        since: 8.0.22
-        note: {zh: 不持有全局互斥锁，高并发时更安全}
+        since: 5.7.39
+        note: {zh: 不持有全局互斥锁，高并发时更安全。8.0 系列从 8.0.22 起才有}
     fields:
       session_id: Id
       user: User
@@ -43,6 +43,8 @@ databases:
     refs:
       - title: 'MySQL: SHOW PROCESSLIST'
         url: https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html
+      - title: 'MySQL 5.7.39 Release Notes'
+        url: https://docs.oracle.com/cd/E17952_01/mysql-5.7-relnotes-en/news-5-7-39.html
   mongodb:
     support: partial
     commands:

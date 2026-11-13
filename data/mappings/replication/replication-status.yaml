@@ -20,7 +20,8 @@ databases:
     support: full
     commands:
       - cmd: SHOW SLAVE STATUS\G
-        until: 8.0.22
+        deprecated_in: 8.0.22
+        removed_in: '8.4'
         note: {zh: 8.0.22 起改名为 SHOW REPLICA STATUS}
       - cmd: SHOW REPLICA STATUS\G
         since: 8.0.22
@@ -41,8 +42,9 @@ databases:
         since: '4.4'
         note: {zh: 直接给出每个从节点落后主节点的秒数}
       - cmd: rs.printSlaveReplicationInfo()
-        until: '4.4'
-        note: {zh: 4.4 起改名为 rs.printSecondaryReplicationInfo()}
+        deprecated_in: '4.4'
+        removed_in: '6.0'
+        note: {zh: 4.4 起改名为 rs.printSecondaryReplicationInfo()；6.0 起随附的 mongosh 不再支持}
     fields:
       lag:
         name: 主节点 optimeDate − 从节点 optimeDate

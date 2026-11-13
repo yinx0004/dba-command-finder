@@ -1,5 +1,8 @@
 # Databases the site knows about. A mapping describes each one under databases.<id>.
+# lab_versions: the versions `npm run lab` and CI run every command against.
 - id: mysql
   name: MySQL
+  lab_versions: ['5.7', '8.0', '8.4']
 - id: mongodb
   name: MongoDB
+  lab_versions: ['6.0', '7.0', '8.0']

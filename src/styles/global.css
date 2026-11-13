@@ -193,3 +193,4 @@ td.mono { overflow-wrap: anywhere; }
 .page-foot a { display: inline-flex; align-items: center; gap: 6px; }
 .badge-missing { color: var(--muted); background: var(--surface-2); border: 1px dashed var(--border-strong); }
 .panel-missing { border-style: dashed; }
+.verified-label { color: var(--exact-fg); font-weight: 500; }

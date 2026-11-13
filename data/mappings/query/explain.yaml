@@ -33,6 +33,9 @@ databases:
     refs:
       - title: 'MySQL: EXPLAIN'
         url: https://dev.mysql.com/doc/refman/8.4/en/explain.html
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {select: SELECT * FROM t WHERE a = 1}
   mongodb:
     support: partial
     commands:
@@ -57,4 +60,7 @@ databases:
     refs:
       - title: 'MongoDB: cursor.explain()'
         url: https://www.mongodb.com/docs/manual/reference/method/cursor.explain/
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 })'
+      vars: {collection: t, filter: '{ a: 1 }', pipeline: '{ $match: { a: 1 } }'}
 related: [show-indexes, slow-query-log]

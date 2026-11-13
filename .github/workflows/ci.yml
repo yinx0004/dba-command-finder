@@ -4,13 +4,20 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -19,4 +26,73 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # One lab job per database version in data/databases.yaml (lab_versions).
+      - id: matrix
+        run: echo "matrix=$(npm run -s lab -- --matrix)" >> "$GITHUB_OUTPUT"
+
+  lab:
+    needs: test
+    name: lab (${{ matrix.db }} ${{ matrix.version }})
+    # MongoDB 8.0 refuses to start on Linux kernels 6.19 through 7.0.13 (SERVER-121912);
+    # Ubuntu 24.04 runners have an older kernel.
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.test.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lab -- --db ${{ matrix.db }} --version ${{ matrix.version }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lab-${{ matrix.db }}-${{ matrix.version }}
+          path: lab/results/
+          if-no-files-found: ignore
+
+  # Runs only when every lab job passed, so the site never shows a command that failed.
+  build:
+    needs: lab
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history, for the "更新于" dates
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: lab-*
+          path: lab/results
+          merge-multiple: true
+      - run: npm run lab:merge
       - run: npm run build
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

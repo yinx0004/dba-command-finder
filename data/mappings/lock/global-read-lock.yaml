@@ -29,4 +29,6 @@ databases:
     refs:
       - title: 'MongoDB: db.fsyncLock()'
         url: https://www.mongodb.com/docs/manual/reference/method/db.fsyncLock/
+    verify:
+      teardown: db.fsyncUnlock()
 related: [lock-waits]

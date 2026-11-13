@@ -44,7 +44,13 @@ data/
 
 如果这件事有输出字段，在 `fields` 里给每个字段定一个和数据库无关的 id，再在各数据库的 `fields` 里写它自己的字段名，字段对照表就会自动生成。
 
-版本差异用 `since`（从哪个版本开始有）和 `until`（从哪个版本开始没有）表示，版本号指该数据库自己的版本。不要删掉旧版本的命令。
+每条命令可以写三个版本字段，版本号都指该数据库自己的版本：
+
+- `since`：从哪个版本开始有
+- `deprecated_in`：从哪个版本开始过时（还能用，页面上标「已过时」）
+- `removed_in`：从哪个版本开始不能用
+
+不要删掉旧版本的命令，用户可能还在用旧版本。
 
 ## 增加、修改、删除
 
@@ -63,9 +69,41 @@ data/
 - 是否还有 TODO
 - [tests/search-golden.yaml](tests/search-golden.yaml) 里的搜索用例是否仍然排在第一。改了关键词或搜索逻辑后结果变了，这里会报出来；遇到搜不到或排序不对的情况，请在这里加一条用例。
 
+## 验证 lab
+
+页面上的每条命令都会在真实数据库上**原样执行**：MySQL 用 `mysql` 命令行，MongoDB 用镜像自带的 `mongosh`。要验证的版本写在 [data/databases.yaml](data/databases.yaml) 的 `lab_versions` 里。
+
+- 版本在 `since` 和 `removed_in` 之间：必须执行成功
+- 早于 `since` 或从 `removed_in` 起：必须报错，这样版本区间写错也能被发现
+
+本地运行需要 Docker：
+
+```bash
+npm run lab                                   # 全部数据库和版本
+npm run lab -- --db mysql --version 8.0       # 只跑一个版本
+npm run lab -- --db mysql --only explain      # 只跑一条记录（不写入结果）
+npm run lab:merge                             # 汇总结果，npm run build 时页面会显示验证过的版本
+```
+
+命令里有 `<table>` 这类占位符，或者需要先准备数据时，在该数据库那一段加 `verify`：
+
+```yaml
+mysql:
+  commands:
+    - cmd: SHOW INDEX FROM <table>;
+  verify:
+    setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a));
+    vars: {table: t}
+    # teardown: ...   # 最后执行，出错不影响结果
+```
+
+每条记录都在一个单独的空库里执行。确实没法自动执行的命令（例如 `KILL` 需要另一个连接），给命令加 `skip: {zh: 原因}`，页面上会显示「未自动验证」和原因。
+
+在 Apple Silicon 上，MySQL 5.7 镜像只有 amd64 版本，会通过模拟运行，比较慢。最新的 MongoDB 8.0 镜像拒绝在 Linux 内核 6.19 到 7.0.13 上启动，如果 Docker（例如 OrbStack）的内核在这个范围内，本地跑不了 8.0，CI 不受影响。
+
 ## 部署
 
-推送到 `main` 后，GitHub Actions 运行测试、构建，并发布到 GitHub Pages。第一次使用前，需要在仓库的 Settings → Pages 里把 Source 设为 GitHub Actions。
+推送到 `main` 后，GitHub Actions 依次运行测试、每个数据库版本的 lab、构建，全部通过后发布到 GitHub Pages。任何一个 lab 失败都不会部署，线上不会出现没通过验证的命令。PR 上跑同样的检查，只是不部署。
 
 ## 许可
 
