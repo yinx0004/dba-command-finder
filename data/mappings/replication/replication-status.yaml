@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 id: replication-status
 category: replication
 title: {zh: 查看复制状态与延迟}
@@ -6,33 +6,57 @@ summary: {zh: 确认从库（副本）是否在正常复制、落后主库多少
 keywords:
   zh: [主从, 从库, 复制延迟, 主从延迟, 副本集]
   en: [slave, replica, replication lag, rs.status]
-equivalence: approx
-mysql:
-  - cmd: SHOW SLAVE STATUS\G
-    until: 8.0.22
-    note: {zh: 8.0.22 起改名为 SHOW REPLICA STATUS}
-  - cmd: SHOW REPLICA STATUS\G
-    since: 8.0.22
-mongodb:
-  - cmd: rs.status()
-    note: {zh: 整个副本集每个成员的状态}
-  - cmd: rs.printSecondaryReplicationInfo()
-    since: '4.4'
-    note: {zh: 直接给出每个从节点落后主节点的秒数}
-  - cmd: rs.printSlaveReplicationInfo()
-    until: '4.4'
-    note: {zh: 4.4 起改名为 rs.printSecondaryReplicationInfo()}
-field_map:
-  - {mysql: Seconds_Behind_Source, mongodb: 主节点 optimeDate − 从节点 optimeDate, note: {zh: rs.printSecondaryReplicationInfo() 已经算好}}
-  - {mysql: Replica_IO_Running / Replica_SQL_Running, mongodb: 'members[].stateStr / health'}
-  - {mysql: Source_Host, mongodb: 'members[].syncSourceHost'}
-  - {mysql: Last_IO_Error / Last_SQL_Error, mongodb: 'members[].lastHeartbeatMessage'}
-differences:
-  - zh: 副本集没有 IO 线程和 SQL 线程之分，看 stateStr：SECONDARY 是正常，RECOVERING、DOWN 等是异常。
-  - zh: rs.status() 在任意成员上执行都能看到整个副本集；MySQL 要到每个从库上分别执行。
-  - zh: 延迟是根据 oplog 时间点推算的，含义和 Seconds_Behind_Source 不完全一样。
-refs:
-  - {title: 'MySQL: SHOW REPLICA STATUS', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-replica-status.html'}
-  - {title: 'MongoDB: rs.status()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.status/'}
-  - {title: 'MongoDB: rs.printSecondaryReplicationInfo()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.printSecondaryReplicationInfo/'}
+fields:
+  - id: lag
+    name: {zh: 复制延迟}
+  - id: health
+    name: {zh: 复制是否正常}
+  - id: source
+    name: {zh: 复制源}
+  - id: last_error
+    name: {zh: 最近的错误}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW SLAVE STATUS\G
+        until: 8.0.22
+        note: {zh: 8.0.22 起改名为 SHOW REPLICA STATUS}
+      - cmd: SHOW REPLICA STATUS\G
+        since: 8.0.22
+    fields:
+      lag: Seconds_Behind_Source
+      health: Replica_IO_Running / Replica_SQL_Running
+      source: Source_Host
+      last_error: Last_IO_Error / Last_SQL_Error
+    refs:
+      - title: 'MySQL: SHOW REPLICA STATUS'
+        url: https://dev.mysql.com/doc/refman/8.4/en/show-replica-status.html
+  mongodb:
+    support: partial
+    commands:
+      - cmd: rs.status()
+        note: {zh: 整个副本集每个成员的状态}
+      - cmd: rs.printSecondaryReplicationInfo()
+        since: '4.4'
+        note: {zh: 直接给出每个从节点落后主节点的秒数}
+      - cmd: rs.printSlaveReplicationInfo()
+        until: '4.4'
+        note: {zh: 4.4 起改名为 rs.printSecondaryReplicationInfo()}
+    fields:
+      lag:
+        name: 主节点 optimeDate − 从节点 optimeDate
+        note: {zh: rs.printSecondaryReplicationInfo() 已经算好}
+      health: members[].stateStr / health
+      source: members[].syncSourceHost
+      last_error: members[].lastHeartbeatMessage
+    notes:
+      - zh: 副本集没有 IO 线程和 SQL 线程之分，看 stateStr：SECONDARY 是正常，RECOVERING、DOWN 等是异常。
+      - zh: rs.status() 在任意成员上执行都能看到整个副本集；MySQL 要到每个从库上分别执行。
+      - zh: 延迟是根据 oplog 时间点推算的，含义和 Seconds_Behind_Source 不完全一样。
+    refs:
+      - title: 'MongoDB: rs.status()'
+        url: https://www.mongodb.com/docs/manual/reference/method/rs.status/
+      - title: 'MongoDB: rs.printSecondaryReplicationInfo()'
+        url: https://www.mongodb.com/docs/manual/reference/method/rs.printSecondaryReplicationInfo/
 related: [server-status]

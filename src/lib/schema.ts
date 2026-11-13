@@ -11,6 +11,9 @@ const TextList = z.strictObject({
   en: z.array(z.string().min(1)).optional(),
 });
 
+const Slug = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'must be kebab-case');
+const FieldId = z.string().regex(/^[a-z0-9]+(_[a-z0-9]+)*$/, 'must be snake_case');
+
 // "8.0", "8.0.22", "3.6"
 const Version = z.string().regex(/^\d+(\.\d+){0,2}$/, 'version must look like 8.0 or 8.0.22');
 
@@ -21,13 +24,7 @@ const Command = z.strictObject({
   note: Text.optional(),
 });
 
-const FieldPair = z.strictObject({
-  mysql: z.string().min(1),
-  mongodb: z.string().min(1),
-  note: Text.optional(),
-});
-
-// What to look at instead, used mainly when there is no equivalent.
+// What to look at instead, used mainly when a database cannot do the task.
 const Alternative = z.strictObject({
   title: Text,
   cmd: z.string().min(1).optional(),
@@ -40,40 +37,71 @@ const Ref = z.strictObject({
   url: z.url(),
 });
 
+// How one database's output names a field of the task: "opid", or with a note.
+const FieldName = z.union([z.string().min(1), z.strictObject({ name: z.string().min(1), note: Text.optional() })]);
+
+/**
+ * How one database does the task.
+ *   full     does it completely
+ *   partial  does it, with differences worth knowing (explained in notes)
+ *   none     cannot do it; notes explain why, alternatives say what to look at instead
+ * A database missing from `databases` simply has not been written up yet.
+ */
+export const DatabaseEntry = z
+  .strictObject({
+    support: z.enum(['full', 'partial', 'none']),
+    commands: z.array(Command).default([]),
+    fields: z.record(FieldId, FieldName).default({}),
+    notes: z.array(Text).default([]),
+    alternatives: z.array(Alternative).default([]),
+    refs: z.array(Ref).default([]),
+  })
+  .superRefine((d, ctx) => {
+    if (d.support === 'none') {
+      if (d.commands.length > 0) ctx.addIssue({ code: 'custom', path: ['commands'], message: 'support "none" must not list commands; use alternatives' });
+      if (d.notes.length === 0) ctx.addIssue({ code: 'custom', path: ['notes'], message: 'support "none" must explain why in notes' });
+    } else {
+      if (d.commands.length === 0) ctx.addIssue({ code: 'custom', path: ['commands'], message: `support "${d.support}" needs at least one command` });
+      if (d.support === 'partial' && d.notes.length === 0) ctx.addIssue({ code: 'custom', path: ['notes'], message: 'support "partial" must say what differs in notes' });
+    }
+  });
+
+/** One DBA task, described once per database. Any two databases can be compared from it. */
 export const Mapping = z
   .strictObject({
-    schema_version: z.literal(1),
-    id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'id must be kebab-case'),
+    schema_version: z.literal(2),
+    id: Slug,
     category: z.string().min(1),
     status: z.enum(['active', 'deprecated']).default('active'),
     replaced_by: z.string().optional(),
     title: Text,
     summary: Text,
     keywords: TextList.default({ zh: [] }),
-    equivalence: z.enum(['exact', 'approx', 'none']),
-    mysql: z.array(Command).min(1),
-    mongodb: z.array(Command).default([]),
-    field_map: z.array(FieldPair).default([]),
-    differences: z.array(Text).default([]),
-    alternatives: z.array(Alternative).default([]),
-    refs: z.array(Ref).default([]),
+    // The task's output fields, independent of any database; each database maps its own names onto these ids.
+    fields: z.array(z.strictObject({ id: FieldId, name: Text.optional() })).default([]),
+    databases: z.record(Slug, DatabaseEntry).refine((d) => Object.keys(d).length > 0, 'at least one database'),
     related: z.array(z.string()).default([]),
   })
   .superRefine((m, ctx) => {
-    if (m.equivalence === 'none') {
-      if (m.mongodb.length > 0) {
-        ctx.addIssue({ code: 'custom', path: ['mongodb'], message: 'equivalence "none" must not list MongoDB commands; use alternatives' });
+    const ids = new Set<string>();
+    m.fields.forEach((f, i) => {
+      if (ids.has(f.id)) ctx.addIssue({ code: 'custom', path: ['fields', i, 'id'], message: `duplicate field "${f.id}"` });
+      ids.add(f.id);
+    });
+    for (const [db, d] of Object.entries(m.databases)) {
+      for (const key of Object.keys(d.fields)) {
+        if (!ids.has(key)) ctx.addIssue({ code: 'custom', path: ['databases', db, 'fields', key], message: `field "${key}" is not declared in fields` });
       }
-      if (m.differences.length === 0) {
-        ctx.addIssue({ code: 'custom', path: ['differences'], message: 'equivalence "none" must explain why in differences' });
-      }
-    } else if (m.mongodb.length === 0) {
-      ctx.addIssue({ code: 'custom', path: ['mongodb'], message: `equivalence "${m.equivalence}" needs at least one MongoDB command` });
     }
   });
 
+export const Database = z.strictObject({
+  id: Slug,
+  name: z.string().min(1),
+});
+
 export const Category = z.strictObject({
-  id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+  id: Slug,
   name: Text,
   desc: Text,
 });
@@ -84,11 +112,16 @@ export const Redirect = z.strictObject({
 });
 
 export const Site = z.strictObject({
+  // The comparison the site shows. Becomes the default once readers can pick databases.
+  pair: z.strictObject({ source: Slug, target: Slug }),
   featured: z.array(z.string()).default([]),
 });
 
 export type Text = z.infer<typeof Text>;
+export type Command = z.infer<typeof Command>;
+export type DatabaseEntry = z.infer<typeof DatabaseEntry>;
 export type Mapping = z.infer<typeof Mapping>;
+export type Database = z.infer<typeof Database>;
 export type Category = z.infer<typeof Category>;
 export type Redirect = z.infer<typeof Redirect>;
 export type Site = z.infer<typeof Site>;

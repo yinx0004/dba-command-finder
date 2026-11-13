@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { load } from 'js-yaml';
-import { Category, Mapping, Redirect, Site } from './schema';
+import { Category, Database, Mapping, Redirect, Site } from './schema';
 import type { z } from 'zod';
 
 export const DATA_DIR = path.resolve(process.cwd(), 'data');
@@ -15,6 +15,7 @@ export type Entry = Mapping & {
 
 export interface Dataset {
   mappings: Entry[];
+  databases: Database[];
   categories: Category[];
   redirects: Redirect[];
   site: Site;
@@ -27,6 +28,7 @@ export interface RawMappingFile {
 
 export interface RawDataset {
   mappings: RawMappingFile[];
+  databases: unknown;
   categories: unknown;
   redirects: unknown;
   site: unknown;
@@ -58,33 +60,51 @@ export function readRaw(dir = DATA_DIR): RawDataset {
     const p = path.join(dir, name);
     return fs.existsSync(p) ? readYaml(p) : undefined;
   };
-  return { mappings, categories: opt('categories.yaml'), redirects: opt('redirects.yaml'), site: opt('site.yaml') };
+  return {
+    mappings,
+    databases: opt('databases.yaml'),
+    categories: opt('categories.yaml'),
+    redirects: opt('redirects.yaml'),
+    site: opt('site.yaml'),
+  };
 }
 
 function issues(prefix: string, err: z.ZodError): string[] {
   return err.issues.map((i) => `${prefix}: ${i.path.join('.') || '(root)'}: ${i.message}`);
 }
 
+function parseList<T>(schema: z.ZodType<T>, value: unknown, file: string, problems: string[]): T[] {
+  const parsed = schema.array().safeParse(value ?? []);
+  if (parsed.success) return parsed.data;
+  problems.push(...issues(file, parsed.error));
+  return [];
+}
+
+function uniqueIds(items: { id: string }[], file: string, problems: string[]): Set<string> {
+  const ids = new Set<string>();
+  for (const x of items) {
+    if (ids.has(x.id)) problems.push(`${file}: duplicate id "${x.id}"`);
+    ids.add(x.id);
+  }
+  return ids;
+}
+
 /** Validates everything that a schema alone cannot: file names, cross references, redirects. */
 export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: string[] } {
   const problems: string[] = [];
 
-  const catsParsed = Category.array().safeParse(raw.categories ?? []);
-  const categories = catsParsed.success ? catsParsed.data : [];
-  if (!catsParsed.success) problems.push(...issues('data/categories.yaml', catsParsed.error));
-  const catIds = new Set<string>();
-  for (const c of categories) {
-    if (catIds.has(c.id)) problems.push(`data/categories.yaml: duplicate category "${c.id}"`);
-    catIds.add(c.id);
-  }
-
-  const redirParsed = Redirect.array().safeParse(raw.redirects ?? []);
-  const redirects = redirParsed.success ? redirParsed.data : [];
-  if (!redirParsed.success) problems.push(...issues('data/redirects.yaml', redirParsed.error));
+  const databases = parseList(Database, raw.databases, 'data/databases.yaml', problems);
+  const dbIds = uniqueIds(databases, 'data/databases.yaml', problems);
+  const categories = parseList(Category, raw.categories, 'data/categories.yaml', problems);
+  const catIds = uniqueIds(categories, 'data/categories.yaml', problems);
+  const redirects = parseList(Redirect, raw.redirects, 'data/redirects.yaml', problems);
 
   const siteParsed = Site.safeParse(raw.site ?? {});
-  const site = siteParsed.success ? siteParsed.data : { featured: [] };
+  const site: Site = siteParsed.success ? siteParsed.data : { pair: { source: '', target: '' }, featured: [] };
   if (!siteParsed.success) problems.push(...issues('data/site.yaml', siteParsed.error));
+  for (const db of [site.pair.source, site.pair.target]) {
+    if (siteParsed.success && !dbIds.has(db)) problems.push(`data/site.yaml: pair database "${db}" is not in data/databases.yaml`);
+  }
 
   const mappings: Entry[] = [];
   const byId = new Map<string, Entry>();
@@ -102,6 +122,9 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
     if (m.id !== fileId) problems.push(`${file}: id "${m.id}" must match the file name "${fileId}"`);
     if (m.category !== dirCat) problems.push(`${file}: category "${m.category}" must match the folder "${dirCat}"`);
     if (!catIds.has(m.category)) problems.push(`${file}: category "${m.category}" is not in data/categories.yaml`);
+    for (const db of Object.keys(m.databases)) {
+      if (!dbIds.has(db)) problems.push(`${file}: database "${db}" is not in data/databases.yaml`);
+    }
     if (byId.has(m.id)) {
       problems.push(`${file}: id "${m.id}" is already used by ${byId.get(m.id)!.file}`);
       continue;
@@ -120,8 +143,10 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
       if (m.status !== 'deprecated') problems.push(`${m.file}: replaced_by is only allowed when status is deprecated`);
       if (!byId.has(m.replaced_by)) problems.push(`${m.file}: replaced_by "${m.replaced_by}" does not exist`);
     }
-    for (const a of m.alternatives) {
-      if (a.see && !byId.has(a.see)) problems.push(`${m.file}: alternatives see "${a.see}" does not exist`);
+    for (const [db, d] of Object.entries(m.databases)) {
+      for (const a of d.alternatives) {
+        if (a.see && !byId.has(a.see)) problems.push(`${m.file}: databases.${db} alternatives see "${a.see}" does not exist`);
+      }
     }
   }
 
@@ -135,13 +160,15 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
   }
 
   for (const id of site.featured) {
-    if (!byId.has(id)) problems.push(`data/site.yaml: featured "${id}" does not exist`);
+    const m = byId.get(id);
+    if (!m) problems.push(`data/site.yaml: featured "${id}" does not exist`);
+    else if (!m.databases[site.pair.source]) problems.push(`data/site.yaml: featured "${id}" has no ${site.pair.source} entry`);
   }
 
   const catOrder = new Map(categories.map((c, i) => [c.id, i]));
   mappings.sort((a, b) => (catOrder.get(a.category) ?? 99) - (catOrder.get(b.category) ?? 99) || a.id.localeCompare(b.id));
 
-  return { dataset: { mappings, categories, redirects, site }, problems };
+  return { dataset: { mappings, databases, categories, redirects, site }, problems };
 }
 
 const cache = new Map<string, Dataset>();

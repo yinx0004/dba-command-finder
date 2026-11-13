@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 id: lock-waits
 category: lock
 title: {zh: 查看锁等待}
@@ -6,25 +6,33 @@ summary: {zh: 找出正在等锁的操作，以及它们在等哪一级的锁。
 keywords:
   zh: [锁等待, 阻塞, 等锁, 行锁]
   en: [lock wait, blocking, waitingforlock, innodb_lock_waits]
-equivalence: approx
-mysql:
-  - cmd: SELECT * FROM sys.innodb_lock_waits;
-    note: {zh: 直接给出等待方和阻塞方}
-  - cmd: SELECT * FROM performance_schema.data_lock_waits;
-    since: '8.0'
-  - cmd: SELECT * FROM information_schema.INNODB_LOCK_WAITS;
-    until: '8.0'
-    note: {zh: 8.0 起移除}
-mongodb:
-  - cmd: 'db.currentOp({ waitingForLock: true })'
-  - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: {} }, { $match: { waitingForLock: true } }])'
-    since: '3.6'
-differences:
-  - zh: MongoDB 的文档级写冲突不会排队等锁（见“查看最近一次死锁”），这里等的多是集合级、库级或全局锁，常见于建索引、DDL、db.fsyncLock()。
-  - zh: currentOp 结果里的 lockStats 显示每个操作获取各级锁的次数和等待时间。
-  - zh: 没有 sys.innodb_lock_waits 那样“谁阻塞了谁”的配对视图，要按 ns 找同时持有锁的操作。
-refs:
-  - {title: 'MySQL: sys.innodb_lock_waits', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-innodb-lock-waits.html'}
-  - {title: 'MongoDB: db.currentOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.currentOp/'}
-  - {title: 'MongoDB: FAQ Concurrency', url: 'https://www.mongodb.com/docs/manual/faq/concurrency/'}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.innodb_lock_waits;
+        note: {zh: 直接给出等待方和阻塞方}
+      - cmd: SELECT * FROM performance_schema.data_lock_waits;
+        since: '8.0'
+      - cmd: SELECT * FROM information_schema.INNODB_LOCK_WAITS;
+        until: '8.0'
+        note: {zh: 8.0 起移除}
+    refs:
+      - title: 'MySQL: sys.innodb_lock_waits'
+        url: https://dev.mysql.com/doc/refman/8.4/en/sys-innodb-lock-waits.html
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.currentOp({ waitingForLock: true })'
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: {} }, { $match: { waitingForLock: true } }])'
+        since: '3.6'
+    notes:
+      - zh: MongoDB 的文档级写冲突不会排队等锁（见“查看最近一次死锁”），这里等的多是集合级、库级或全局锁，常见于建索引、DDL、db.fsyncLock()。
+      - zh: currentOp 结果里的 lockStats 显示每个操作获取各级锁的次数和等待时间。
+      - zh: 没有 sys.innodb_lock_waits 那样“谁阻塞了谁”的配对视图，要按 ns 找同时持有锁的操作。
+    refs:
+      - title: 'MongoDB: db.currentOp()'
+        url: https://www.mongodb.com/docs/manual/reference/method/db.currentOp/
+      - title: 'MongoDB: FAQ Concurrency'
+        url: https://www.mongodb.com/docs/manual/faq/concurrency/
 related: [latest-deadlock, list-active-sessions, global-read-lock]

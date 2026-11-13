@@ -24,20 +24,27 @@ npm run build    # 生成静态站点到 dist/
 ```
 data/
   mappings/<category>/<id>.yaml   # 一条运维意图一个文件
+  databases.yaml                  # 收录的数据库
   categories.yaml                 # 类别和顺序
-  site.yaml                       # 首页「DBA 最常查的」
+  site.yaml                       # 网站展示哪一对数据库，以及首页「DBA 最常查的」
   redirects.yaml                  # 改名、合并后旧链接的跳转
 ```
 
-一条记录对应一件 DBA 要做的事（例如「查看正在执行的会话」），两边的相关命令都列在里面。字段说明见 [src/lib/schema.ts](src/lib/schema.ts)，完整例子见 [data/mappings/session/list-active-sessions.yaml](data/mappings/session/list-active-sessions.yaml)。
+一条记录对应一件 DBA 要做的事（例如「查看正在执行的会话」），**每个数据库各写一段**，写在 `databases.<数据库>` 下。任意两个数据库之间的对照由构建时组合出来，所以加一个数据库只要在相关记录里各加一段，不用为每一对数据库单独写。字段说明见 [src/lib/schema.ts](src/lib/schema.ts)，完整例子见 [data/mappings/session/list-active-sessions.yaml](data/mappings/session/list-active-sessions.yaml)。
 
-`equivalence` 写清等价程度：
+每个数据库用 `support` 说明自己能不能完成这件事：
 
-- `exact`：完全等价
-- `approx`：能做同一件事，但输出或语义有差别，差别写在 `differences` 里
-- `none`：MongoDB 没有对应命令；`mongodb` 留空，`differences` 写原因，`alternatives` 写可以改看什么
+- `full`：能完整做到
+- `partial`：能做，但输出或语义有差别，差别写在这个数据库的 `notes` 里
+- `none`：做不到；`commands` 留空，`notes` 写原因，`alternatives` 写可以改看什么
 
-版本差异用 `since`（从哪个版本开始有）和 `until`（从哪个版本开始没有）表示，不要删掉旧版本的命令。
+没有写某个数据库，表示还没收录，页面上显示「未收录」，不等于「做不到」。
+
+两个数据库之间的等价程度由双方的 `support` 推出：两边都是 `full` 显示「完全等价」，目标库是 `none` 显示「无等价」，其他情况显示「近似」。
+
+如果这件事有输出字段，在 `fields` 里给每个字段定一个和数据库无关的 id，再在各数据库的 `fields` 里写它自己的字段名，字段对照表就会自动生成。
+
+版本差异用 `since`（从哪个版本开始有）和 `until`（从哪个版本开始没有）表示，版本号指该数据库自己的版本。不要删掉旧版本的命令。
 
 ## 增加、修改、删除
 

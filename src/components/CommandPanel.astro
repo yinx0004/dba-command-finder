@@ -1,16 +1,18 @@
 ---
 import { t, UI, type Lang } from '../lib/i18n';
-import type { Mapping } from '../lib/schema';
+import type { Command } from '../lib/schema';
 
 interface Props {
   lang: Lang;
-  side: 'mysql' | 'mongo';
-  commands: Mapping['mysql'];
+  /** source is drawn blue, target green, whichever databases they are */
+  role: 'source' | 'target';
+  dbName: string;
+  commands: Command[];
 }
-const { lang, side, commands } = Astro.props;
+const { lang, role, dbName, commands } = Astro.props;
 const ui = UI[lang];
 
-function versionLabel(c: Mapping['mysql'][number]): string {
+function versionLabel(c: Command): string {
   if (c.since && c.until) return `${c.since} – ${c.until}`;
   if (c.since) return ui.since(c.since);
   if (c.until) return ui.until(c.until);
@@ -19,10 +21,8 @@ function versionLabel(c: Mapping['mysql'][number]): string {
 ---
 <div class="card panel">
   <div class="panel-head">
-    <span class:list={['dot', side === 'mysql' ? 'dot-mysql' : 'dot-mongo']}></span>
-    <span class:list={['side', side === 'mysql' ? 'side-mysql' : 'side-mongo']} style="font-size: 13px">
-      {side === 'mysql' ? 'MySQL' : 'MongoDB'}
-    </span>
+    <span class={`dot dot-${role}`}></span>
+    <span class={`side side-${role}`} style="font-size: 13px">{dbName}</span>
   </div>
   {
     commands.map((c) => (

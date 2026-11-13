@@ -21,7 +21,20 @@ if (fs.existsSync(file)) {
   process.exit(1);
 }
 
-const template = `schema_version: 1
+const dbs = load(fs.readFileSync('data/databases.yaml', 'utf8')).map((d) => d.id);
+const dbBlock = (db) => `  ${db}:
+    support: full # full / partial / none
+    commands:
+      - cmd: TODO
+        # since: '8.0'   # first version that has it
+        # until: '8.0'   # first version that no longer has it
+        # note: {zh: ...}
+    # fields: {elapsed: Time}   # this database's name for each task field
+    # notes: [{zh: ...}]        # required for partial and none
+    # refs: [{title: ..., url: ...}]
+`;
+
+const template = `schema_version: 2
 id: ${id}
 category: ${category}
 title: {zh: TODO 一句话说清要做的事}
@@ -29,18 +42,10 @@ summary: {zh: TODO 什么场景下会用到}
 keywords:
   zh: []
   en: []
-equivalence: approx # exact / approx / none
-mysql:
-  - cmd: TODO;
-    # since: '8.0'   # first version that has it
-    # until: '8.0'   # first version that no longer has it
-    # note: {zh: ...}
-mongodb:
-  - cmd: TODO
-field_map: []
-differences: []
-refs: []
-related: []
+# fields:                      # the task's output fields, if it has any
+#   - {id: elapsed, name: {zh: 已运行时间}}
+databases:
+${dbs.map(dbBlock).join('')}related: []
 `;
 fs.mkdirSync(path.dirname(file), { recursive: true });
 fs.writeFileSync(file, template);

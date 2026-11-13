@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 id: list-active-sessions
 category: session
 title: {zh: 查看正在执行的会话}
@@ -6,36 +6,81 @@ summary: {zh: 列出当前实例上的连接和正在运行的语句，用来排
 keywords:
   zh: [会话, 连接, 线程, 正在执行, 进程列表]
   en: [processlist, threads, connections]
-equivalence: approx
-mysql:
-  - cmd: SHOW FULL PROCESSLIST;
-    note: {zh: 不加 FULL 时 Info 列只显示前 100 个字符}
-  - cmd: SELECT * FROM information_schema.PROCESSLIST WHERE COMMAND <> 'Sleep';
-    note: {zh: 可以用 WHERE 过滤、排序}
-  - cmd: SELECT * FROM performance_schema.processlist;
-    since: 8.0.22
-    note: {zh: 不持有全局互斥锁，高并发时更安全}
-mongodb:
-  - cmd: 'db.currentOp({ active: true })'
-    note: {zh: mongosh 辅助方法，只看活跃操作}
-  - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true } }])'
-    since: '3.6'
-    note: {zh: 聚合形式，可以接 $match、$sort、$project}
-field_map:
-  - {mysql: Id, mongodb: opid, note: {zh: MongoDB 用 opid 终止操作，而不是连接 id}}
-  - {mysql: User, mongodb: effectiveUsers, note: {zh: 开启认证时才有}}
-  - {mysql: Host, mongodb: client, note: {zh: 经过 mongos 时是 mongos 的地址}}
-  - {mysql: db, mongodb: ns, note: {zh: ns 的格式是「库.集合」}}
-  - {mysql: Time, mongodb: secs_running, note: {zh: 单位秒；更精确的是 microsecs_running}}
-  - {mysql: State, mongodb: waitingForLock / desc, note: {zh: 没有直接对应的线程状态}}
-  - {mysql: Info, mongodb: command, note: {zh: 是 BSON 文档，不是 SQL 文本}}
-differences:
-  - zh: '默认不显示空闲连接。要看类似 Sleep 状态的连接，用 $currentOp: { idleConnections: true }。'
-  - zh: 在分片集群里通过 mongos 执行时，opid 带分片前缀，例如 "shard01:12345"。
-  - zh: '结果是文档不是表格，过滤直接写条件，例如 db.currentOp({ secs_running: { $gte: 5 } })。'
-  - zh: 查看其他用户的操作需要 inprog 权限，对应 MySQL 的 PROCESS 权限。
-refs:
-  - {title: 'MySQL: SHOW PROCESSLIST', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html'}
-  - {title: 'MongoDB: db.currentOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.currentOp/'}
-  - {title: 'MongoDB: $currentOp', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/currentOp/'}
+fields:
+  - id: session_id
+    name: {zh: 会话 ID}
+  - id: user
+    name: {zh: 用户}
+  - id: client
+    name: {zh: 客户端地址}
+  - id: database
+    name: {zh: 库}
+  - id: elapsed
+    name: {zh: 已运行时间}
+  - id: state
+    name: {zh: 状态}
+  - id: statement
+    name: {zh: 正在执行的语句}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW FULL PROCESSLIST;
+        note: {zh: 不加 FULL 时 Info 列只显示前 100 个字符}
+      - cmd: SELECT * FROM information_schema.PROCESSLIST WHERE COMMAND <> 'Sleep';
+        note: {zh: 可以用 WHERE 过滤、排序}
+      - cmd: SELECT * FROM performance_schema.processlist;
+        since: 8.0.22
+        note: {zh: 不持有全局互斥锁，高并发时更安全}
+    fields:
+      session_id: Id
+      user: User
+      client: Host
+      database: db
+      elapsed: Time
+      state: State
+      statement: Info
+    refs:
+      - title: 'MySQL: SHOW PROCESSLIST'
+        url: https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.currentOp({ active: true })'
+        note: {zh: mongosh 辅助方法，只看活跃操作}
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true } }])'
+        since: '3.6'
+        note: {zh: 聚合形式，可以接 $match、$sort、$project}
+    fields:
+      session_id:
+        name: opid
+        note: {zh: MongoDB 用 opid 终止操作，而不是连接 id}
+      user:
+        name: effectiveUsers
+        note: {zh: 开启认证时才有}
+      client:
+        name: client
+        note: {zh: 经过 mongos 时是 mongos 的地址}
+      database:
+        name: ns
+        note: {zh: ns 的格式是「库.集合」}
+      elapsed:
+        name: secs_running
+        note: {zh: 单位秒；更精确的是 microsecs_running}
+      state:
+        name: waitingForLock / desc
+        note: {zh: 没有直接对应的线程状态}
+      statement:
+        name: command
+        note: {zh: 是 BSON 文档，不是 SQL 文本}
+    notes:
+      - zh: '默认不显示空闲连接。要看类似 Sleep 状态的连接，用 $currentOp: { idleConnections: true }。'
+      - zh: 在分片集群里通过 mongos 执行时，opid 带分片前缀，例如 "shard01:12345"。
+      - zh: '结果是文档不是表格，过滤直接写条件，例如 db.currentOp({ secs_running: { $gte: 5 } })。'
+      - zh: 查看其他用户的操作需要 inprog 权限，对应 MySQL 的 PROCESS 权限。
+    refs:
+      - title: 'MongoDB: db.currentOp()'
+        url: https://www.mongodb.com/docs/manual/reference/method/db.currentOp/
+      - title: 'MongoDB: $currentOp'
+        url: https://www.mongodb.com/docs/manual/reference/operator/aggregation/currentOp/
 related: [kill-session, lock-waits, server-status]

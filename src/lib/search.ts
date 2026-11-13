@@ -1,10 +1,9 @@
 // Shared by the browser search box and the golden tests, so what is tested is what ships.
 // Keep this file free of Node APIs.
 import Fuse, { type IFuseOptions } from 'fuse.js';
+import type { Equivalence } from './pair';
 
-export type Equivalence = 'exact' | 'approx' | 'none';
-
-/** One mapping, flattened for search and for rendering a result row. */
+/** One mapping, flattened for search and for rendering a result row of the site's database pair. */
 export interface SearchDoc {
   id: string;
   slug: string; // category/id
@@ -12,9 +11,9 @@ export interface SearchDoc {
   category: string; // display name
   equivalence: Equivalence;
   deprecated: boolean;
-  mysql: string; // first MySQL command, as shown
-  mongodb: string; // first MongoDB command, as shown ('' when none)
-  // normalized fields used for matching
+  source: string; // first source command, as shown
+  target: string; // first target command, as shown ('' when none or not written up)
+  // normalized fields used for matching; commands of every database, so any of them finds the task
   n_cmds: string[];
   n_title: string;
   n_keywords: string[];

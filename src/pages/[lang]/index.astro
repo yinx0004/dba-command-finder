@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import SearchBox from '../../components/SearchBox.tsx';
 import { loadDataset } from '../../lib/data';
-import { toSearchDocs } from '../../lib/docs';
+import { pairMappings, toSearchDocs } from '../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../lib/i18n';
 import { categoryHref, entryHref, href, newIssueUrl } from '../../lib/site';
 
@@ -13,23 +13,34 @@ export function getStaticPaths() {
 const lang = Astro.params.lang as Lang;
 const ui = UI[lang];
 const ds = loadDataset();
+const { source, target } = ds.site.pair;
+const dbName = new Map(ds.databases.map((d) => [d.id, d.name]));
+const S = dbName.get(source)!;
+const T = dbName.get(target)!;
 const docs = toSearchDocs(ds, lang);
-const byId = new Map(ds.mappings.map((m) => [m.id, m]));
-const featured = ds.site.featured.map((id) => byId.get(id)!);
+const mappings = pairMappings(ds);
+const byId = new Map(mappings.map((m) => [m.id, m]));
+const featured = ds.site.featured.map((id) => byId.get(id)!).filter(Boolean);
 const counts = new Map<string, number>();
-for (const m of ds.mappings) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
+for (const m of mappings) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
 const categories = ds.categories.filter((c) => counts.get(c.id));
+const targetCmd = (m: (typeof mappings)[number]) => {
+  const d = m.databases[target];
+  return d?.commands[0]?.cmd ?? (d?.support === 'none' ? ui.noEquivalent : ui.eq.missing);
+};
 ---
-<Base lang={lang} title={`${ui.siteName}：${ui.tagline}`} description={ui.heroSub} variant="home">
+<Base lang={lang} title={`${ui.siteName}：${ui.tagline(S, T)}`} description={ui.heroSub(S, T)} variant="home">
   <main class="wrap" style="padding-bottom: 48px">
     <section class="hero">
-      <h1>{ui.heroTitle}</h1>
-      <p class="lede">{ui.heroSub}</p>
+      <h1>{ui.heroTitle(S, T)}</h1>
+      <p class="lede">{ui.heroSub(S, T)}</p>
     </section>
 
     <SearchBox
       client:load
       docs={docs}
+      sourceName={S}
+      targetName={T}
       tries={['show processlist', '锁等待', 'slave', 'db.currentOp', '死锁']}
       entryBase={href(`${lang}/`)}
       submitUrl={newIssueUrl()}
@@ -71,7 +82,7 @@ const categories = ds.categories.filter((c) => counts.get(c.id));
               <a class="pop" href={entryHref(lang, m.slug)}>
                 <strong>{t(m.title, lang)}</strong>
                 <code>
-                  {m.mysql[0].cmd} → {m.mongodb[0]?.cmd ?? ui.noEquivalent}
+                  {m.databases[source].commands[0]?.cmd} → {targetCmd(m)}
                 </code>
               </a>
             ))

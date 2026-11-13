@@ -10,8 +10,8 @@
   --muted: #5b6470;
   --link: #1e4fa8;
   --link-hover: #163b7e;
-  --mysql: #1e4fa8;
-  --mongo: #11683f;
+  --source: #1e4fa8;
+  --target: #11683f;
   --exact-fg: #0f5132;
   --exact-bg: #e3f2e9;
   --approx-fg: #7a4100;
@@ -41,8 +41,8 @@
     --muted: #98a1ad;
     --link: #8ab4ff;
     --link-hover: #b3ceff;
-    --mysql: #8ab4ff;
-    --mongo: #6fd39b;
+    --source: #8ab4ff;
+    --target: #6fd39b;
     --exact-fg: #8be0ae;
     --exact-bg: #163323;
     --approx-fg: #f5c37a;
@@ -98,8 +98,8 @@ code, .mono { font-family: var(--mono); }
 .row-title strong { font-size: 16px; font-weight: 600; }
 .row-cmds { font-family: var(--mono); font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
 .side { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; flex: none; }
-.side-mysql { color: var(--mysql); }
-.side-mongo { color: var(--mongo); }
+.side-source { color: var(--source); }
+.side-target { color: var(--target); }
 .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; font-family: var(--mono); font-size: 13px; }
 .pair > div { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
 .pair > div > span:last-child { overflow-wrap: anywhere; }
@@ -162,8 +162,8 @@ body[data-searching] .browse { display: none; }
 .panel { overflow: hidden; }
 .panel-head { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
 .dot { width: 8px; height: 8px; border-radius: 99px; }
-.dot-mysql { background: var(--mysql); }
-.dot-mongo { background: var(--mongo); }
+.dot-source { background: var(--source); }
+.dot-target { background: var(--target); }
 .cmd { padding: 14px 18px; border-bottom: 1px solid var(--divider); display: flex; flex-direction: column; gap: 8px; }
 .cmd:last-child { border-bottom: 0; }
 .cmd-line { display: flex; gap: 10px; align-items: flex-start; }
@@ -191,3 +191,5 @@ td.mono { overflow-wrap: anywhere; }
 .link-list { display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
 .page-foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: 14px; align-items: center; }
 .page-foot a { display: inline-flex; align-items: center; gap: 6px; }
+.badge-missing { color: var(--muted); background: var(--surface-2); border: 1px dashed var(--border-strong); }
+.panel-missing { border-style: dashed; }

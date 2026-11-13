@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 id: kill-session
 category: session
 title: {zh: 终止会话或查询}
@@ -6,24 +6,32 @@ summary: {zh: 终止一条跑太久或卡住的语句，或者断开一个异常
 keywords:
   zh: [杀, 终止, 杀会话, 杀查询]
   en: [kill, kill query, killop]
-equivalence: approx
-mysql:
-  - cmd: KILL <processlist_id>;
-    note: {zh: 终止语句并断开连接}
-  - cmd: KILL QUERY <processlist_id>;
-    note: {zh: 只终止当前语句，连接保留}
-mongodb:
-  - cmd: db.killOp(<opid>)
-    note: {zh: opid 从 db.currentOp() 的结果里取}
-  - cmd: 'db.adminCommand({ killSessions: [ { id: <lsid.id> } ] })'
-    since: '3.6'
-    note: {zh: 终止某个逻辑会话下的全部操作，包括未提交的事务}
-differences:
-  - zh: killOp 只终止操作，不断开客户端连接，更接近 KILL QUERY。MongoDB 没有从服务端断开指定客户端连接的命令。
-  - zh: 操作要运行到下一个中断检查点才会真正结束，不一定立刻消失。
-  - zh: 在分片集群里，通过 mongos 执行 killOp 时要用带分片前缀的 opid，例如 "shard01:12345"。
-refs:
-  - {title: 'MySQL: KILL', url: 'https://dev.mysql.com/doc/refman/8.4/en/kill.html'}
-  - {title: 'MongoDB: db.killOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.killOp/'}
-  - {title: 'MongoDB: killSessions', url: 'https://www.mongodb.com/docs/manual/reference/command/killSessions/'}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: KILL <processlist_id>;
+        note: {zh: 终止语句并断开连接}
+      - cmd: KILL QUERY <processlist_id>;
+        note: {zh: 只终止当前语句，连接保留}
+    refs:
+      - title: 'MySQL: KILL'
+        url: https://dev.mysql.com/doc/refman/8.4/en/kill.html
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.killOp(<opid>)
+        note: {zh: opid 从 db.currentOp() 的结果里取}
+      - cmd: 'db.adminCommand({ killSessions: [ { id: <lsid.id> } ] })'
+        since: '3.6'
+        note: {zh: 终止某个逻辑会话下的全部操作，包括未提交的事务}
+    notes:
+      - zh: killOp 只终止操作，不断开客户端连接，更接近 KILL QUERY。MongoDB 没有从服务端断开指定客户端连接的命令。
+      - zh: 操作要运行到下一个中断检查点才会真正结束，不一定立刻消失。
+      - zh: 在分片集群里，通过 mongos 执行 killOp 时要用带分片前缀的 opid，例如 "shard01:12345"。
+    refs:
+      - title: 'MongoDB: db.killOp()'
+        url: https://www.mongodb.com/docs/manual/reference/method/db.killOp/
+      - title: 'MongoDB: killSessions'
+        url: https://www.mongodb.com/docs/manual/reference/command/killSessions/
 related: [list-active-sessions]

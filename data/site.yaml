@@ -1,3 +1,8 @@
+# The comparison the site shows. Becomes the default once readers can pick databases.
+pair:
+  source: mysql
+  target: mongodb
+
 # Shown under "DBA 最常查的" on the home page.
 featured:
   - list-active-sessions

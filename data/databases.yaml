@@ -1,0 +1,5 @@
+# Databases the site knows about. A mapping describes each one under databases.<id>.
+- id: mysql
+  name: MySQL
+- id: mongodb
+  name: MongoDB

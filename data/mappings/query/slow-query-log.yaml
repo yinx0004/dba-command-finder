@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 id: slow-query-log
 category: query
 title: {zh: 开启并查看慢查询}
@@ -6,26 +6,47 @@ summary: {zh: 记录执行时间超过阈值的语句，再从记录里找出最
 keywords:
   zh: [慢查询, 慢日志, 慢 SQL]
   en: [slow log, slow query, profiler, profile, slowms]
-equivalence: approx
-mysql:
-  - cmd: SET GLOBAL slow_query_log = ON;
-  - cmd: SET GLOBAL long_query_time = 1;
-    note: {zh: 阈值，单位秒}
-mongodb:
-  - cmd: 'db.setProfilingLevel(1, { slowms: 100 })'
-    note: {zh: 对当前库开启 profiler，阈值单位毫秒}
-  - cmd: 'db.system.profile.find().sort({ ts: -1 }).limit(10)'
-    note: {zh: 查看最近 10 条慢操作}
-field_map:
-  - {mysql: Query_time, mongodb: millis}
-  - {mysql: Rows_examined, mongodb: docsExamined}
-  - {mysql: Rows_sent, mongodb: nreturned}
-  - {mysql: SQL 文本, mongodb: command}
-differences:
-  - zh: 即使 profiler 关闭，超过 slowms（默认 100 毫秒）的操作也会写进 mongod 日志，相当于慢日志默认就开着。
-  - zh: profiler 按库开启，结果存在该库的 system.profile 集合里（固定大小，旧记录会被覆盖）；MySQL 的慢日志是全局的。
-  - zh: 4.4 起 mongod 日志是 JSON 格式，可以用 jq 或 mtools 分析，替代 pt-query-digest。
-refs:
-  - {title: 'MySQL: The Slow Query Log', url: 'https://dev.mysql.com/doc/refman/8.4/en/slow-query-log.html'}
-  - {title: 'MongoDB: Database Profiler', url: 'https://www.mongodb.com/docs/manual/tutorial/manage-the-database-profiler/'}
+fields:
+  - id: elapsed
+    name: {zh: 执行耗时}
+  - id: rows_examined
+    name: {zh: 扫描行数}
+  - id: rows_returned
+    name: {zh: 返回行数}
+  - id: statement
+    name: {zh: 语句}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SET GLOBAL slow_query_log = ON;
+      - cmd: SET GLOBAL long_query_time = 1;
+        note: {zh: 阈值，单位秒}
+    fields:
+      elapsed: Query_time
+      rows_examined: Rows_examined
+      rows_returned: Rows_sent
+      statement: SQL 文本
+    refs:
+      - title: 'MySQL: The Slow Query Log'
+        url: https://dev.mysql.com/doc/refman/8.4/en/slow-query-log.html
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.setProfilingLevel(1, { slowms: 100 })'
+        note: {zh: 对当前库开启 profiler，阈值单位毫秒}
+      - cmd: 'db.system.profile.find().sort({ ts: -1 }).limit(10)'
+        note: {zh: 查看最近 10 条慢操作}
+    fields:
+      elapsed: millis
+      rows_examined: docsExamined
+      rows_returned: nreturned
+      statement: command
+    notes:
+      - zh: 即使 profiler 关闭，超过 slowms（默认 100 毫秒）的操作也会写进 mongod 日志，相当于慢日志默认就开着。
+      - zh: profiler 按库开启，结果存在该库的 system.profile 集合里（固定大小，旧记录会被覆盖）；MySQL 的慢日志是全局的。
+      - zh: 4.4 起 mongod 日志是 JSON 格式，可以用 jq 或 mtools 分析，替代 pt-query-digest。
+    refs:
+      - title: 'MongoDB: Database Profiler'
+        url: https://www.mongodb.com/docs/manual/tutorial/manage-the-database-profiler/
 related: [explain, list-active-sessions]

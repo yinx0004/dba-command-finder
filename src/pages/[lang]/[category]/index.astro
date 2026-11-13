@@ -2,12 +2,14 @@
 import Base from '../../../layouts/Base.astro';
 import EqBadge from '../../../components/EqBadge.astro';
 import { loadDataset } from '../../../lib/data';
+import { pairMappings } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
+import { equivalence } from '../../../lib/pair';
 import { categoryHref, entryHref, langHome, newIssueUrl } from '../../../lib/site';
 
 export function getStaticPaths() {
   const ds = loadDataset();
-  const used = new Set(ds.mappings.map((m) => m.category));
+  const used = new Set(pairMappings(ds).map((m) => m.category));
   return LANGS.flatMap((lang) =>
     ds.categories.filter((c) => used.has(c.id)).map((c) => ({ params: { lang, category: c.id } })),
   );
@@ -16,15 +18,20 @@ export function getStaticPaths() {
 const lang = Astro.params.lang as Lang;
 const ui = UI[lang];
 const ds = loadDataset();
-const used = new Set(ds.mappings.map((m) => m.category));
+const { source, target } = ds.site.pair;
+const dbName = new Map(ds.databases.map((d) => [d.id, d.name]));
+const mappings = pairMappings(ds);
+const used = new Set(mappings.map((m) => m.category));
 const categories = ds.categories.filter((c) => used.has(c.id));
 const cat = categories.find((c) => c.id === Astro.params.category)!;
-const entries = ds.mappings
+const entries = mappings
   .filter((m) => m.category === cat.id)
   .sort((a, b) => Number(a.status === 'deprecated') - Number(b.status === 'deprecated'));
 const name = t(cat.name, lang);
+const S = dbName.get(source)!;
+const T = dbName.get(target)!;
 ---
-<Base lang={lang} title={`${name}：MySQL → MongoDB 命令对照 | ${ui.siteName}`} description={`${name}相关的 MySQL 运维命令在 MongoDB 中的对应写法：${t(cat.desc, lang)}`}>
+<Base lang={lang} title={`${name}：${ui.tagline(S, T)} | ${ui.siteName}`} description={`${name}相关的 ${S} 运维命令在 ${T} 中的对应写法：${t(cat.desc, lang)}`}>
   <div class="wrap cat-layout">
     <nav class="cat-nav" aria-label="类别">
       <span class="label">类别</span>
@@ -46,18 +53,23 @@ const name = t(cat.name, lang);
 
       <div class="card">
         {
-          entries.map((m) => (
-            <a class="row-link" href={entryHref(lang, m.slug)}>
-              <div class="row-title">
-                <strong>{t(m.title, lang)}</strong>
-                <EqBadge lang={lang} eq={m.equivalence} />
-                {m.status === 'deprecated' && <span class="tag">{ui.deprecated}</span>}
-              </div>
-              <div class="row-cmds">
-                {m.mysql[0].cmd} → {m.mongodb[0]?.cmd ?? ui.noEquivalent}
-              </div>
-            </a>
-          ))
+          entries.map((m) => {
+            const s = m.databases[source];
+            const tg = m.databases[target];
+            const eq = equivalence(s, tg);
+            return (
+              <a class="row-link" href={entryHref(lang, m.slug)}>
+                <div class="row-title">
+                  <strong>{t(m.title, lang)}</strong>
+                  <EqBadge lang={lang} eq={eq} />
+                  {m.status === 'deprecated' && <span class="tag">{ui.deprecated}</span>}
+                </div>
+                <div class="row-cmds">
+                  {s.commands[0]?.cmd} → {tg?.commands[0]?.cmd ?? (eq === 'none' ? ui.noEquivalent : ui.eq.missing)}
+                </div>
+              </a>
+            );
+          })
         }
       </div>
 

@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 id: show-variables
 category: config
 title: {zh: 查看配置参数}
@@ -6,20 +6,28 @@ summary: {zh: 查看实例当前生效的配置，例如最大连接数、超时
 keywords:
   zh: [参数, 变量, 配置, 系统变量]
   en: [variables, parameters, config, getparameter, getcmdlineopts]
-equivalence: approx
-mysql:
-  - cmd: SHOW VARIABLES;
-  - cmd: SHOW VARIABLES LIKE 'max_connections';
-mongodb:
-  - cmd: "db.adminCommand({ getParameter: '*' })"
-    note: {zh: 运行时参数}
-  - cmd: 'db.adminCommand({ getCmdLineOpts: 1 })'
-    note: {zh: 启动时的配置文件和命令行选项}
-differences:
-  - zh: MongoDB 的配置分两类：启动时的配置文件和命令行选项（用 getCmdLineOpts 查看），以及运行时参数（用 getParameter 查看）。很多 MySQL 变量对应的是前者，例如 max_connections 对应配置文件里的 net.maxIncomingConnections。
-  - zh: 'getParameter 不支持通配，按名字查单个参数：db.adminCommand({ getParameter: 1, <name>: 1 })。'
-refs:
-  - {title: 'MySQL: SHOW VARIABLES', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-variables.html'}
-  - {title: 'MongoDB: getParameter', url: 'https://www.mongodb.com/docs/manual/reference/command/getParameter/'}
-  - {title: 'MongoDB: getCmdLineOpts', url: 'https://www.mongodb.com/docs/manual/reference/command/getCmdLineOpts/'}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW VARIABLES;
+      - cmd: SHOW VARIABLES LIKE 'max_connections';
+    refs:
+      - title: 'MySQL: SHOW VARIABLES'
+        url: https://dev.mysql.com/doc/refman/8.4/en/show-variables.html
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getParameter: ''*'' })'
+        note: {zh: 运行时参数}
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 })'
+        note: {zh: 启动时的配置文件和命令行选项}
+    notes:
+      - zh: MongoDB 的配置分两类：启动时的配置文件和命令行选项（用 getCmdLineOpts 查看），以及运行时参数（用 getParameter 查看）。很多 MySQL 变量对应的是前者，例如 max_connections 对应配置文件里的 net.maxIncomingConnections。
+      - zh: 'getParameter 不支持通配，按名字查单个参数：db.adminCommand({ getParameter: 1, <name>: 1 })。'
+    refs:
+      - title: 'MongoDB: getParameter'
+        url: https://www.mongodb.com/docs/manual/reference/command/getParameter/
+      - title: 'MongoDB: getCmdLineOpts'
+        url: https://www.mongodb.com/docs/manual/reference/command/getCmdLineOpts/
 related: [set-variable, server-status]

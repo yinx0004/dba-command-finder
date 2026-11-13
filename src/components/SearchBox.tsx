@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createSearcher, type Equivalence, type SearchDoc } from '../lib/search';
+import type { Equivalence } from '../lib/pair';
+import { createSearcher, type SearchDoc } from '../lib/search';
 
 interface Labels {
   searchLabel: string;
@@ -16,6 +17,8 @@ interface Labels {
 
 interface Props {
   docs: SearchDoc[];
+  sourceName: string;
+  targetName: string;
   tries: string[];
   /** link prefix for entries, e.g. "/dba-command-finder/zh/" */
   entryBase: string;
@@ -31,7 +34,7 @@ function readQuery(): string {
   }
 }
 
-export default function SearchBox({ docs, tries, entryBase, submitUrl, labels }: Props) {
+export default function SearchBox({ docs, sourceName, targetName, tries, entryBase, submitUrl, labels }: Props) {
   const searcher = useMemo(() => createSearcher(docs), [docs]);
   const [q, setQ] = useState('');
   const input = useRef<HTMLInputElement>(null);
@@ -113,12 +116,12 @@ export default function SearchBox({ docs, tries, entryBase, submitUrl, labels }:
                   </div>
                   <div className="pair">
                     <div>
-                      <span className="side side-mysql">MySQL</span>
-                      <span>{d.mysql}</span>
+                      <span className="side side-source">{sourceName}</span>
+                      <span>{d.source}</span>
                     </div>
                     <div>
-                      <span className="side side-mongo">MongoDB</span>
-                      <span>{d.mongodb || labels.noEquivalent}</span>
+                      <span className="side side-target">{targetName}</span>
+                      <span>{d.target || (d.equivalence === 'none' ? labels.noEquivalent : labels.eq.missing)}</span>
                     </div>
                   </div>
                 </a>
