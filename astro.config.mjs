@@ -16,7 +16,7 @@ const redirects = Object.fromEntries(
 );
 
 export default defineConfig({
-  site: 'https://solidstack.io',
+  site: 'https://www.solidstack.io',
   base: BASE,
   trailingSlash: 'always',
   build: { format: 'directory' },

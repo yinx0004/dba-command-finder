@@ -2,7 +2,7 @@
 
 MySQL 运维命令在 MongoDB 里怎么做？输入一条 MySQL 命令、MongoDB 命令或中文关键词，查到对应写法、输出字段对照、版本差异和注意事项。没有等价命令时会明确说明，并给出可以改看的信号。
 
-网站：<https://solidstack.io/dba-command-finder/>
+网站：<https://www.solidstack.io/dba-command-finder/>
 
 *A lookup site for DBAs moving between MySQL and MongoDB. Chinese first; English pages will follow.*
 
