@@ -45,7 +45,8 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
         {
           variant === 'home' ? (
             <nav class="site-nav" aria-label="站点">
-              <a href="#browse">{ui.browse}</a>
+              {/* Leaves any ?q= behind: while searching, the category section is hidden and #browse goes nowhere. */}
+              <a href={`${langHome(lang)}#browse`}>{ui.browse}</a>
               <a href={GITHUB}>{ui.contribute}</a>
             </nav>
           ) : (
