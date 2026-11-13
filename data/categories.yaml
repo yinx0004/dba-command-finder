@@ -1,0 +1,25 @@
+# Order here is the order on the home page and in the category menu.
+- id: session
+  name: {zh: 会话}
+  desc: {zh: 正在执行的会话、终止查询}
+- id: status
+  name: {zh: 状态监控}
+  desc: {zh: 状态计数、连接数、缓存}
+- id: config
+  name: {zh: 参数配置}
+  desc: {zh: 查看与修改运行参数}
+- id: replication
+  name: {zh: 复制}
+  desc: {zh: 主从状态、复制延迟}
+- id: schema
+  name: {zh: 库表结构}
+  desc: {zh: 库、表与集合}
+- id: index
+  name: {zh: 索引}
+  desc: {zh: 索引列表与使用情况}
+- id: query
+  name: {zh: 查询}
+  desc: {zh: 执行计划、慢查询}
+- id: lock
+  name: {zh: 锁}
+  desc: {zh: 锁等待、死锁、全局锁}

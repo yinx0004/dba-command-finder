@@ -1,0 +1,23 @@
+schema_version: 1
+id: list-databases
+category: schema
+title: {zh: 列出数据库}
+summary: {zh: 列出实例上的所有数据库。}
+keywords:
+  zh: [数据库, 库列表]
+  en: [databases, dbs, listdatabases]
+equivalence: approx
+mysql:
+  - cmd: SHOW DATABASES;
+mongodb:
+  - cmd: show dbs
+    note: {zh: mongosh 命令}
+  - cmd: 'db.adminCommand({ listDatabases: 1 })'
+    note: {zh: 结果带每个库的 sizeOnDisk}
+differences:
+  - zh: 只列出已经有数据的库。MongoDB 的库在第一次写入时才真正创建，use 一个新库不会让它出现在列表里。
+  - zh: listDatabases 直接给出每个库的磁盘占用；MySQL 要从 information_schema.TABLES 汇总。
+refs:
+  - {title: 'MySQL: SHOW DATABASES', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-databases.html'}
+  - {title: 'MongoDB: listDatabases', url: 'https://www.mongodb.com/docs/manual/reference/command/listDatabases/'}
+related: [list-tables]

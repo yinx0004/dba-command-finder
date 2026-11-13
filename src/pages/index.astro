@@ -1,0 +1,17 @@
+---
+// The site root sends readers to the Chinese pages; add language detection when English lands.
+import { langHome } from '../lib/site';
+const target = langHome('zh');
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>DBA Command Finder</title>
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={target} />
+  </head>
+  <body>
+    <a href={target}>DBA Command Finder</a>
+  </body>
+</html>

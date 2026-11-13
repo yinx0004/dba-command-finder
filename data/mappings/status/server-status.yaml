@@ -1,0 +1,31 @@
+schema_version: 1
+id: server-status
+category: status
+title: {zh: 查看服务器状态计数}
+summary: {zh: 查看连接数、请求量、网络流量、缓存命中等累计计数，是做监控和看负载的起点。}
+keywords:
+  zh: [状态, 计数器, 连接数, QPS, 负载]
+  en: [status, counters, serverstatus]
+equivalence: approx
+mysql:
+  - cmd: SHOW GLOBAL STATUS;
+  - cmd: SHOW GLOBAL STATUS LIKE 'Threads_%';
+    note: {zh: 用 LIKE 过滤}
+mongodb:
+  - cmd: db.serverStatus()
+  - cmd: db.serverStatus().connections
+    note: {zh: 用点路径取其中一部分}
+field_map:
+  - {mysql: Threads_connected, mongodb: connections.current}
+  - {mysql: Uptime, mongodb: uptime}
+  - {mysql: Com_select / Com_insert / …, mongodb: opcounters}
+  - {mysql: Bytes_received / Bytes_sent, mongodb: network.bytesIn / network.bytesOut}
+  - {mysql: Innodb_buffer_pool_*, mongodb: wiredTiger.cache, note: {zh: 缓存相关指标}}
+differences:
+  - zh: 计数器从进程启动开始累计，算速率要取两次结果的差值，这一点和 MySQL 一样。
+  - zh: 结果是嵌套文档而不是名值对，没有 LIKE 过滤，用点路径取子字段。
+  - zh: 没有 FLUSH STATUS 这样重置计数器的命令。
+refs:
+  - {title: 'MySQL: SHOW STATUS', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-status.html'}
+  - {title: 'MongoDB: serverStatus', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/'}
+related: [list-active-sessions, show-variables]

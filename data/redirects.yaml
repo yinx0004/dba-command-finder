@@ -1,0 +1,4 @@
+# When a mapping is renamed, moved or merged, keep its old URL working:
+# - from: old-category/old-id
+#   to: new-category/new-id
+[]

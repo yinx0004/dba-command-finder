@@ -1,0 +1,26 @@
+schema_version: 1
+id: set-variable
+category: config
+title: {zh: 在线修改参数}
+summary: {zh: 不重启实例，直接修改一个运行参数。}
+keywords:
+  zh: [改参数, 修改变量, 动态参数]
+  en: [set global, set persist, setparameter]
+equivalence: approx
+mysql:
+  - cmd: SET GLOBAL <variable> = <value>;
+    note: {zh: 重启后失效}
+  - cmd: SET PERSIST <variable> = <value>;
+    since: '8.0'
+    note: {zh: 同时写入 mysqld-auto.cnf，重启后仍然生效}
+mongodb:
+  - cmd: 'db.adminCommand({ setParameter: 1, <name>: <value> })'
+    note: {zh: 重启后失效}
+differences:
+  - zh: setParameter 只对当前进程生效。要持久化，得把参数写进配置文件的 setParameter 段，没有 SET PERSIST 这样的命令。
+  - zh: 只有允许运行时修改的参数才能改；很多选项（例如 net.maxIncomingConnections）只能改配置文件后重启。
+  - zh: 副本集和分片集群的每个成员要分别设置。
+refs:
+  - {title: 'MySQL: SET PERSIST', url: 'https://dev.mysql.com/doc/refman/8.4/en/persisted-system-variables.html'}
+  - {title: 'MongoDB: setParameter', url: 'https://www.mongodb.com/docs/manual/reference/command/setParameter/'}
+related: [show-variables]

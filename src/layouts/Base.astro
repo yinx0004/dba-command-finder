@@ -1,0 +1,89 @@
+---
+import '../styles/global.css';
+import { UI, type Lang } from '../lib/i18n';
+import { GITHUB, href, langHome, newIssueUrl } from '../lib/site';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+  /** home shows the full nav; other pages show a search shortcut */
+  variant?: 'home' | 'page';
+}
+
+const { lang, title, description, variant = 'page' } = Astro.props;
+const ui = UI[lang];
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+---
+<!doctype html>
+<html lang={lang === 'zh' ? 'zh-CN' : lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <link rel="icon" href={href('favicon.svg')} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="logo" href={langHome(lang)}>
+          <span class="logo-mark" aria-hidden="true">&gt;_</span>
+          <span class="logo-name">{ui.siteName}</span>
+        </a>
+        {
+          variant === 'home' ? (
+            <nav class="site-nav" aria-label="站点">
+              <a href="#browse">{ui.browse}</a>
+              <a href={GITHUB}>{ui.contribute}</a>
+            </nav>
+          ) : (
+            <a class="search-pill" href={langHome(lang)}>
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-3.5-3.5" />
+              </svg>
+              {ui.searchLabel}
+            </a>
+          )
+        }
+      </div>
+    </header>
+
+    <slot />
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>{ui.footerNote}</span>
+        <a href={GITHUB}>GitHub</a>
+        <a href={newIssueUrl()}>{ui.submitMapping}</a>
+      </div>
+    </footer>
+
+    <script is:inline define:vars={{ copied: ui.copied }}>
+      document.addEventListener('click', async (e) => {
+        const btn = e.target instanceof Element ? e.target.closest('[data-copy]') : null;
+        if (!btn) return;
+        try {
+          await navigator.clipboard.writeText(btn.getAttribute('data-copy') || '');
+        } catch {
+          return;
+        }
+        const label = btn.textContent;
+        btn.textContent = copied;
+        setTimeout(() => (btn.textContent = label), 1500);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+schema_version: 1
+id: explain
+category: query
+title: {zh: 查看执行计划}
+summary: {zh: 看一条查询走没走索引、扫描了多少行，以及实际耗时。}
+keywords:
+  zh: [执行计划, 走索引, 全表扫描]
+  en: [explain, explain analyze, query plan, executionstats]
+equivalence: approx
+mysql:
+  - cmd: EXPLAIN <select>;
+    note: {zh: 只看计划，不执行}
+  - cmd: EXPLAIN FORMAT=JSON <select>;
+  - cmd: EXPLAIN ANALYZE <select>;
+    since: 8.0.18
+    note: {zh: 真正执行，给出实际行数和耗时}
+mongodb:
+  - cmd: db.<collection>.find(<filter>).explain()
+    note: {zh: 默认 queryPlanner 模式，只看计划}
+  - cmd: db.<collection>.find(<filter>).explain("executionStats")
+    note: {zh: 真正执行，给出实际扫描数和耗时}
+  - cmd: db.<collection>.explain("executionStats").aggregate([<pipeline>])
+    note: {zh: 聚合查询的写法}
+field_map:
+  - {mysql: type = ALL, mongodb: COLLSCAN 阶段, note: {zh: 全表（全集合）扫描}}
+  - {mysql: key, mongodb: IXSCAN 阶段的 indexName}
+  - {mysql: rows, mongodb: executionStats.totalDocsExamined, note: {zh: MySQL 的 rows 是估算，这里是实际值}}
+  - {mysql: actual time（EXPLAIN ANALYZE）, mongodb: executionStats.executionTimeMillis}
+differences:
+  - zh: explain("executionStats") 会真正执行查询，等同 EXPLAIN ANALYZE，在生产上注意耗时。
+  - zh: 重点看 totalKeysExamined、totalDocsExamined、nReturned 三者的比例，扫描数远大于返回数就说明索引不合适。
+refs:
+  - {title: 'MySQL: EXPLAIN', url: 'https://dev.mysql.com/doc/refman/8.4/en/explain.html'}
+  - {title: 'MongoDB: cursor.explain()', url: 'https://www.mongodb.com/docs/manual/reference/method/cursor.explain/'}
+related: [show-indexes, slow-query-log]

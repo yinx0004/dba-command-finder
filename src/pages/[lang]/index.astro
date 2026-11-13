@@ -1,0 +1,83 @@
+---
+import Base from '../../layouts/Base.astro';
+import SearchBox from '../../components/SearchBox.tsx';
+import { loadDataset } from '../../lib/data';
+import { toSearchDocs } from '../../lib/docs';
+import { LANGS, t, UI, type Lang } from '../../lib/i18n';
+import { categoryHref, entryHref, href, newIssueUrl } from '../../lib/site';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+const ui = UI[lang];
+const ds = loadDataset();
+const docs = toSearchDocs(ds, lang);
+const byId = new Map(ds.mappings.map((m) => [m.id, m]));
+const featured = ds.site.featured.map((id) => byId.get(id)!);
+const counts = new Map<string, number>();
+for (const m of ds.mappings) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
+const categories = ds.categories.filter((c) => counts.get(c.id));
+---
+<Base lang={lang} title={`${ui.siteName}：${ui.tagline}`} description={ui.heroSub} variant="home">
+  <main class="wrap" style="padding-bottom: 48px">
+    <section class="hero">
+      <h1>{ui.heroTitle}</h1>
+      <p class="lede">{ui.heroSub}</p>
+    </section>
+
+    <SearchBox
+      client:load
+      docs={docs}
+      tries={['show processlist', '锁等待', 'slave', 'db.currentOp', '死锁']}
+      entryBase={href(`${lang}/`)}
+      submitUrl={newIssueUrl()}
+      labels={{
+        searchLabel: ui.searchLabel,
+        placeholder: ui.searchPlaceholder,
+        tryLabel: ui.tryLabel,
+        found: ui.found,
+        noResultTitle: ui.noResultTitle,
+        noResultBody: ui.noResultBody,
+        submitMapping: ui.submitMapping,
+        noResultTail: ui.noResultTail,
+        noEquivalent: ui.noEquivalent,
+        eq: ui.eq,
+      }}
+    />
+
+    <div class="browse">
+      <section class="section" id="browse" style="margin-top: 44px">
+        <h2 style="font-size: 18px">{ui.browse}</h2>
+        <div class="cat-grid">
+          {
+            categories.map((c) => (
+              <a class="card cat-card" href={categoryHref(lang, c.id)}>
+                <strong>{t(c.name, lang)}</strong>
+                <span>{t(c.desc, lang)}</span>
+                <span style="font-size: 12px">{ui.count(counts.get(c.id) ?? 0)}</span>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="section" style="margin-top: 40px">
+        <h2 style="font-size: 18px">{ui.popular}</h2>
+        <div class="card">
+          {
+            featured.map((m) => (
+              <a class="pop" href={entryHref(lang, m.slug)}>
+                <strong>{t(m.title, lang)}</strong>
+                <code>
+                  {m.mysql[0].cmd} → {m.mongodb[0]?.cmd ?? ui.noEquivalent}
+                </code>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+    </div>
+  </main>
+</Base>

@@ -1,0 +1,7 @@
+# Shown under "DBA 最常查的" on the home page.
+featured:
+  - list-active-sessions
+  - kill-session
+  - replication-status
+  - slow-query-log
+  - lock-waits

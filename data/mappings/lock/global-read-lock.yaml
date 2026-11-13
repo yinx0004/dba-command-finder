@@ -1,0 +1,25 @@
+schema_version: 1
+id: global-read-lock
+category: lock
+title: {zh: 加全局只读锁}
+summary: {zh: 在做文件级备份或快照前，让实例暂停写入。}
+keywords:
+  zh: [全局锁, 只读锁, 备份锁, 锁库]
+  en: [ftwrl, flush tables with read lock, fsynclock]
+equivalence: approx
+mysql:
+  - cmd: FLUSH TABLES WITH READ LOCK;
+  - cmd: UNLOCK TABLES;
+    note: {zh: 解锁}
+mongodb:
+  - cmd: db.fsyncLock()
+    note: {zh: 刷盘并阻塞写入，读不受影响}
+  - cmd: db.fsyncUnlock()
+    note: {zh: 解锁}
+differences:
+  - zh: fsyncLock 是计数的，加了几次就要解锁几次。
+  - zh: 锁不随连接断开而释放（FLUSH TABLES WITH READ LOCK 在会话断开时会自动释放），一定要记得执行 db.fsyncUnlock()。
+refs:
+  - {title: 'MySQL: FLUSH', url: 'https://dev.mysql.com/doc/refman/8.4/en/flush.html'}
+  - {title: 'MongoDB: db.fsyncLock()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.fsyncLock/'}
+related: [lock-waits]

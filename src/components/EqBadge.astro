@@ -1,0 +1,12 @@
+---
+import { UI, type Lang } from '../lib/i18n';
+import type { Equivalence } from '../lib/search';
+
+interface Props {
+  lang: Lang;
+  eq: Equivalence;
+  large?: boolean;
+}
+const { lang, eq, large = false } = Astro.props;
+---
+<span class:list={['badge', `badge-${eq}`, { 'badge-lg': large }]}>{UI[lang].eq[eq]}</span>

@@ -1,0 +1,56 @@
+# What a DBA types → which mapping must come first.
+#   top: <id>          the first result must be this id
+#   top_any: [ids]     the first result must be one of these
+#   empty: true        nothing should match
+# Add a line here whenever a search surprises you.
+
+- {q: 'show full processlist;', top: list-active-sessions}
+- {q: SHOW PROCESSLIST, top: list-active-sessions}
+- {q: processlist, top: list-active-sessions}
+- {q: proc, top: list-active-sessions}
+- {q: 会话, top_any: [list-active-sessions, kill-session]}
+- {q: db.currentOp, top_any: [list-active-sessions, lock-waits]}
+- {q: '$currentOp', top_any: [list-active-sessions, lock-waits]}
+
+- {q: kill, top: kill-session}
+- {q: 'KILL QUERY 123', top: kill-session}
+- {q: killOp, top: kill-session}
+
+- {q: 'show slave status\G', top: replication-status}
+- {q: show replica status, top: replication-status}
+- {q: slave, top: replication-status}
+- {q: 主从延迟, top: replication-status}
+- {q: slave延迟, top: replication-status}
+- {q: 'rs.status()', top: replication-status}
+
+- {q: 锁等待, top: lock-waits}
+- {q: 怎么看锁等待, top: lock-waits}
+- {q: innodb_lock_waits, top: lock-waits}
+- {q: 死锁, top: latest-deadlock}
+- {q: deadlock, top: latest-deadlock}
+- {q: 'SHOW ENGINE INNODB STATUS\G', top: latest-deadlock}
+- {q: FTWRL, top: global-read-lock}
+- {q: flush tables with read lock, top: global-read-lock}
+- {q: fsyncLock, top: global-read-lock}
+
+- {q: 慢查询, top: slow-query-log}
+- {q: mongodb 慢查询, top: slow-query-log}
+- {q: long_query_time, top: slow-query-log}
+- {q: profiler, top: slow-query-log}
+- {q: 执行计划, top: explain}
+- {q: explain analyze, top: explain}
+- {q: show index from orders, top: show-indexes}
+- {q: getIndexes, top: show-indexes}
+
+- {q: "show variables like 'max_connections'", top: show-variables}
+- {q: set global, top: set-variable}
+- {q: set persist, top: set-variable}
+- {q: show global status, top: server-status}
+- {q: serverStatus, top: server-status}
+- {q: show databases, top: list-databases}
+- {q: show dbs, top: list-databases}
+- {q: show tables, top: list-tables}
+- {q: show collections, top: list-tables}
+
+- {q: xyzzy, empty: true}
+- {q: '   ', empty: true}

@@ -1,0 +1,28 @@
+schema_version: 1
+id: latest-deadlock
+category: lock
+title: {zh: 查看最近一次死锁}
+summary: {zh: 找出最近一次死锁里互相等待的两个事务、各自持有和等待的锁，以及被回滚的是哪一个。}
+keywords:
+  zh: [死锁]
+  en: [deadlock, innodb status]
+equivalence: none
+mysql:
+  - cmd: SHOW ENGINE INNODB STATUS\G
+    note: {zh: 看输出里的 LATEST DETECTED DEADLOCK 段}
+  - cmd: SET GLOBAL innodb_print_all_deadlocks = ON;
+    note: {zh: 把每一次死锁都写进错误日志，而不只保留最近一次}
+differences:
+  - zh: WiredTiger 用乐观并发控制：两个操作写同一个文档时，后到的一方立刻得到写冲突，而不是排队等锁，所以不会形成需要检测的死锁，也就没有死锁日志。
+  - zh: 普通写操作遇到写冲突由服务端自动重试；多文档事务里则返回 TransientTransactionError，由驱动或应用重试整个事务。
+alternatives:
+  - title: {zh: 写冲突累计次数}
+    cmd: db.serverStatus().metrics.operation.writeConflicts
+  - title: {zh: 单条操作遇到的写冲突}
+    note: {zh: 慢日志和 profiler（system.profile）里每条记录的 writeConflicts 字段}
+  - title: {zh: 正在等锁的操作}
+    see: lock-waits
+refs:
+  - {title: 'MySQL: Deadlocks in InnoDB', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks.html'}
+  - {title: 'MongoDB: FAQ Concurrency', url: 'https://www.mongodb.com/docs/manual/faq/concurrency/'}
+related: [lock-waits]

@@ -1,0 +1,25 @@
+schema_version: 1
+id: list-tables
+category: schema
+title: {zh: 列出表（集合）}
+summary: {zh: 列出当前库里的所有表；在 MongoDB 里是集合。}
+keywords:
+  zh: [表, 集合, 表列表]
+  en: [tables, collections, show collections]
+equivalence: exact
+mysql:
+  - cmd: SHOW TABLES;
+  - cmd: SHOW FULL TABLES;
+    note: {zh: 多一列 Table_type，区分表和视图}
+mongodb:
+  - cmd: show collections
+    note: {zh: mongosh 命令}
+  - cmd: db.getCollectionNames()
+  - cmd: db.getCollectionInfos()
+    note: {zh: 每个集合的 type 字段区分集合和视图}
+differences:
+  - zh: 两边都会把视图一起列出来。区分类型时，MySQL 看 SHOW FULL TABLES 的 Table_type，MongoDB 看 db.getCollectionInfos() 的 type。
+refs:
+  - {title: 'MySQL: SHOW TABLES', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-tables.html'}
+  - {title: 'MongoDB: db.getCollectionInfos()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.getCollectionInfos/'}
+related: [list-databases, show-indexes]

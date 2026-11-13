@@ -1,0 +1,43 @@
+---
+import { t, UI, type Lang } from '../lib/i18n';
+import type { Mapping } from '../lib/schema';
+
+interface Props {
+  lang: Lang;
+  side: 'mysql' | 'mongo';
+  commands: Mapping['mysql'];
+}
+const { lang, side, commands } = Astro.props;
+const ui = UI[lang];
+
+function versionLabel(c: Mapping['mysql'][number]): string {
+  if (c.since && c.until) return `${c.since} – ${c.until}`;
+  if (c.since) return ui.since(c.since);
+  if (c.until) return ui.until(c.until);
+  return ui.allVersions;
+}
+---
+<div class="card panel">
+  <div class="panel-head">
+    <span class:list={['dot', side === 'mysql' ? 'dot-mysql' : 'dot-mongo']}></span>
+    <span class:list={['side', side === 'mysql' ? 'side-mysql' : 'side-mongo']} style="font-size: 13px">
+      {side === 'mysql' ? 'MySQL' : 'MongoDB'}
+    </span>
+  </div>
+  {
+    commands.map((c) => (
+      <div class="cmd">
+        <div class="cmd-line">
+          <code>{c.cmd}</code>
+          <button type="button" class="copy" data-copy={c.cmd}>
+            {ui.copy}
+          </button>
+        </div>
+        <div class="cmd-meta">
+          <span class="tag">{versionLabel(c)}</span>
+          {c.note && <span>{t(c.note, lang)}</span>}
+        </div>
+      </div>
+    ))
+  }
+</div>

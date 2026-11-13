@@ -1,0 +1,14 @@
+---
+import Base from '../layouts/Base.astro';
+import { UI } from '../lib/i18n';
+import { langHome } from '../lib/site';
+const ui = UI.zh;
+---
+<Base lang="zh" title={`${ui.notFound} | ${ui.siteName}`} description={ui.notFound}>
+  <main class="wrap" style="padding-top: 64px; padding-bottom: 64px">
+    <h1>{ui.notFound}</h1>
+    <p class="lede" style="margin-top: 12px">
+      {ui.notFoundBody}<a href={langHome('zh')}>{ui.home}</a>
+    </p>
+  </main>
+</Base>

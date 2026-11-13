@@ -1,0 +1,26 @@
+schema_version: 1
+id: show-indexes
+category: index
+title: {zh: 查看表的索引}
+summary: {zh: 列出一张表（集合）上的所有索引和索引字段。}
+keywords:
+  zh: [索引, 索引列表]
+  en: [index, indexes, getindexes]
+equivalence: approx
+mysql:
+  - cmd: SHOW INDEX FROM <table>;
+mongodb:
+  - cmd: db.<collection>.getIndexes()
+field_map:
+  - {mysql: Key_name, mongodb: name}
+  - {mysql: Column_name / Seq_in_index, mongodb: key, note: {zh: key 是一个文档，字段顺序就是索引列顺序}}
+  - {mysql: Non_unique, mongodb: unique, note: {zh: 含义相反；没有 unique 字段即非唯一}}
+  - {mysql: Index_type, mongodb: key 的值, note: {zh: '1 / -1 是升序 / 降序，另有 "text"、"2dsphere"、"hashed"'}}
+differences:
+  - zh: MySQL 每个索引字段占一行；MongoDB 每个索引是一个文档，复合索引的字段都在 key 里。
+  - zh: '查看索引的使用次数用 db.<collection>.aggregate([{ $indexStats: {} }])，对应 MySQL sys 库的 schema_index_statistics。'
+refs:
+  - {title: 'MySQL: SHOW INDEX', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-index.html'}
+  - {title: 'MongoDB: db.collection.getIndexes()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.getIndexes/'}
+  - {title: 'MongoDB: $indexStats', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/indexStats/'}
+related: [list-tables, explain]
