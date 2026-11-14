@@ -105,5 +105,17 @@
 - {q: general_log, top: general-log}
 - {q: 记录所有语句, top: general-log}
 
+- {q: optimize table, top: reclaim-space}
+- {q: compact, top: reclaim-space}
+- {q: 回收空间, top: reclaim-space}
+- {q: check table, top: check-table}
+- {q: 表损坏, top: check-table}
+- {q: validate, top: check-table}
+- {q: analyze table, top: analyze-table}
+- {q: 统计信息, top: analyze-table}
+- {q: 直方图, top: analyze-table}
+- {q: shutdown, top: shutdown}
+- {q: 关闭数据库, top: shutdown}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

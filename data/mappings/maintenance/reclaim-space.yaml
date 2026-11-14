@@ -1,0 +1,46 @@
+schema_version: 2
+id: reclaim-space
+category: maintenance
+title: {zh: 回收表的空闲空间}
+summary: {zh: 大量删除数据后，表文件不会自动变小；重建表（集合）把空闲空间还给操作系统。}
+keywords:
+  zh: [回收空间, 碎片整理, 表空间收缩, 删数据后空间没释放]
+  en: [optimize table, compact, defragment, reclaim space]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: OPTIMIZE TABLE <table>;
+        note: {zh: InnoDB 上实际做的是重建表加 ANALYZE，输出里会提示 doing recreate + analyze instead}
+      - cmd: ALTER TABLE <table> ENGINE=InnoDB;
+        note: {zh: 同样重建表，效果相同}
+    notes:
+      - zh: 重建是在线 DDL，期间可以读写，但需要大约一份表大小的额外磁盘空间。
+      - zh: 先用「查看表的大小」里的 DATA_FREE 判断值不值得做。
+    refs:
+      - {title: 'MySQL: OPTIMIZE TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/optimize-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); DELETE FROM t WHERE id = 1;
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.runCommand({ compact: "<collection>" })'
+        skip: {zh: lab 的实例只有主节点，而这条应该在从节点上执行}
+        note: {zh: 在每个从节点上分别执行}
+      - cmd: 'db.runCommand({ compact: "<collection>", force: true })'
+        note: {zh: 在主节点上执行时需要 force}
+      - cmd: 'db.adminCommand({ autoCompact: true })'
+        since: '8.0'
+        note: {zh: 让 WiredTiger 在后台自动回收空间}
+    notes:
+      - zh: 'lab 实测：6.0 在主节点上可以直接 compact，7.0 起会拒绝（提示会拖慢其他操作），必须加 force: true。一般做法是先在从节点上逐个执行，最后切换主从再处理原来的主节点。'
+      - zh: compact 只回收空闲空间，不像 OPTIMIZE TABLE 那样更新统计信息。
+      - zh: 回收不动时，另一个办法是把从节点清空后重新初始同步（initial sync），再切换主从。
+    refs:
+      - {title: 'MongoDB: compact', url: 'https://www.mongodb.com/docs/manual/reference/command/compact/'}
+      - {title: 'MongoDB: autoCompact', url: 'https://www.mongodb.com/docs/manual/reference/command/autoCompact/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.deleteOne({ a: 1 })'
+      vars: {collection: t}
+related: [table-size, check-table]

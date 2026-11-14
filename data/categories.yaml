@@ -23,6 +23,9 @@
 - id: storage
   name: {zh: 存储容量}
   desc: {zh: 表大小、库大小、行数}
+- id: maintenance
+  name: {zh: 维护}
+  desc: {zh: 回收空间、检查表、统计信息、关闭实例}
 - id: index
   name: {zh: 索引}
   desc: {zh: 索引列表与使用情况}
