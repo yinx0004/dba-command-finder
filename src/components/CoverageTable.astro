@@ -2,9 +2,9 @@
 // The coverage matrix: a row per task, a version strip per database with an ⓘ note on what changes
 // across versions. Category pages also show each side's command, which follows "我的版本".
 import type { CoverageRow } from '../lib/coverage';
-import { eqLabels, UI, type Lang } from '../lib/i18n';
+import { UI, type Lang } from '../lib/i18n';
 import type { Database } from '../lib/schema';
-import { entryHref } from '../lib/site';
+import CoverageRowView from './CoverageRowView.astro';
 
 interface Props {
   lang: Lang;
@@ -16,7 +16,6 @@ interface Props {
 const { lang, dbs, rows, commands = false } = Astro.props;
 const ui = UI[lang];
 const h = ui.homePage;
-const eq = eqLabels(lang, dbs[1].name);
 ---
 <div class:list={['cov', { 'cov-cmds': commands }]} style={`--n: ${dbs.length}`}>
   <div class="cov-row cov-header" aria-hidden="true">
@@ -30,66 +29,6 @@ const eq = eqLabels(lang, dbs[1].name);
       ))
     }
   </div>
-  {
-    rows.map((row) => (
-      <div class="cov-row">
-        <span class="cov-title">
-          <a href={entryHref(lang, row.slug)}>{row.title}</a>
-          {row.deprecated && <span class="cov-eq">{ui.deprecated}</span>}
-        </span>
-        {row.cells.map((c) => (
-          <span class="cov-cell">
-            <span class="cov-line">
-              <span class="cov-db">{c.name}</span>
-              <span class="strip" role="img" aria-label={`${c.name}：${c.segs.map((s) => h.support[s]).join(' / ')}`}>
-                {c.segs.map((s) => (
-                  <i class={`seg-${s}`} />
-                ))}
-              </span>
-              {c.note ? (
-                <span class="tip">
-                  <button type="button" class="tip-btn" aria-label={c.note} aria-expanded="false">
-                    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 11v5M12 7.5h.01" />
-                    </svg>
-                  </button>
-                  <span class="tip-bubble" role="tooltip">
-                    {c.note}
-                  </span>
-                </span>
-              ) : (
-                <span class="tip-space" />
-              )}
-            </span>
-            {commands &&
-              (c.pick ? (
-                <code class="cov-cmd" data-pick={c.pick} data-db={c.db}>
-                  {c.cmd}
-                </code>
-              ) : (
-                <span class="cov-cmd cov-nil">{c.written ? ui.noEquivalent : eq.missing}</span>
-              ))}
-          </span>
-        ))}
-      </div>
-    ))
-  }
+  {rows.map((row) => <CoverageRowView lang={lang} row={row} commands={commands} />)}
 </div>
 
-<script>
-  // ⓘ bubbles open on hover and focus by CSS; a tap toggles them on touch screens.
-  document.addEventListener('click', (e) => {
-    const btn = e.target instanceof Element ? e.target.closest('.tip-btn') : null;
-    for (const tip of document.querySelectorAll('.tip.open')) {
-      if (tip !== btn?.parentElement) {
-        tip.classList.remove('open');
-        tip.querySelector('.tip-btn')?.setAttribute('aria-expanded', 'false');
-      }
-    }
-    if (btn) {
-      const open = btn.parentElement!.classList.toggle('open');
-      btn.setAttribute('aria-expanded', String(open));
-    }
-  });
-</script>

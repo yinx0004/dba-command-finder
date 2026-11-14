@@ -177,8 +177,6 @@ export const Site = z.strictObject({
   // The comparison the site shows. Becomes the default once readers can pick databases.
   pair: z.strictObject({ source: Slug, target: Slug }),
   featured: z.array(z.string()).default([]),
-  // Tasks the home page's coverage matrix shows, picked to show version differences and gaps.
-  home_matrix: z.array(z.string()).default([]),
   // What the home page's translator suggests trying; the first one is filled in on arrival.
   home_tries: z.array(z.string().min(1)).default([]),
 });
