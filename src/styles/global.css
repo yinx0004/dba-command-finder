@@ -331,8 +331,18 @@ td.mono { overflow-wrap: anywhere; }
 .cov-header span { display: flex; flex-direction: column; gap: 2px; }
 .cov-header b { color: var(--ink); font-weight: 600; }
 .cov-header small { font-family: var(--mono); font-size: 11px; }
-.cov-title { font-size: 15px; color: var(--ink); }
-.cov-cell { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+.cov-title { font-size: 15px; }
+.cov-cell { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cov-line { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+.tip-space { flex: none; width: 28px; }
+.cov-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.cov-title a { color: var(--ink); }
+.cov-eq { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.cov-eq-none { color: var(--none-fg); }
+.cov-eq-only { color: var(--target); }
+.cov-cmd { font-size: 12px; line-height: 1.5; color: var(--ink-2); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cov-nil, .cov-cmd.ver-none { font-family: var(--sans); color: var(--muted); }
+.cov-cmds .cov-row { align-items: start; }
 .cov-db { display: none; width: 64px; font-size: 12px; color: var(--muted); }
 .strip { flex: 1; display: flex; gap: 2px; }
 .strip i { flex: 1; height: 8px; border-radius: 2px; }
@@ -350,8 +360,10 @@ td.mono { overflow-wrap: anywhere; }
   .cov-header { display: none; }
   .cov-row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .cov-title { margin-bottom: 4px; }
-  .cov-db { display: inline; }
-  .tip-btn { width: 40px; height: 36px; }
+  .cov-db { display: inline; flex: none; }
+  .cov-cell { gap: 2px; }
+  .cov-cmd { margin-left: 72px; }
+  .tip-btn, .tip-space { width: 40px; height: 36px; }
 }
 
 /* how the lab checks, and its last run */
@@ -408,3 +420,15 @@ td.mono { overflow-wrap: anywhere; }
 .avail-removed { color: var(--none-fg); background: var(--none-bg); }
 .avail-unproven { background: transparent; border: 1px dashed currentColor; }
 .avail-cell.ver-mine { box-shadow: inset 0 0 0 1.5px var(--link); text-decoration: none; font-weight: 400; }
+
+/* ---------- category page and 404 ---------- */
+.cat-nav a { display: flex; justify-content: space-between; gap: 8px; }
+.cat-nav small { font-size: 12px; color: var(--muted); }
+.cat-nav .label { letter-spacing: 0; }
+.cat-title { margin: 12px 0 8px; }
+.cat-main .lede { margin-bottom: 20px; }
+.cat-legend { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding-bottom: 12px; border-bottom: 1px solid var(--ink); font-size: 13px; color: var(--muted); }
+.cat-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.cat-legend i { width: 12px; height: 8px; border-radius: 2px; }
+.not-found { padding-top: 72px; padding-bottom: 96px; display: flex; flex-direction: column; gap: 14px; }
+.not-found-code { margin: 0; font-family: var(--mono); font-size: 14px; color: var(--muted); }

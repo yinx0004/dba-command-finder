@@ -1,14 +1,30 @@
 ---
 import Base from '../layouts/Base.astro';
-import { UI } from '../lib/i18n';
-import { langHome } from '../lib/site';
+import { loadDataset } from '../lib/data';
+import { pairMappings } from '../lib/docs';
+import { t, UI } from '../lib/i18n';
+import { categoryHref, langHome } from '../lib/site';
 const ui = UI.zh;
+const ds = loadDataset();
+const counts = new Map<string, number>();
+for (const m of pairMappings(ds)) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
+const categories = ds.categories.filter((c) => counts.get(c.id));
 ---
 <Base lang="zh" title={`${ui.notFound} | ${ui.siteName}`} description={ui.notFound}>
-  <main class="wrap" style="padding-top: 64px; padding-bottom: 64px">
+  <main class="wrap not-found">
+    <p class="not-found-code">404</p>
     <h1>{ui.notFound}</h1>
-    <p class="lede" style="margin-top: 12px">
-      {ui.notFoundBody}<a href={langHome('zh')}>{ui.home}</a>
-    </p>
+    <p class="lede">{ui.notFoundBody}<a href={langHome('zh')}>{ui.notFoundHome}</a></p>
+    <nav class="home-browse" aria-label={ui.homePage.navIndex}>
+      <span>{ui.homePage.navIndex}</span>
+      {
+        categories.map((c) => (
+          <a href={categoryHref('zh', c.id)}>
+            {t(c.name, 'zh')}
+            <small>{counts.get(c.id)}</small>
+          </a>
+        ))
+      }
+    </nav>
   </main>
 </Base>
