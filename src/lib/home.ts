@@ -2,7 +2,6 @@
 import type { Dataset } from './data';
 import type { Verification } from '../../lab/plan';
 import { labSkip } from './roles';
-import { availableIn, compareVersions } from './version';
 
 export interface HomeStats {
   entries: number;
@@ -34,43 +33,6 @@ export function homeStats(ds: Dataset): HomeStats {
     versions: ds.databases.reduce((n, d) => n + d.lab_versions.length, 0),
     versionBound,
   };
-}
-
-export type ExcerptLine = { kind: 'run'; db: string; server: string } | { kind: 'cmd'; cmd: string; failsAsExpected: boolean };
-
-export interface LabExcerpt {
-  date: string; // YYYY-MM-DD of the lab run
-  lines: ExcerptLine[];
-  versions: number;
-  /** every command behaved as expected on every version the lab ran */
-  allAsExpected: boolean;
-}
-
-/**
- * A few real lines of lab output for the home page: for each database in site.yaml's lab_excerpt,
- * its newest version the lab ran, and how the chosen commands behaved there.
- */
-export function labExcerpt(ds: Dataset, v: Verification | null): LabExcerpt | null {
-  if (!v || v.runs.length === 0) return null;
-  const byId = new Map(ds.mappings.map((m) => [m.id, m]));
-  const lines: ExcerptLine[] = [];
-  const dbs = [...new Set(ds.site.lab_excerpt.map((p) => p.db))];
-  for (const db of dbs) {
-    const run = v.runs.filter((r) => r.db === db).sort((a, b) => compareVersions(b.version, a.version))[0];
-    if (!run) continue;
-    const cmdLines: ExcerptLine[] = [];
-    for (const pick of ds.site.lab_excerpt.filter((p) => p.db === db)) {
-      const entry = byId.get(pick.entry);
-      const c = entry?.databases[db]?.commands.find((x) => x.cmd === pick.cmd);
-      const ev = v.entries[pick.entry]?.[db];
-      if (!c || !ev) continue;
-      if (ev.commands[c.cmd]?.verified.includes(run.version)) cmdLines.push({ kind: 'cmd', cmd: c.cmd, failsAsExpected: false });
-      else if (!availableIn(c, run.server) && ev.versions.includes(run.version)) cmdLines.push({ kind: 'cmd', cmd: c.cmd, failsAsExpected: true });
-    }
-    if (cmdLines.length) lines.push({ kind: 'run', db, server: run.server }, ...cmdLines);
-  }
-
-  return { ...labStatus(ds, v)!, lines };
 }
 
 export interface LabStatus {

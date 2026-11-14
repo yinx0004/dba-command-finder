@@ -21,7 +21,7 @@ export type CmdOnLine =
   | { state: 'not-yet'; version: string }
   | { state: 'removed'; version: string };
 
-export function cmdOnLine(c: Command, line: string): CmdOnLine {
+export function cmdOnLine(c: Pick<Command, 'since' | 'deprecated_in' | 'removed_in'>, line: string): CmdOnLine {
   const s = onLine(c, line);
   if (s.state === 'unavailable') return { state: s.reason, version: s.version };
   if (c.deprecated_in && compareVersions(line, lineOf(c.deprecated_in)) >= 0) return { state: 'deprecated', version: c.deprecated_in };
