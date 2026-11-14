@@ -41,4 +41,11 @@ databases:
       - {title: 'MongoDB: transactionLifetimeLimitSeconds', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.transactionLifetimeLimitSeconds'}
     verify:
       skip_fields: {zh: 需要另一个连接上有未提交的事务}
+  redis:
+    support: none
+    notes:
+      - zh: 没有长事务。MULTI 之后的命令只是排队，EXEC 时一次性执行完，执行期间不会被别的命令插进来，也不会一直占着锁。
+    alternatives:
+      - title: {zh: 看哪些连接正在 MULTI 里排队命令（flags 带 x，multi 是排队的命令数）}
+        cmd: CLIENT LIST
 related: [list-active-sessions, lock-waits, kill-session]

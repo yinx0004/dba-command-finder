@@ -55,4 +55,8 @@ databases:
       - {title: 'MongoDB: allowDiskUseByDefault', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.allowDiskUseByDefault'}
     verify:
       teardown: 'db.adminCommand({ setParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 104857600 })'
+  redis:
+    support: none
+    notes:
+      - zh: 没有排序缓冲区和临时表，SORT 这类命令的中间结果都放在内存里，不单独设上限；整个实例的内存上限只有 maxmemory。
 related: [disk-spills, memory-usage, set-variable]

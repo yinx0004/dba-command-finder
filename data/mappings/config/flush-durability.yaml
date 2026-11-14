@@ -52,4 +52,20 @@ databases:
     verify:
       vars: {collection: t}
       teardown: 'db.adminCommand({ setParameter: 1, journalCommitInterval: 100 })'
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET appendonly
+        note:
+          zh: yes 表示开着 AOF，每个写命令都追加到文件里
+      - cmd: CONFIG GET appendfsync
+        note:
+          zh: always 每条写命令都刷盘；everysec 每秒刷一次，宕机最多丢 1 秒；no 交给操作系统
+      - cmd: CONFIG GET save
+        note:
+          zh: RDB 快照的触发条件；只靠快照时，宕机会丢掉上次快照之后的写入
+    fields:
+      log_flush: appendfsync
+    notes:
+      - zh: 默认只开 RDB 快照、不开 AOF，宕机可能丢几分钟的数据；对数据安全有要求时打开 AOF 并用 everysec。
 related: [default-rw-concern, binlog-retention]

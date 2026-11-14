@@ -39,4 +39,8 @@ databases:
     verify:
       setup: 'db.createCollection("t", { collation: { locale: "zh" } }); db.t.insertOne({ name: "张三" })'
       vars: {collection: t}
+  redis:
+    support: none
+    notes:
+      - zh: 没有字符集和排序规则：键和值都是二进制安全的字节串，存进去什么字节，读出来就是什么字节，编码由客户端决定。
 related: [show-create-table, time-zone]

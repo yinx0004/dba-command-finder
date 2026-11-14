@@ -37,4 +37,19 @@ databases:
       - zh: 只有存储数据的 mongod（包括 config server）有数据缓存。mongos 不存数据，没有 WiredTiger 缓存，在 mongos 上执行会报参数不存在；它的内存占用看 db.serverStatus().mem。
     refs:
       - {title: 'MongoDB: WiredTiger Memory Use', url: 'https://www.mongodb.com/docs/manual/core/wiredtiger/#memory-use'}
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG SET maxmemory 1gb
+        note:
+          zh: 立即生效；调小到比已用内存还小时，会马上按 maxmemory-policy 淘汰键或拒绝写入
+      - cmd: CONFIG GET maxmemory
+        note:
+          zh: 默认 0 表示不限制；已经用了多少看 INFO memory 的 used_memory
+    fields:
+      size: maxmemory
+    notes:
+      - zh: maxmemory 是全部数据能用的内存上限，不是单独的一块缓存；到了上限怎么办由 maxmemory-policy 决定，默认 noeviction 是拒绝写入。
+    verify:
+      teardown: CONFIG SET maxmemory 0
 related: [cache-hit-ratio, set-variable]

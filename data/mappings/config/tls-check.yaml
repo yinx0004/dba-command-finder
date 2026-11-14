@@ -26,4 +26,15 @@ databases:
       - zh: 服务器端只能看配置；当前连接有没有加密要在客户端确认，例如连接串里的 tls=true。
     refs:
       - {title: 'MongoDB: Configure mongod and mongos for TLS/SSL', url: 'https://www.mongodb.com/docs/manual/tutorial/configure-ssl/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET tls-port
+        note:
+          zh: 0 表示没开 TLS 端口
+      - cmd: CONFIG GET tls-auth-clients
+        note:
+          zh: 是否要求客户端出示证书
+    notes:
+      - zh: 只能看服务器有没有开 TLS，看不出某个连接是不是走的 TLS；开了 tls-port 后，可以把 port 设成 0，只留加密端口。
 related: [config-file, create-user]

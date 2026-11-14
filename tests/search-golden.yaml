@@ -306,3 +306,14 @@
 
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
+
+# Redis
+- {q: CLIENT LIST, top: list-active-sessions}
+- {q: client kill, top: kill-session}
+- {q: slowlog get, top: slow-query-log}
+- {q: maxclients, top: max-connections}
+- {q: CONFIG REWRITE, top: persist-parameters}
+- {q: INFO memory, top: memory-usage}
+- {q: latency doctor, top: wait-events}
+- {q: appendfsync, top: flush-durability}
+- {q: redis-cli --bigkeys, top: hot-tables}

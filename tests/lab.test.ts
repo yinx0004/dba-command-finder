@@ -109,6 +109,14 @@ describe('merge', () => {
   });
 });
 
+describe('redis parameter names', () => {
+  it('reads a hyphenated name as a field', () => {
+    expect(fieldPaths('proto-max-bulk-len')).toEqual([['proto-max-bulk-len']]);
+    expect(fieldPaths('maxclients / rejected_connections')).toEqual([['maxclients'], ['rejected_connections']]);
+    expect(fieldPaths('-oops')).toBeNull();
+  });
+});
+
 describe('redis replies', () => {
   it('fails on an error reply, which redis-cli does not signal by its exit code', () => {
     expect(redisFailed("ERR unknown subcommand 'NO-EVICT'. Try CLIENT HELP.")).toBe(true);

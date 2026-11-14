@@ -42,7 +42,8 @@ export function labDatabase(id: string): string {
   return `lab_${id.replace(/[^a-z0-9]/gi, '_')}`;
 }
 
-const SEGMENT = String.raw`[A-Za-z_$][\w$]*(?:\[\])?`;
+// Letters, digits, _ and $; a hyphen inside a name too (Redis parameters such as proto-max-bulk-len).
+const SEGMENT = String.raw`[A-Za-z_$][\w$]*(?:-[\w$]+)*(?:\[\])?`;
 const PATH = new RegExp(`^${SEGMENT}(?:\\.${SEGMENT})*$`);
 
 /**

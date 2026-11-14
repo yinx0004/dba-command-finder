@@ -5,7 +5,7 @@ title: {zh: 查看正在执行的会话}
 summary: {zh: 列出当前实例上的连接和正在运行的语句，用来排查慢查询堆积、连接打满或某条语句卡住。}
 keywords:
   zh: [会话, 连接, 线程, 正在执行, 进程列表]
-  en: [processlist, threads, connections]
+  en: [processlist, threads, connections, CLIENT LIST]
 fields:
   - id: session_id
     name: {zh: 会话 ID}

@@ -54,4 +54,17 @@ databases:
       - {title: 'MongoDB: setParameter Option', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/#setparameter-option'}
     verify:
       teardown: 'db.adminCommand({ setClusterParameter: { changeStreamOptions: { preAndPostImages: { expireAfterSeconds: "off" } } } })'
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG SET maxmemory 256mb
+      - cmd: CONFIG REWRITE
+        note:
+          zh: 把运行中改过的参数写回启动时用的配置文件，重启后仍然生效
+    notes:
+      - zh: 要求 Redis 是用配置文件启动的；没有配置文件时 CONFIG REWRITE 会报错。
+    verify:
+      teardown: |-
+        CONFIG SET maxmemory 0
+        CONFIG REWRITE
 related: [set-variable, show-variables, config-file]

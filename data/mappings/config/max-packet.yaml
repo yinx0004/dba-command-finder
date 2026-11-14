@@ -39,4 +39,18 @@ databases:
     refs:
       - {title: 'MongoDB: Limits and Thresholds', url: 'https://www.mongodb.com/docs/manual/reference/limits/'}
       - {title: 'MongoDB: GridFS', url: 'https://www.mongodb.com/docs/manual/core/gridfs/'}
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG GET proto-max-bulk-len
+        note:
+          zh: 单个字符串值的最大长度，默认 512mb
+      - cmd: CONFIG SET proto-max-bulk-len 1gb
+      - cmd: CONFIG GET client-query-buffer-limit
+        note:
+          zh: 单个连接发来的、还没处理完的请求最多占多少内存，默认 1gb
+    fields:
+      limit: proto-max-bulk-len
+    verify:
+      teardown: CONFIG SET proto-max-bulk-len 512mb
 related: [import-data, set-variable]

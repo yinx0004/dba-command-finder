@@ -28,4 +28,12 @@ databases:
     refs:
       - {title: 'MongoDB: db.version()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.version/'}
       - {title: 'MongoDB: setFeatureCompatibilityVersion', url: 'https://www.mongodb.com/docs/manual/reference/command/setFeatureCompatibilityVersion/'}
+  redis:
+    support: full
+    commands:
+      - cmd: INFO server
+        note:
+          zh: 看 redis_version
+      - cmd: redis-server --version
+        shell: true
 related: [server-status, show-variables]

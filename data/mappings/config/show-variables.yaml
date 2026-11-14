@@ -38,4 +38,11 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/command/getCmdLineOpts/
       - title: 'MongoDB: getClusterParameter'
         url: https://www.mongodb.com/docs/manual/reference/command/getClusterParameter/
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG GET *
+      - cmd: CONFIG GET maxmemory*
+        note:
+          zh: 支持通配符，列出名字匹配的参数
 related: [set-variable, persist-parameters, server-status]

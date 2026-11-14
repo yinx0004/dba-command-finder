@@ -46,4 +46,17 @@ databases:
       - {title: 'MongoDB: connectionStatus', url: 'https://www.mongodb.com/docs/manual/reference/command/connectionStatus/'}
       - {title: 'MongoDB: hello', url: 'https://www.mongodb.com/docs/manual/reference/command/hello/'}
       - {title: 'MongoDB: whatsmyuri', url: 'https://www.mongodb.com/docs/manual/reference/command/whatsmyuri/'}
+  redis:
+    support: full
+    commands:
+      - cmd: CLIENT ID
+      - cmd: CLIENT INFO
+        since: '6.2'
+        note:
+          zh: id、user、addr、db 都在这一行里
+      - cmd: ACL WHOAMI
+    fields:
+      conn_id: id
+      user: user
+      client: addr
 related: [list-active-sessions, show-grants, server-version]
