@@ -1,0 +1,33 @@
+schema_version: 2
+id: drop-index
+category: index
+title: {zh: 删除索引}
+summary: {zh: 删除不再使用的索引，减少写入开销和空间占用。}
+keywords:
+  zh: [删索引, 删除索引]
+  en: [drop index, dropindex, dropindexes]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: DROP INDEX <index> ON <table>;
+      - cmd: ALTER TABLE <table> DROP INDEX <index2>;
+    refs:
+      - {title: 'MySQL: DROP INDEX', url: 'https://dev.mysql.com/doc/refman/8.4/en/drop-index.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b));
+      vars: {table: t, index: idx_a, index2: idx_b}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.<collection>.dropIndex("<index>")
+      - cmd: db.<collection>.dropIndexes(["<index2>"])
+        note: {zh: 一次删多个}
+    notes:
+      - zh: _id 索引不能删。
+    refs:
+      - {title: 'MongoDB: db.collection.dropIndex()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.dropIndex/'}
+    verify:
+      setup: 'db.t.createIndex({ a: 1 }, { name: "idx_a" }); db.t.createIndex({ b: 1 }, { name: "idx_b" })'
+      vars: {collection: t, index: idx_a, index2: idx_b}
+related: [index-usage, invisible-index]

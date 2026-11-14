@@ -1,0 +1,40 @@
+schema_version: 2
+id: invisible-index
+category: index
+title: {zh: 隐藏索引}
+summary: {zh: 先让优化器不用某个索引，观察一段时间没问题再删，出问题可以马上恢复。}
+keywords:
+  zh: [隐藏索引, 不可见索引, 删除索引前]
+  en: [invisible index, hideindex, unhideindex]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> ALTER INDEX <index> INVISIBLE;
+        since: '8.0'
+      - cmd: ALTER TABLE <table> ALTER INDEX <index> VISIBLE;
+        since: '8.0'
+        note: {zh: 恢复}
+    notes:
+      - zh: 隐藏的索引照常随写入更新，只是优化器不再使用；主键不能隐藏。
+    refs:
+      - {title: 'MySQL: Invisible Indexes', url: 'https://dev.mysql.com/doc/refman/8.4/en/invisible-indexes.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a));
+      vars: {table: t, index: idx_a}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.<collection>.hideIndex("<index>")
+        since: '4.4'
+      - cmd: db.<collection>.unhideIndex("<index>")
+        since: '4.4'
+        note: {zh: 恢复}
+    notes:
+      - zh: 隐藏的索引照常随写入更新，只是优化器不再使用；_id 索引不能隐藏。
+    refs:
+      - {title: 'MongoDB: Hidden Indexes', url: 'https://www.mongodb.com/docs/manual/core/index-hidden/'}
+    verify:
+      setup: 'db.t.createIndex({ a: 1 }, { name: "idx_a" })'
+      vars: {collection: t, index: idx_a}
+related: [drop-index, index-usage]

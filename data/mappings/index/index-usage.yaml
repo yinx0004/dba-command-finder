@@ -1,0 +1,49 @@
+schema_version: 2
+id: index-usage
+category: index
+title: {zh: 查看索引使用情况和无用索引}
+summary: {zh: 找出从来没被用过的索引，删除前先确认。}
+keywords:
+  zh: [无用索引, 索引使用情况, 没用的索引, 索引命中]
+  en: [unused indexes, schema_unused_indexes, schema_index_statistics, indexstats]
+fields:
+  - {id: index, name: {zh: 索引名}}
+  - {id: usage, name: {zh: 使用次数}}
+  - {id: since, name: {zh: 从什么时候开始统计}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.schema_unused_indexes WHERE object_schema = '<db>';
+        note: {zh: 自实例启动以来没被用过的索引}
+      - cmd: SELECT * FROM sys.schema_index_statistics WHERE table_schema = '<db>';
+        note: {zh: 每个索引被读写的行数和耗时}
+    fields:
+      index: index_name
+      usage: rows_selected
+    notes:
+      - zh: 统计来自 performance_schema，实例重启后清零，要看足够长时间（例如覆盖月底跑批）再下结论。
+    refs:
+      - {title: 'MySQL: schema_unused_indexes', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-schema-unused-indexes.html'}
+      - {title: 'MySQL: schema_index_statistics', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-schema-index-statistics.html'}
+    verify:
+      # Use one index so it has statistics; leave the other unused.
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b)); INSERT INTO t VALUES (1, 1, 1); SELECT * FROM t FORCE INDEX (idx_a) WHERE a = 1;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.<collection>.aggregate([{ $indexStats: {} }])'
+        note: {zh: 每个索引被用了多少次（accesses.ops）、从什么时候开始统计}
+    fields:
+      index: name
+      usage: accesses.ops
+      since: accesses.since
+    notes:
+      - zh: 只统计当前这个节点，副本集要在每个成员上分别看；mongod 重启后清零。
+      - zh: 没有现成的「无用索引」视图，用 accesses.ops 为 0 来判断。
+    refs:
+      - {title: 'MongoDB: $indexStats', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/indexStats/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1, b: 1 }); db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 }); db.t.find({ a: 1 }).toArray()'
+      vars: {collection: t}
+related: [show-indexes, drop-index, invisible-index]
