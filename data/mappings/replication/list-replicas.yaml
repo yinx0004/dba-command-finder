@@ -1,0 +1,42 @@
+schema_version: 2
+id: list-replicas
+category: replication
+title: {zh: 列出所有从库（副本集成员）}
+summary: {zh: 在主库上看有哪些从库连着，做切换或扩容前确认拓扑。}
+keywords:
+  zh: [从库列表, 有哪些从库, 副本集成员, 复制拓扑]
+  en: [show replicas, show slave hosts, rs.conf, members]
+fields:
+  - {id: host, name: {zh: 地址}}
+databases:
+  mysql:
+    support: partial
+    commands:
+      - cmd: SHOW REPLICAS;
+        since: 8.0.22
+      - cmd: SHOW SLAVE HOSTS;
+        deprecated_in: 8.0.22
+        removed_in: '8.4'
+        note: {zh: 8.0.22 起改名为 SHOW REPLICAS}
+      - cmd: SELECT * FROM information_schema.PROCESSLIST WHERE COMMAND LIKE 'Binlog Dump%';
+        note: {zh: 每个连着的从库在主库上有一个 Binlog Dump 线程}
+    fields:
+      host: Host
+    notes:
+      - zh: SHOW REPLICAS 只列出启动时设置了 report_host 的从库；更可靠的办法是看主库上的 Binlog Dump 线程。
+    refs:
+      - {title: 'MySQL: SHOW REPLICAS', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-replicas.html'}
+    verify:
+      skip_fields: {zh: lab 的实例没有从库，结果为空}
+  mongodb:
+    support: full
+    commands:
+      - cmd: rs.conf().members
+        note: {zh: 配置里的所有成员，包括优先级、是否隐藏、投票权}
+      - cmd: rs.status().members
+        note: {zh: 每个成员当前的状态（stateStr）和复制进度}
+    fields:
+      host: host
+    refs:
+      - {title: 'MongoDB: rs.conf()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.conf/'}
+related: [replica-role, replication-status]

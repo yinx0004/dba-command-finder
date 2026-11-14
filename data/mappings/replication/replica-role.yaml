@@ -1,0 +1,36 @@
+schema_version: 2
+id: replica-role
+category: replication
+title: {zh: 判断当前实例是主还是从}
+summary: {zh: 连上一台实例后，先确认它是主库还是从库，再决定能不能在上面写。}
+keywords:
+  zh: [主库还是从库, 是不是主库, 当前角色, 主从角色]
+  en: [read_only, ismaster, hello, iswritableprimary, primary or secondary]
+databases:
+  mysql:
+    support: partial
+    commands:
+      - cmd: SELECT @@read_only, @@super_read_only;
+        since: 5.7.8
+        note: {zh: 从库通常设为只读}
+      - cmd: SHOW REPLICA STATUS\G
+        since: 8.0.22
+        note: {zh: 有输出说明它是从库}
+    notes:
+      - zh: MySQL 没有直接表示「主」或「从」的字段，只能从是否只读、是否配置了复制通道来判断；组复制可以查 performance_schema.replication_group_members 里的 MEMBER_ROLE。
+    refs:
+      - {title: 'MySQL: read_only', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_read_only'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.hello()
+        since: '5.0'
+        note: {zh: isWritablePrimary 为 true 是主节点，secondary 为 true 是从节点}
+      - cmd: db.isMaster()
+        deprecated_in: '5.0'
+        note: {zh: 旧写法，5.0 起改用 db.hello()}
+    notes:
+      - zh: 结果里还有副本集名（setName）、当前主节点地址（primary）和所有成员（hosts）。
+    refs:
+      - {title: 'MongoDB: hello', url: 'https://www.mongodb.com/docs/manual/reference/command/hello/'}
+related: [replication-status, list-replicas, set-read-only]

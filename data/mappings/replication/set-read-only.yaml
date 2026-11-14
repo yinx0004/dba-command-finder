@@ -1,0 +1,35 @@
+schema_version: 2
+id: set-read-only
+category: replication
+title: {zh: 把实例设为只读}
+summary: {zh: 切换、迁移或维护前，先禁止应用写入。}
+keywords:
+  zh: [设为只读, 禁止写入, 只读模式]
+  en: [read_only, super_read_only, read only]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SET GLOBAL read_only = ON;
+        note: {zh: 普通用户不能写，有 SUPER 权限的用户仍然可以}
+      - cmd: SET GLOBAL super_read_only = ON;
+        since: 5.7.8
+        note: {zh: 连 SUPER 用户也不能写}
+    notes:
+      - zh: 复制线程不受只读限制，从库照常应用主库的变更。
+    refs:
+      - {title: 'MySQL: super_read_only', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_super_read_only'}
+    verify:
+      teardown: SET GLOBAL super_read_only = OFF; SET GLOBAL read_only = OFF;
+  mongodb:
+    support: none
+    notes:
+      - zh: 没有实例级的只读开关。从节点本来就拒绝写入；要让主节点停止接受写入，只能把它降为从节点，或者用 fsyncLock 暂时阻塞写入。
+    alternatives:
+      - title: {zh: 把主节点降为从节点（会触发选举）}
+        cmd: rs.stepDown()
+      - title: {zh: 暂时阻塞所有写入}
+        see: global-read-lock
+    refs:
+      - {title: 'MongoDB: rs.stepDown()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.stepDown/'}
+related: [global-read-lock, replica-role]

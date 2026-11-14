@@ -1,0 +1,31 @@
+schema_version: 2
+id: server-version
+category: status
+title: {zh: 查看数据库版本}
+summary: {zh: 确认实例的版本号，升级、排查兼容性问题或查文档前先看这个。}
+keywords:
+  zh: [版本, 版本号, 什么版本]
+  en: [version, buildinfo, featurecompatibilityversion, fcv]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT VERSION();
+      - cmd: SHOW VARIABLES LIKE 'version%';
+        note: {zh: 还能看到编译信息和操作系统}
+    refs:
+      - {title: 'MySQL: VERSION()', url: 'https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_version'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.version()
+      - cmd: 'db.adminCommand({ buildInfo: 1 })'
+        note: {zh: 详细的构建信息，modules 里有 enterprise 表示企业版}
+      - cmd: 'db.adminCommand({ getParameter: 1, featureCompatibilityVersion: 1 })'
+        note: {zh: 功能兼容版本（FCV）}
+    notes:
+      - zh: 除了程序版本，还有「功能兼容版本」（FCV）。升级大版本后 FCV 仍停在旧版本，新功能用不了，确认没问题后要手动 setFeatureCompatibilityVersion。
+    refs:
+      - {title: 'MongoDB: db.version()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.version/'}
+      - {title: 'MongoDB: setFeatureCompatibilityVersion', url: 'https://www.mongodb.com/docs/manual/reference/command/setFeatureCompatibilityVersion/'}
+related: [server-status, show-variables]
