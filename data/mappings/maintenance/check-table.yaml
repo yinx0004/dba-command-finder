@@ -38,15 +38,17 @@ databases:
         note: {zh: 更彻底，也更慢}
       - cmd: 'db.<collection>.validate({ background: true })'
         since: '4.4'
-        note: {zh: 不阻塞读写的检查方式}
+        note: {zh: 不阻塞读写；检查的是最近一次检查点的数据}
     fields:
       result: valid
       problems: errors
     notes:
       - zh: '默认的 validate 执行期间会阻塞这个集合的读写；大集合在生产上用 background: true，或者在从节点上检查。'
+      - zh: 'background: true 检查的是最近一次检查点（默认约每分钟一次）的数据。lab 实测：8.0 上刚创建、还没做过检查点的集合会报「does not exist」，可以先执行 db.adminCommand({ fsync: 1 }) 强制做一次检查点。'
     refs:
       - {title: 'MongoDB: validate', url: 'https://www.mongodb.com/docs/manual/reference/command/validate/'}
     verify:
-      setup: 'db.t.insertOne({ a: 1 }); db.t.createIndex({ a: 1 })'
+      # background validation reads the last checkpoint, so force one after creating the collection
+      setup: 'db.t.insertOne({ a: 1 }); db.t.createIndex({ a: 1 }); db.adminCommand({ fsync: 1 })'
       vars: {collection: t}
 related: [reclaim-space]
