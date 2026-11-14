@@ -29,6 +29,14 @@ export function parseServerVersion(raw: string): string {
   return m[1];
 }
 
+// Error replies redis-cli prints when its output is not a terminal; it still exits 0 after them.
+const REDIS_ERROR = /^(ERR|WRONGTYPE|NOPERM|NOAUTH|WRONGPASS|NOSCRIPT|NOTBUSY|NOREPLICAS|NOPROTO|READONLY|MASTERDOWN|EXECABORT|BUSY|BUSYKEY|LOADING|MISCONF|OOM|UNKILLABLE|CLUSTERDOWN|CROSSSLOT|TRYAGAIN|MOVED|ASK)\b/m;
+
+/** Whether redis-cli's output contains an error reply, which is how a Redis command fails. */
+export function redisFailed(output: string): boolean {
+  return REDIS_ERROR.test(output);
+}
+
 /** A database name the lab can create for one entry: letters, digits, underscores. */
 export function labDatabase(id: string): string {
   return `lab_${id.replace(/[^a-z0-9]/gi, '_')}`;

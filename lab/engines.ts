@@ -1,7 +1,7 @@
 // How the lab starts each database in Docker and runs a command exactly as the page shows it.
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { parseServerVersion } from './plan';
+import { parseServerVersion, redisFailed } from './plan';
 
 const run = promisify(execFile);
 
@@ -18,6 +18,17 @@ async function sh(args: string[], timeoutMs = 60_000): Promise<ExecResult> {
     const err = e as { stdout?: string; stderr?: string; message: string };
     return { ok: false, out: ((err.stdout ?? '') + (err.stderr ?? '') || err.message).trim() };
   }
+}
+
+/** Like sh, with text fed to the command's standard input. */
+function shIn(args: string[], input: string, timeoutMs = 60_000): Promise<ExecResult> {
+  return new Promise((resolve) => {
+    const child = execFile('docker', args, { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024 }, (err, stdout, stderr) => {
+      const out = (stdout + stderr).trim();
+      resolve({ ok: !err, out: err && !out ? err.message : out });
+    });
+    child.stdin?.end(input);
+  });
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -121,4 +132,33 @@ export function mongodb(version: string): Engine {
   };
 }
 
-export const ENGINES: Record<string, (version: string) => Engine> = { mysql, mongodb };
+export function redis(version: string): Engine {
+  const name = `dbalab-redis-${version}`;
+  const image = `redis:${version}`;
+  const cli = ['exec', '-i', name, 'redis-cli'];
+  return {
+    image,
+    async start() {
+      // A standalone server, as most deployments start; cluster and Sentinel commands are marked by role and skipped.
+      await startContainer(name, [image]);
+      await waitFor(name, async () => (await sh(['exec', name, 'redis-cli', 'PING'])).out === 'PONG', 60_000);
+    },
+    async serverVersion() {
+      const r = await sh(['exec', name, 'redis-cli', 'INFO', 'server']);
+      const v = /redis_version:(\S+)/.exec(r.out)?.[1];
+      if (!r.ok || !v) throw new Error(r.out);
+      return parseServerVersion(v);
+    },
+    // Redis has numbered databases rather than named ones; every entry uses database 0.
+    createDatabase: async () => ({ ok: true, out: '' }),
+    // Commands go in on standard input, one per line, quoted as on the page; an error reply means failure.
+    async exec(text) {
+      const r = await shIn(cli, text.endsWith('\n') ? text : text + '\n');
+      return { ok: r.ok && !redisFailed(r.out), out: r.out };
+    },
+    shell: (text) => inShell(name, text),
+    stop: async () => void (await sh(['rm', '-fv', name])),
+  };
+}
+
+export const ENGINES: Record<string, (version: string) => Engine> = { mysql, mongodb, redis };

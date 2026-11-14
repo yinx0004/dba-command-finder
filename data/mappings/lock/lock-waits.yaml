@@ -35,4 +35,13 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/method/db.currentOp/
       - title: 'MongoDB: FAQ Concurrency'
         url: https://www.mongodb.com/docs/manual/faq/concurrency/
+  redis:
+    support: none
+    notes:
+      - zh: 命令在一个线程里依次执行，没有行锁、表锁，也就没有锁等待。客户端卡住，多半是被慢命令挡住，或者在 BLPOP 这类阻塞命令上等数据。
+    alternatives:
+      - title: {zh: 看有多少客户端停在阻塞命令上（blocked_clients）}
+        cmd: INFO clients
+      - title: {zh: 找出挡住其他命令的慢命令}
+        see: slow-query-log
 related: [latest-deadlock, list-active-sessions, global-read-lock]

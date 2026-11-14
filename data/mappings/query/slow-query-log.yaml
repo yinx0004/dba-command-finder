@@ -60,4 +60,20 @@ databases:
     verify:
       # Profile everything briefly so system.profile has a query record to show.
       setup: 'db.t.insertOne({ a: 1 }); db.setProfilingLevel(2); db.t.find({ a: 1 }).toArray()'
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG SET slowlog-log-slower-than 10000
+        note: {zh: 单位是微秒，10000 是 10 毫秒；0 记录所有命令，-1 关闭}
+      - cmd: SLOWLOG GET 10
+        note: {zh: 每条记录依次是：编号、时间戳、耗时（微秒）、命令和参数、客户端地址、客户端名}
+      - cmd: LATENCY HISTOGRAM
+        since: '7.0'
+        note: {zh: 按命令看耗时分布}
+    fields:
+      elapsed: {name: SLOWLOG GET 每条记录的第 3 项（微秒）}
+      statement: {name: SLOWLOG GET 每条记录的第 4 项}
+    notes:
+      - zh: 慢日志只记命令本身的执行时间，不含排队和网络往返；记录保存在内存里，条数由 slowlog-max-len 决定，重启就没了。
+      - zh: 没有扫描行数、返回行数这类统计。
 related: [explain, list-active-sessions]

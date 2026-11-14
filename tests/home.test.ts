@@ -9,7 +9,7 @@ describe('home stats', () => {
   it('counts from the data', () => {
     const s = homeStats(ds);
     expect(s.entries).toBe(ds.mappings.length);
-    expect(s.versions).toBe(6);
+    expect(s.versions).toBe(ds.databases.reduce((n, d) => n + d.lab_versions.length, 0));
     expect(s.labCommands).toBeGreaterThan(0);
     expect(s.labCommands).toBeLessThanOrEqual(ds.mappings.flatMap((m) => Object.values(m.databases).flatMap((d) => d.commands)).length);
   });
