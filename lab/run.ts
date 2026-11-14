@@ -124,9 +124,13 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
           else if (outputs.length === 0) r = { id, name, status: 'unchecked', detail: `no command produced output on ${server}` };
           else {
             const missing = paths.filter((p) => !outputHasPath(all, p)).map((p) => p.join('.'));
-            r = missing.length
-              ? { id, name, status: 'fail', detail: `not in the output on ${server}: ${missing.join(', ')}` }
-              : { id, name, status: 'pass' };
+            // On a version where some commands don't exist yet (or anymore), the field may come from one of those.
+            const partial = d.commands.some((c) => !c.skip && expectation(c, server) === 'error');
+            r = !missing.length
+              ? { id, name, status: 'pass' }
+              : partial
+                ? { id, name, status: 'unchecked', detail: `not in the output on ${server}, where some commands are outside their version range` }
+                : { id, name, status: 'fail', detail: `not in the output on ${server}: ${missing.join(', ')}` };
           }
           if (r.status === 'fail') failures++;
           entry.fields.push(r);

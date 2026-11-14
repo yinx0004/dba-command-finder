@@ -73,7 +73,8 @@ export function mysql(version: string): Engine {
   return {
     image,
     async start() {
-      await startContainer(name, [...platform, '-e', `MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}`, image]);
+      // Binary logging on for every version (5.7 has it off by default), so binlog commands are tested on all of them.
+      await startContainer(name, [...platform, '-e', `MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}`, image, '--server-id=1', '--log-bin=binlog']);
       // TCP only answers once the entrypoint's temporary init server has been replaced by the real one.
       await waitFor(name, async () => (await sh([...client(), '-e', 'SELECT 1'])).ok, 300_000);
       // Lets mysqldump and friends run as the page shows them, without connection flags.

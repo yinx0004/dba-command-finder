@@ -1,0 +1,32 @@
+schema_version: 2
+id: rotate-logs
+category: log
+title: {zh: 切换日志文件}
+summary: {zh: 关闭当前日志文件、开一个新的，配合 logrotate 清理旧日志，避免日志把磁盘写满。}
+keywords:
+  zh: [切换日志, 日志轮转, 日志太大]
+  en: [flush logs, logrotate, log rotation]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: FLUSH LOGS;
+        note: {zh: 切换 binlog，并重新打开错误日志、慢日志、通用日志}
+      - cmd: FLUSH BINARY LOGS;
+        note: {zh: 只切换 binlog}
+      - cmd: FLUSH ERROR LOGS;
+        note: {zh: 只重新打开错误日志}
+    notes:
+      - zh: MySQL 不会按大小或时间自动切换错误日志和慢日志，一般用系统的 logrotate 改名后再执行 FLUSH LOGS；binlog 会在达到 max_binlog_size 时自动切换。
+    refs:
+      - {title: 'MySQL: Server Log Maintenance', url: 'https://dev.mysql.com/doc/refman/8.4/en/log-file-maintenance.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ logRotate: 1 })'
+        note: {zh: 默认把当前日志文件改名（加时间戳）并新开一个}
+    notes:
+      - zh: 要配合系统的 logrotate 使用，把 systemLog.logRotate 设为 reopen，由 logrotate 改名、mongod 只重新打开。
+    refs:
+      - {title: 'MongoDB: logRotate', url: 'https://www.mongodb.com/docs/manual/reference/command/logRotate/'}
+related: [error-log, binlog-retention]
