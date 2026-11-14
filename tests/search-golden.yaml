@@ -238,5 +238,16 @@
 - {q: tls, top: tls-check}
 - {q: 加密连接, top: tls-check}
 
+- {q: connection_id, top: current-connection}
+- {q: 当前用户, top: current-connection}
+- {q: session_connect_attrs, top: client-programs}
+- {q: 哪个程序, top: client-programs}
+- {q: 批量杀会话, top: kill-user-sessions}
+- {q: killAllSessionsByPattern, top: kill-user-sessions}
+- {q: wait_timeout, top: idle-timeout}
+- {q: 空闲连接, top: idle-timeout}
+- {q: lock tables, top: lock-table}
+- {q: 锁表, top: lock-table}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

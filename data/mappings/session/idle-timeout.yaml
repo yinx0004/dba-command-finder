@@ -1,0 +1,37 @@
+schema_version: 2
+id: idle-timeout
+category: session
+title: {zh: 空闲连接多久会被断开}
+summary: {zh: 应用报「连接已断开」或连接池里有失效连接时，查服务端会在连接空闲多久后主动断开它。}
+keywords:
+  zh: [空闲超时, 连接超时, 空闲连接, 连接被断开, 连接断了]
+  en: [wait_timeout, interactive_timeout, idle timeout, gone away, maxidletimems, cursortimeoutmillis]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@GLOBAL.wait_timeout, @@GLOBAL.interactive_timeout, @@SESSION.wait_timeout;
+        note: {zh: 默认都是 28800 秒（8 小时）}
+      - cmd: SET GLOBAL wait_timeout = 600;
+        note: {zh: 只影响之后新建的连接，已有连接还按原来的值}
+    notes:
+      - zh: mysql 命令行这类交互式客户端用的是 interactive_timeout，应用程序的连接用 wait_timeout。
+      - zh: 应用连接池的空闲回收时间要比 wait_timeout 短，否则会拿到已被服务端断开的连接（MySQL server has gone away）。
+    refs:
+      - {title: 'MySQL: wait_timeout', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_wait_timeout'}
+    verify:
+      teardown: SET GLOBAL wait_timeout = 28800;
+  mongodb:
+    support: none
+    notes:
+      - zh: 服务端不会断开空闲的客户端连接，空闲连接的回收由驱动负责，在连接串里用 maxIdleTimeMS 设置。
+      - zh: 服务端有两个相关的超时：空闲游标默认 10 分钟（cursorTimeoutMillis）后被关闭，空闲的逻辑会话默认 30 分钟（localLogicalSessionTimeoutMinutes）后过期。
+    alternatives:
+      - title: {zh: 查看游标和会话的超时}
+        cmd: 'db.adminCommand({ getParameter: 1, cursorTimeoutMillis: 1, localLogicalSessionTimeoutMinutes: 1 })'
+      - title: {zh: 在驱动里设置空闲连接回收}
+        cmd: mongodb://<host>/?maxIdleTimeMS=600000
+    refs:
+      - {title: 'MongoDB: cursorTimeoutMillis', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.cursorTimeoutMillis'}
+      - {title: 'MongoDB: Connection Pool Options', url: 'https://www.mongodb.com/docs/manual/reference/connection-string-options/#connection-pool-options'}
+related: [connection-usage, list-active-sessions]

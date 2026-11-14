@@ -1,0 +1,49 @@
+schema_version: 2
+id: current-connection
+category: session
+title: {zh: 查看当前连接的信息}
+summary: {zh: 确认自己连的是哪台实例、以什么用户登录、当前连接的 ID 和客户端地址，避免在错误的库上执行操作。}
+keywords:
+  zh: [当前连接, 当前用户, 我是谁, 连接 ID, 当前库]
+  en: [connection_id, current_user, whatsmyuri, connectionstatus, connectionid, status]
+fields:
+  - {id: conn_id, name: {zh: 连接 ID}}
+  - {id: user, name: {zh: 登录用户}}
+  - {id: client, name: {zh: 客户端地址}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT CONNECTION_ID() AS connection_id, CURRENT_USER() AS account, USER() AS login, DATABASE() AS current_db;
+        note: {zh: account 是实际匹配到的账号（如 root@%），login 是客户端报上来的用户和来源主机}
+      - cmd: status
+        note: {zh: mysql 客户端命令（也可写成 \s），一次列出连接 ID、用户、是否加密、服务器版本和端口}
+    fields:
+      conn_id: connection_id
+      user: account
+      client: {name: login, note: {zh: '@ 后面是来源主机'}}
+    refs:
+      - {title: 'MySQL: Information Functions', url: 'https://dev.mysql.com/doc/refman/8.4/en/information-functions.html'}
+      - {title: 'MySQL: mysql Client Commands', url: 'https://dev.mysql.com/doc/refman/8.4/en/mysql-commands.html'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.hello()
+        note: {zh: 其中的 connectionId 和 $currentOp 结果里的 connectionId 对应；终止操作用的是 opid，不是这个 ID}
+      - cmd: 'db.runCommand({ connectionStatus: 1 })'
+        note: {zh: 当前连接认证过的用户和角色；没开认证时是空数组}
+      - cmd: 'db.adminCommand({ whatsmyuri: 1 })'
+        note: {zh: 服务端看到的客户端地址和端口}
+      - cmd: db.getName()
+        note: {zh: 当前所在的库}
+    fields:
+      conn_id: connectionId
+      user: authInfo.authenticatedUsers
+      client: you
+    notes:
+      - zh: mongosh 启动时打印的 Connecting to 一行就是连接串，db.getMongo() 也会显示它，可以用来确认连的是哪台实例。
+    refs:
+      - {title: 'MongoDB: connectionStatus', url: 'https://www.mongodb.com/docs/manual/reference/command/connectionStatus/'}
+      - {title: 'MongoDB: hello', url: 'https://www.mongodb.com/docs/manual/reference/command/hello/'}
+      - {title: 'MongoDB: whatsmyuri', url: 'https://www.mongodb.com/docs/manual/reference/command/whatsmyuri/'}
+related: [list-active-sessions, show-grants, server-version]
