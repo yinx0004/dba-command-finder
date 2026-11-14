@@ -100,7 +100,7 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
   const redirects = parseList(Redirect, raw.redirects, 'data/redirects.yaml', problems);
 
   const siteParsed = Site.safeParse(raw.site ?? {});
-  const site: Site = siteParsed.success ? siteParsed.data : { pair: { source: '', target: '' }, featured: [] };
+  const site: Site = siteParsed.success ? siteParsed.data : { pair: { source: '', target: '' }, featured: [], home_matrix: [], home_tries: [] };
   if (!siteParsed.success) problems.push(...issues('data/site.yaml', siteParsed.error));
   for (const db of [site.pair.source, site.pair.target]) {
     if (siteParsed.success && !dbIds.has(db)) problems.push(`data/site.yaml: pair database "${db}" is not in data/databases.yaml`);
@@ -169,14 +169,11 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
     if (!slugs.has(r.to)) problems.push(`data/redirects.yaml: target "${r.to}" does not exist`);
   }
 
-  for (const p of site.lab_excerpt) {
-    const m = byId.get(p.entry);
-    if (!m) problems.push(`data/site.yaml: lab_excerpt entry "${p.entry}" does not exist`);
-    else if (!m.databases[p.db]?.commands.some((c) => c.cmd === p.cmd)) {
-      problems.push(`data/site.yaml: lab_excerpt command ${JSON.stringify(p.cmd)} is not in ${p.entry} / ${p.db}`);
-    }
+  for (const id of site.home_matrix) {
+    const m = byId.get(id);
+    if (!m) problems.push(`data/site.yaml: home_matrix "${id}" does not exist`);
+    else if (!m.databases[site.pair.source]) problems.push(`data/site.yaml: home_matrix "${id}" has no ${site.pair.source} entry`);
   }
-
   for (const id of site.featured) {
     const m = byId.get(id);
     if (!m) problems.push(`data/site.yaml: featured "${id}" does not exist`);

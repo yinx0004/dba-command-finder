@@ -3,12 +3,21 @@ pair:
   source: mysql
   target: mongodb
 
-# Real lab results shown on the home page: for each database, its newest version the lab ran.
-# A command outside its version range there shows as "fails as expected".
-lab_excerpt:
-  - {entry: replication-status, db: mysql, cmd: 'SHOW REPLICA STATUS\G'}
-  - {entry: replication-status, db: mysql, cmd: 'SHOW SLAVE STATUS\G'}
-  - {entry: binlog-retention, db: mysql, cmd: 'SELECT @@expire_logs_days;'}
-  - {entry: replica-role, db: mongodb, cmd: db.hello()}
-  - {entry: reclaim-space, db: mongodb, cmd: 'db.adminCommand({ autoCompact: true })'}
-  - {entry: replication-status, db: mongodb, cmd: rs.printSlaveReplicationInfo()}
+# Tasks the home page's coverage matrix shows: picked to show version differences and gaps.
+home_matrix:
+  - list-active-sessions
+  - lock-waits
+  - replication-status
+  - binlog-retention
+  - invisible-index
+  - rename-column
+  - reclaim-space
+  - account-lock
+
+# What the home page's translator suggests trying; the first one is filled in on arrival.
+home_tries:
+  - 'SHOW SLAVE STATUS\G'
+  - show processlist
+  - 锁等待
+  - db.currentOp()
+  - 修改最大连接数
