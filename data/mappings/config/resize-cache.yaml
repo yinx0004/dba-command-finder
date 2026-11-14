@@ -28,10 +28,13 @@ databases:
     support: partial
     commands:
       - cmd: 'db.adminCommand({ setParameter: 1, wiredTigerEngineRuntimeConfig: "cache_size=1G" })'
+        on: [mongod, configsvr]
       - cmd: 'db.serverStatus().wiredTiger.cache["maximum bytes configured"]'
+        on: [mongod, configsvr]
         note: {zh: 确认当前上限（字节）}
     notes:
       - zh: 只对当前进程生效，重启后恢复为配置文件里的 storage.wiredTiger.engineConfig.cacheSizeGB，记得同时改配置文件。
+      - zh: 只有存储数据的 mongod（包括 config server）有数据缓存。mongos 不存数据，没有 WiredTiger 缓存，在 mongos 上执行会报参数不存在；它的内存占用看 db.serverStatus().mem。
     refs:
       - {title: 'MongoDB: WiredTiger Memory Use', url: 'https://www.mongodb.com/docs/manual/core/wiredtiger/#memory-use'}
 related: [cache-hit-ratio, set-variable]

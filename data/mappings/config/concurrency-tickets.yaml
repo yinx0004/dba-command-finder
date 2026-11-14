@@ -1,0 +1,51 @@
+schema_version: 2
+id: concurrency-tickets
+category: config
+title: {zh: 并发执行的线程或 ticket 上限}
+summary: {zh: 高并发时请求排队、响应变慢，查看存储引擎同时能处理多少个读写，以及现在用了多少。}
+keywords:
+  zh: [并发线程, 并发数, ticket, 读写票据, 请求排队]
+  en: [innodb_thread_concurrency, threads_running, storageengineconcurrentreadtransactions, concurrenttransactions, tickets]
+fields:
+  - {id: limit, name: {zh: 并发上限}}
+  - {id: running, name: {zh: 正在用的}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@innodb_thread_concurrency AS innodb_thread_concurrency, @@innodb_read_io_threads AS innodb_read_io_threads, @@innodb_write_io_threads AS innodb_write_io_threads, @@thread_cache_size AS thread_cache_size;
+        note: {zh: innodb_thread_concurrency 默认 0，表示不限制；读写 IO 线程数只能改配置文件后重启}
+      - cmd: SHOW GLOBAL STATUS LIKE 'Threads_running';
+        note: {zh: 正在执行的线程数，持续远高于 CPU 核数说明在排队}
+      - cmd: SET GLOBAL innodb_thread_concurrency = 16;
+        note: {zh: 在线生效；一般只在线程数特别多、CPU 争抢严重时才限制}
+    fields:
+      limit: innodb_thread_concurrency
+      running: Threads_running
+    refs:
+      - {title: 'MySQL: Configuring Thread Concurrency for InnoDB', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-performance-thread_concurrency.html'}
+    verify:
+      teardown: SET GLOBAL innodb_thread_concurrency = 0;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getParameter: 1, storageEngineConcurrentReadTransactions: 1, storageEngineConcurrentWriteTransactions: 1 })'
+        on: [mongod, configsvr]
+        note: {zh: 读、写 ticket 的上限；没手动设置时显示 0}
+      - cmd: db.serverStatus().wiredTiger.concurrentTransactions
+        on: [mongod, configsvr]
+        note: {zh: out 是正在用的，available 是剩余的，totalTickets 是当前总数}
+      - cmd: db.serverStatus().queues.execution.read
+        since: '8.0'
+        on: [mongod, configsvr]
+        note: {zh: 8.0 起 ticket 的统计放在 queues.execution 下，写入看 .write}
+    fields:
+      limit: totalTickets
+      running: out
+    notes:
+      - zh: 6.0 默认读写各 128 个；7.0 起按负载自动调整，最多 128 个，官方不建议手动修改（设置后自动调整就关掉了）。
+      - zh: 只有存储数据的 mongod（包括 config server）有 ticket；mongos 不访问存储引擎，没有这个限制。available 长时间为 0 说明请求在排队。
+    refs:
+      - {title: 'MongoDB: storageEngineConcurrentReadTransactions', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.storageEngineConcurrentReadTransactions'}
+      - {title: 'MongoDB: serverStatus queues', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/#queues'}
+related: [live-throughput, list-active-sessions, lock-waits]
