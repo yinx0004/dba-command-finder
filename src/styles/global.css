@@ -87,6 +87,7 @@ code, .mono { font-family: var(--mono); }
 .badge-exact { color: var(--exact-fg); background: var(--exact-bg); }
 .badge-approx { color: var(--approx-fg); background: var(--approx-bg); }
 .badge-none { color: var(--none-fg); background: var(--none-bg); }
+.badge-only { color: var(--target); background: var(--surface-2); border: 1px solid var(--border); }
 .tag { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
 /* which process a command runs on: mongod / mongos / config server */
 .roles { display: inline-flex; flex-wrap: wrap; gap: 4px; }

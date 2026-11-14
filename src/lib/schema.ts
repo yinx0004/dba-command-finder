@@ -123,6 +123,9 @@ export const Mapping = z
       if (ids.has(f.id)) ctx.addIssue({ code: 'custom', path: ['fields', i, 'id'], message: `duplicate field "${f.id}"` });
       ids.add(f.id);
     });
+    if (Object.values(m.databases).every((d) => d.support === 'none')) {
+      ctx.addIssue({ code: 'custom', path: ['databases'], message: 'at least one database must be able to do the task' });
+    }
     for (const [db, d] of Object.entries(m.databases)) {
       for (const key of Object.keys(d.fields)) {
         if (!ids.has(key)) ctx.addIssue({ code: 'custom', path: ['databases', db, 'fields', key], message: `field "${key}" is not declared in fields` });

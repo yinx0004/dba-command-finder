@@ -1,12 +1,14 @@
 ---
-import { UI, type Lang } from '../lib/i18n';
+import { eqLabels, type Lang } from '../lib/i18n';
 import type { Equivalence } from '../lib/pair';
 
 interface Props {
   lang: Lang;
   eq: Equivalence;
+  /** the target database's name, for "MongoDB 独有" */
+  target: string;
   large?: boolean;
 }
-const { lang, eq, large = false } = Astro.props;
+const { lang, eq, target, large = false } = Astro.props;
 ---
-<span class:list={['badge', `badge-${eq}`, { 'badge-lg': large }]}>{UI[lang].eq[eq]}</span>
+<span class:list={['badge', `badge-${eq}`, { 'badge-lg': large }]}>{eqLabels(lang, target)[eq]}</span>

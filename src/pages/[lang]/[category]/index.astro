@@ -61,11 +61,16 @@ const T = dbName.get(target)!;
               <a class="row-link" href={entryHref(lang, m.slug)}>
                 <div class="row-title">
                   <strong>{t(m.title, lang)}</strong>
-                  <EqBadge lang={lang} eq={eq} />
+                  <EqBadge lang={lang} eq={eq} target={T} />
                   {m.status === 'deprecated' && <span class="tag">{ui.deprecated}</span>}
                 </div>
                 <div class="row-cmds">
-                  <span data-pick={JSON.stringify(versionedCmds(s))} data-db={source}>{s.commands[0]?.cmd}</span> →{' '}
+                  {s.commands.length ? (
+                    <span data-pick={JSON.stringify(versionedCmds(s))} data-db={source}>{s.commands[0].cmd}</span>
+                  ) : (
+                    ui.noEquivalent
+                  )}{' '}
+                  →{' '}
                   {tg?.commands.length ? (
                     <span data-pick={JSON.stringify(versionedCmds(tg))} data-db={target}>{tg.commands[0].cmd}</span>
                   ) : eq === 'none' ? (
