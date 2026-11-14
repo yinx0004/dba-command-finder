@@ -45,4 +45,27 @@ databases:
       - {title: 'MongoDB: db.stats()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.stats/'}
     verify:
       setup: 'db.t.insertOne({ a: 1 })'
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO keyspace
+        note:
+          zh: 每个有数据的库一行，例如 db0:keys=2,expires=0
+      - cmd: DBSIZE
+        note:
+          zh: 当前库有多少个键
+      - cmd: INFO memory
+        note:
+          zh: used_memory_dataset 是数据本身占的内存，used_memory 是总内存
+    fields:
+      name: db0
+      data: used_memory_dataset
+      total: used_memory
+    notes:
+      - zh: 只能看到整个实例的内存占用，看不到每个库各占多少内存；库只有编号（默认 16 个），没有名字。
+    verify:
+      setup: |-
+        SET app:1 a
+        SET app:2 b
+      teardown: DEL app:1 app:2
 related: [table-size, list-databases]

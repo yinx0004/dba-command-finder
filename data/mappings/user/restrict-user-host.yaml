@@ -43,4 +43,11 @@ databases:
       - {title: 'MongoDB: db.createUser() authenticationRestrictions', url: 'https://www.mongodb.com/docs/manual/reference/method/db.createUser/#authentication-restrictions'}
     verify:
       vars: {user: app_host, password: 'Lab#Pass123'}
+  redis:
+    support: none
+    notes:
+      - zh: ACL 不能按客户端地址限制用户。能做的是限制整个实例：bind 只监听内网地址、配好防火墙；没设密码时 protected-mode 只接受本机连接。
+    alternatives:
+      - title: {zh: 看实例监听了哪些地址}
+        cmd: CONFIG GET bind
 related: [create-user, account-lock, list-users]

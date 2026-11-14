@@ -30,4 +30,13 @@ databases:
     verify:
       setup: 'db.createUser({ user: "app_drop", pwd: "Lab#Pass123", roles: [] })'
       vars: {user: app_drop}
+  redis:
+    support: full
+    commands:
+      - cmd: ACL DELUSER <user>
+        note:
+          zh: 用这个用户登录的连接会被一起断开
+    verify:
+      setup: 'ACL SETUSER app_drop on >Lab#Pass123 ~* +@all'
+      vars: {user: app_drop}
 related: [list-users, kill-session]

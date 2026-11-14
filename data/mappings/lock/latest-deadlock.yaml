@@ -32,4 +32,8 @@ databases:
     refs:
       - title: 'MongoDB: FAQ Concurrency'
         url: https://www.mongodb.com/docs/manual/faq/concurrency/
+  redis:
+    support: none
+    notes:
+      - zh: 没有锁，也就没有死锁：命令在单线程里依次执行，MULTI/EXEC 也是一次性执行完。
 related: [lock-waits]

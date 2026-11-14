@@ -35,4 +35,17 @@ databases:
       - zh: 位点就是 oplog 里的时间戳（optime），没有「文件名 + 偏移」这种形式，也不需要手动记录：从节点会自己找到同步起点。
     refs:
       - {title: 'MongoDB: rs.status()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.status/'}
+  redis:
+    support: full
+    commands:
+      - cmd: INFO replication
+        note:
+          zh: master_replid 是复制流的 ID，master_repl_offset 是写到哪个位置了；从库上还有 slave_repl_offset
+      - cmd: ROLE
+        note:
+          zh: 主库返回自己的位置和每个从库确认到的位置
+    fields:
+      position: master_repl_offset
+    notes:
+      - zh: 位置是复制流里的字节偏移，主从对比 master_repl_offset 和 slave_repl_offset 就知道从库落后多少字节。
 related: [replication-status, binlog-retention, point-in-time-recovery]

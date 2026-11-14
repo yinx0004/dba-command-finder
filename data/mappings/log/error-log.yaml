@@ -39,4 +39,13 @@ databases:
     refs:
       - {title: 'MongoDB: getLog', url: 'https://www.mongodb.com/docs/manual/reference/command/getLog/'}
       - {title: 'MongoDB: Log Messages', url: 'https://www.mongodb.com/docs/manual/reference/log-messages/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET logfile
+        note:
+          zh: 日志文件路径；为空表示写到标准输出，在容器里用 docker logs 看
+      - cmd: CONFIG GET loglevel
+    notes:
+      - zh: 没有用命令读日志内容的办法，直接看日志文件。日志不分错误日志和普通日志，用 loglevel 控制详细程度。
 related: [rotate-logs, slow-query-log]

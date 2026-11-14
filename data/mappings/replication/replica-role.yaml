@@ -5,7 +5,7 @@ title: {zh: 判断当前实例是主还是从}
 summary: {zh: 连上一台实例后，先确认它是主库还是从库，再决定能不能在上面写。}
 keywords:
   zh: [主库还是从库, 是不是主库, 当前角色, 主从角色]
-  en: [read_only, ismaster, hello, iswritableprimary, primary or secondary]
+  en: [read_only, ismaster, hello, iswritableprimary, primary or secondary, ROLE]
 databases:
   mysql:
     support: partial
@@ -33,4 +33,13 @@ databases:
       - zh: 结果里还有副本集名（setName）、当前主节点地址（primary）和所有成员（hosts）。
     refs:
       - {title: 'MongoDB: hello', url: 'https://www.mongodb.com/docs/manual/reference/command/hello/'}
+  redis:
+    support: full
+    commands:
+      - cmd: ROLE
+        note:
+          zh: 第一行是 master、slave 或 sentinel
+      - cmd: INFO replication
+        note:
+          zh: role 一行；从库上还有 master_host、master_link_status
 related: [replication-status, list-replicas, set-read-only]

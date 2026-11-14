@@ -35,4 +35,16 @@ databases:
         see: global-read-lock
     refs:
       - {title: 'MongoDB: db.fsyncLock()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.fsyncLock/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: REPLICAOF NO ONE
+        note:
+          zh: 在从库上执行，断开复制并变成主库，已有数据保留
+      - cmd: REPLICAOF <host> <port>
+        skip: {zh: 会把实例变成从库，lab 只有一个实例}
+        note:
+          zh: 重新连回主库；能用积压缓冲区续上就增量同步，否则全量同步
+    notes:
+      - zh: 没有“暂停、继续”：断开复制就是停止，再连回去时从主库的复制积压缓冲区续传，断开太久就要全量同步。
 related: [skip-replication-error, replication-status]

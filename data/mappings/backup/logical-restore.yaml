@@ -40,4 +40,18 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }])'
       setup_shell: mongodump --db=<db> --out=dump && mongodump --db=<db> --archive=<db>.archive.gz --gzip
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET dir
+        note:
+          zh: 快照文件所在目录
+      - cmd: CONFIG GET dbfilename
+      - cmd: cp backup.rdb <dir>/dump.rdb
+        shell: true
+        skip: {zh: 要先停掉 Redis 再替换文件，lab 没法在运行中验证}
+        note:
+          zh: 停掉 Redis，用备份替换快照文件，再启动
+    notes:
+      - zh: 恢复就是用快照文件启动；开着 AOF 时启动会优先读 AOF，要先关掉 appendonly 或一起替换。单个键可以用 DUMP 导出、RESTORE 导回。
 related: [logical-backup, point-in-time-recovery]

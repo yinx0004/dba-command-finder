@@ -35,4 +35,19 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }])'
       vars: {collection: t}
+  redis:
+    support: full
+    commands:
+      - cmd: DBSIZE
+        note:
+          zh: 当前库的键数
+      - cmd: HLEN <key>
+        note:
+          zh: 一个哈希里有多少个字段；列表用 LLEN，集合用 SCARD，有序集合用 ZCARD，流用 XLEN
+    notes:
+      - zh: 没有表，最接近“行数”的是键的个数，或者一个大集合里的元素个数；这些计数都是现成的，不用遍历。
+    verify:
+      setup: HSET app:user:1 name a age 1
+      vars: {key: 'app:user:1'}
+      teardown: DEL app:user:1
 related: [table-size]

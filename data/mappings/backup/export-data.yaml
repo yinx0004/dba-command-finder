@@ -37,4 +37,17 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1, b: "x" }, { a: 2, b: "y" }])'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: redis-cli --rdb /tmp/export.rdb
+        shell: true
+        note:
+          zh: 把整个实例的数据导成一个 RDB 文件，二进制格式
+      - cmd: redis-cli --scan --pattern 'app:*' > /tmp/keys.txt
+        shell: true
+        note:
+          zh: 按模式导出键名，用 SCAN 遍历，不会挡住其他命令
+    notes:
+      - zh: 没有表，也没有导出成 CSV 的命令；要导出成文本，得按键遍历，再按类型用 GET、HGETALL 等取值。
 related: [import-data, logical-backup]

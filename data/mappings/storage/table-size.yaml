@@ -5,7 +5,7 @@ title: {zh: 查看表的大小}
 summary: {zh: 看一张表（集合）的数据、索引各占多少空间，找出最大的表，或判断有没有可回收的空间。}
 keywords:
   zh: [表大小, 占用空间, 磁盘占用, 大表]
-  en: [table size, data_length, collstats, storagesize, table status]
+  en: [table size, data_length, collstats, storagesize, table status, MEMORY USAGE, big key]
 fields:
   - {id: rows, name: {zh: 行数（文档数）}}
   - {id: data, name: {zh: 数据占用}}
@@ -50,4 +50,25 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: MEMORY USAGE <key>
+        note:
+          zh: 这个键连同值一共占多少字节内存
+      - cmd: OBJECT ENCODING <key>
+        note:
+          zh: 底层用的是哪种存储结构，例如 listpack、hashtable；小集合用紧凑结构，省内存
+      - cmd: redis-cli --bigkeys
+        shell: true
+        note:
+          zh: 找出每种类型里最大的键
+    fields:
+      data: {name: MEMORY USAGE 返回的字节数}
+    notes:
+      - zh: 没有表，对应的是单个大键；没有单独的索引和空闲空间。
+    verify:
+      setup: HSET app:user:1 name a age 1
+      vars: {key: 'app:user:1'}
+      teardown: DEL app:user:1
 related: [database-size, row-count]

@@ -32,4 +32,11 @@ databases:
         see: global-read-lock
     refs:
       - {title: 'MongoDB: FAQ Concurrency', url: 'https://www.mongodb.com/docs/manual/faq/concurrency/'}
+  redis:
+    support: none
+    notes:
+      - zh: 没有锁表或锁键的命令。要防止并发修改，用 WATCH 做乐观锁；多个程序之间要互斥，常用 SET NX 加过期时间做一把锁。
+    alternatives:
+      - title: {zh: 用一个键做锁：不存在才设置成功，30 秒后自动过期}
+        cmd: SET lock:<name> <token> NX PX 30000
 related: [global-read-lock, lock-waits]

@@ -32,4 +32,18 @@ databases:
         see: global-read-lock
     refs:
       - {title: 'MongoDB: rs.stepDown()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.stepDown/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET replica-read-only
+        note:
+          zh: 从库默认只读
+      - cmd: CLIENT PAUSE 1000 WRITE
+        since: '6.2'
+        note:
+          zh: 让所有客户端的写命令等待 1000 毫秒，读命令照常；常用于切换主库前停住写入
+      - cmd: CLIENT UNPAUSE
+        since: '6.2'
+    notes:
+      - zh: 主库没有只读开关。要长期禁止写入，用 ACL 去掉写权限（-@write）；临时停住写入用 CLIENT PAUSE，到时间自动恢复。
 related: [global-read-lock, replica-role]

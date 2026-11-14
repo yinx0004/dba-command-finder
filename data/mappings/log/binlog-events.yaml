@@ -52,4 +52,11 @@ databases:
     verify:
       setup: 'db.t.insertOne({ a: 1 }); db.t.updateOne({ a: 1 }, { $inc: { a: 1 } })'
       vars: {collection: t}
+  redis:
+    support: none
+    notes:
+      - zh: 没有可以查询的变更日志。开着 AOF 时，写命令按 Redis 协议格式追加在 AOF 文件里，只能直接读文件。
+    alternatives:
+      - title: {zh: 实时看实例收到的每条命令（会明显拖慢实例，只能短时间用）}
+        cmd: MONITOR
 related: [binlog-retention, point-in-time-recovery]
