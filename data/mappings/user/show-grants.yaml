@@ -1,0 +1,43 @@
+schema_version: 2
+id: show-grants
+category: user
+title: {zh: 查看用户的权限}
+summary: {zh: 确认一个用户到底有哪些权限，排查「权限不足」报错时常用。}
+keywords:
+  zh: [查看权限, 权限不足, 有哪些权限]
+  en: [show grants, getuser, showprivileges, connectionstatus]
+fields:
+  - {id: roles, name: {zh: 拥有的角色}}
+  - {id: privileges, name: {zh: 展开后的权限}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW GRANTS FOR '<user>'@'<host>';
+      - cmd: SHOW GRANTS;
+        note: {zh: 查看当前登录用户自己的权限}
+    refs:
+      - {title: 'MySQL: SHOW GRANTS', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-grants.html'}
+    verify:
+      setup: CREATE USER 'app_show'@'%' IDENTIFIED BY 'Lab#Pass123'; GRANT SELECT ON *.* TO 'app_show'@'%';
+      vars: {user: app_show, host: '%'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.getUser("<user>", { showPrivileges: true })'
+        note: {zh: 在用户所属的认证库里执行}
+      - cmd: 'db.runCommand({ connectionStatus: 1, showPrivileges: true })'
+        note: {zh: 查看当前连接已认证用户的角色和权限}
+    fields:
+      roles: roles
+      privileges: inheritedPrivileges
+    notes:
+      - zh: 返回的是角色和展开后的权限列表，不是 SHOW GRANTS 那样可以直接执行的 GRANT 语句。
+      - zh: '要看某个角色包含哪些权限：db.getRole("<role>", { showPrivileges: true })。'
+    refs:
+      - {title: 'MongoDB: db.getUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.getUser/'}
+      - {title: 'MongoDB: connectionStatus', url: 'https://www.mongodb.com/docs/manual/reference/command/connectionStatus/'}
+    verify:
+      setup: 'db.createUser({ user: "app_show", pwd: "Lab#Pass123", roles: [{ role: "read", db: "<db>" }] })'
+      vars: {user: app_show}
+related: [grant-privileges, list-users]

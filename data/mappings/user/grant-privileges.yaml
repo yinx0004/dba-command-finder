@@ -1,0 +1,45 @@
+schema_version: 2
+id: grant-privileges
+category: user
+title: {zh: 给用户授权}
+summary: {zh: 让一个用户可以读写某个库，或者执行某些操作。}
+keywords:
+  zh: [授权, 赋权, 权限, 角色]
+  en: [grant, grantrolestouser, createrole, privileges, roles]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: GRANT SELECT, INSERT, UPDATE, DELETE ON <db>.* TO '<user>'@'<host>';
+      - cmd: GRANT SELECT ON <db>.* TO '<user>'@'<host>' IDENTIFIED BY '<password>';
+        deprecated_in: 5.7.6
+        removed_in: '8.0'
+        note: {zh: 8.0 起不能在 GRANT 里设置密码，要先 CREATE USER}
+    notes:
+      - zh: 8.0 起也支持角色（CREATE ROLE、GRANT 角色 TO 用户），用法和 MongoDB 的角色接近。
+    refs:
+      - {title: 'MySQL: GRANT', url: 'https://dev.mysql.com/doc/refman/8.4/en/grant.html'}
+    verify:
+      setup: CREATE USER 'app_grant'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {user: app_grant, host: '%', password: 'Lab#Pass123'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.grantRolesToUser("<user>", [{ role: "readWrite", db: "<db>" }])'
+        note: {zh: 授予内置角色}
+      - cmd: 'db.createRole({ role: "<role>", privileges: [{ resource: { db: "<db>", collection: "" }, actions: ["find", "insert"] }], roles: [] })'
+        note: {zh: 需要细粒度权限时，先自建角色}
+      - cmd: 'db.grantRolesToUser("<user>", ["<role>"])'
+        note: {zh: 再把自建角色授给用户}
+    notes:
+      - zh: 只能通过角色授权，不能像 GRANT 那样把单个权限直接给用户；需要细粒度权限就用 createRole 自建角色。
+      - zh: 权限的作用范围是库或集合（resource 里的 db 和 collection），没有列级权限。
+      - zh: grantRolesToUser 要在用户所属的认证库里执行。
+    refs:
+      - {title: 'MongoDB: db.grantRolesToUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.grantRolesToUser/'}
+      - {title: 'MongoDB: db.createRole()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.createRole/'}
+      - {title: 'MongoDB: Built-In Roles', url: 'https://www.mongodb.com/docs/manual/reference/built-in-roles/'}
+    verify:
+      setup: 'db.createUser({ user: "app_grant", pwd: "Lab#Pass123", roles: [] })'
+      vars: {user: app_grant, role: app_rw}
+related: [create-user, show-grants]

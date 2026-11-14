@@ -1,0 +1,33 @@
+schema_version: 2
+id: drop-user
+category: user
+title: {zh: 删除用户}
+summary: {zh: 删除不再使用的账号。}
+keywords:
+  zh: [删用户, 删除账号]
+  en: [drop user, dropuser, remove user]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: DROP USER '<user>'@'<host>';
+      - cmd: DROP USER IF EXISTS '<user>'@'<host>';
+        note: {zh: 用户不存在时只给警告，不报错}
+    notes:
+      - zh: DROP USER 不会断开这个用户已经打开的会话，要立即生效还得 KILL 掉这些连接。
+    refs:
+      - {title: 'MySQL: DROP USER', url: 'https://dev.mysql.com/doc/refman/8.4/en/drop-user.html'}
+    verify:
+      setup: CREATE USER 'app_drop'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {user: app_drop, host: '%'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.dropUser("<user>")'
+        note: {zh: 在用户所属的认证库里执行}
+    refs:
+      - {title: 'MongoDB: db.dropUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.dropUser/'}
+    verify:
+      setup: 'db.createUser({ user: "app_drop", pwd: "Lab#Pass123", roles: [] })'
+      vars: {user: app_drop}
+related: [list-users, kill-session]

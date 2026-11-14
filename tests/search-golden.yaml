@@ -52,5 +52,19 @@
 - {q: show tables, top: list-tables}
 - {q: show collections, top: list-tables}
 
+- {q: create user, top: create-user}
+- {q: createUser, top: create-user}
+- {q: 建用户, top: create-user}
+- {q: grant, top: grant-privileges}
+- {q: 授权, top: grant-privileges}
+- {q: grantRolesToUser, top: grant-privileges}
+- {q: show grants, top: show-grants}
+- {q: 权限不足, top: show-grants}
+- {q: mysql.user, top: list-users}
+- {q: 用户列表, top: list-users}
+- {q: 改密码, top: change-password}
+- {q: alter user identified by, top: change-password}
+- {q: drop user, top: drop-user}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
