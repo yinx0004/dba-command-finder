@@ -3,7 +3,7 @@ import { load } from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import { loadDataset } from '../src/lib/data';
 import { toSearchDocs } from '../src/lib/docs';
-import { categoryChips, createSearcher, filterByCategory, normalize, queryTokens } from '../src/lib/search';
+import { categoryChips, createSearcher, filterByCategory, normalize, phraseTokens, queryTokens } from '../src/lib/search';
 
 describe('normalize', () => {
   it('drops terminators, optional words and case', () => {
@@ -15,7 +15,12 @@ describe('normalize', () => {
     expect(normalize('slave延迟')).toBe('slave 延迟');
   });
   it('drops filler words from queries', () => {
-    expect(queryTokens('mongodb 怎么看锁等待')).toEqual(['锁等待']);
+    expect(phraseTokens('mongodb 怎么看锁等待')).toEqual(['锁等待']);
+  });
+  it('splits Chinese queries into words', () => {
+    expect(queryTokens('mongodb 怎么看锁等待')).toEqual(['锁', '等待']);
+    expect(queryTokens('索引删除')).toEqual(['索引', '删除']);
+    expect(queryTokens('slave延迟')).toEqual(['slave', '延迟']);
   });
 });
 

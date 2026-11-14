@@ -51,11 +51,35 @@ export function normalize(s: string): string {
 // Words people type around the thing they are looking for.
 const QUERY_NOISE_WORDS = new Set(['mysql', 'mongodb', 'mongo', 'mongosh', 'how', 'to', 'in']);
 const QUERY_NOISE_CJK = /怎么|如何|怎样|查看|命令|什么|一下|对应|看|的|里|中|在/g;
+// The same filler, as whole words from the segmenter (plus 查, which it splits off on its own).
+const QUERY_NOISE_CJK_WORDS = new Set(['怎么', '如何', '怎样', '查看', '命令', '什么', '一下', '对应', '看', '的', '里', '中', '在', '查']);
 
-export function queryTokens(q: string): string[] {
+const HAS_CJK = new RegExp(`[${CJK}]`);
+
+/** The query as typed, minus filler; each run of Chinese stays one piece. Used to reward exact phrases. */
+export function phraseTokens(q: string): string[] {
   return normalize(q)
     .replace(QUERY_NOISE_CJK, ' ')
     .split(' ')
+    .filter((t) => t && !QUERY_NOISE_WORDS.has(t));
+}
+
+// Built into browsers and Node; Chinese has no spaces, so this finds the words.
+const segmenter = typeof Intl !== 'undefined' && 'Segmenter' in Intl ? new Intl.Segmenter('zh', { granularity: 'word' }) : null;
+
+/**
+ * The words of a query. Chinese runs are split into words, so "索引删除" finds
+ * "删除索引" whatever the order. Without Intl.Segmenter this is the same as phraseTokens.
+ */
+export function queryTokens(q: string): string[] {
+  if (!segmenter) return phraseTokens(q);
+  return normalize(q)
+    .split(' ')
+    .flatMap((t) =>
+      HAS_CJK.test(t)
+        ? [...segmenter.segment(t)].filter((s) => s.isWordLike).map((s) => s.segment).filter((w) => !QUERY_NOISE_CJK_WORDS.has(w))
+        : [t],
+    )
     .filter((t) => t && !QUERY_NOISE_WORDS.has(t));
 }
 
@@ -84,6 +108,7 @@ export function createSearcher(docs: SearchDoc[]): Searcher {
     search(q, limit = 20) {
       const tokens = queryTokens(q);
       if (tokens.length === 0) return [];
+      const phrase = phraseTokens(q).join(' ');
       const scores = new Map<string, number>();
       const add = (results: ReturnType<typeof fuse.search>, weight: number) => {
         for (const r of results) {
@@ -92,7 +117,7 @@ export function createSearcher(docs: SearchDoc[]): Searcher {
         }
       };
       // The whole query, so an exact command phrase ranks first...
-      add(fuse.search(tokens.join(' ')), 1);
+      if (phrase) add(fuse.search(phrase), 1);
       // ...plus each word, so word order and extra words do not lose the match.
       if (tokens.length > 1) {
         for (const t of tokens) add(fuse.search(t), 1 / tokens.length);

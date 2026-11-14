@@ -155,5 +155,20 @@
 - {q: buildInfo, top: server-version}
 - {q: 什么版本, top: server-version}
 
+# Chinese in a different word order, or phrased differently, than the titles (issue #33).
+- {q: 索引删除, top: drop-index}
+- {q: 密码修改, top: change-password}
+- {q: 用户删除, top: drop-user}
+- {q: 空间回收, top: reclaim-space}
+- {q: 日志错误, top: error-log}
+- {q: 延迟主从, top: replication-status}
+- {q: 主从延迟怎么看, top: replication-status}
+- {q: 查看表的大小, top: table-size}
+- {q: 大小表, top: table-size}
+- {q: 信息统计, top: analyze-table}
+- {q: 超时查询, top: query-timeout}
+- {q: 只读设置, top: set-read-only}
+- {q: 列表用户, top: list-users}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
