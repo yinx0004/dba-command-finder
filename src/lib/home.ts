@@ -70,6 +70,19 @@ export function labExcerpt(ds: Dataset, v: Verification | null): LabExcerpt | nu
     if (cmdLines.length) lines.push({ kind: 'run', db, server: run.server }, ...cmdLines);
   }
 
+  return { ...labStatus(ds, v)!, lines };
+}
+
+export interface LabStatus {
+  date: string; // YYYY-MM-DD of the lab run
+  versions: number;
+  /** every command behaved as expected on every version the lab ran */
+  allAsExpected: boolean;
+}
+
+/** When the lab last ran and whether everything behaved as expected; null without lab results. */
+export function labStatus(ds: Dataset, v: Verification | null): LabStatus | null {
+  if (!v || v.runs.length === 0) return null;
   // All as expected: every entry that runs something on a database counts every version of it as clean.
   const runsByDb = new Map<string, string[]>();
   for (const r of v.runs) runsByDb.set(r.db, [...(runsByDb.get(r.db) ?? []), r.version]);
@@ -82,6 +95,5 @@ export function labExcerpt(ds: Dataset, v: Verification | null): LabExcerpt | nu
       return ran.every((ver) => clean.includes(ver));
     }),
   );
-
-  return { date: v.generatedAt.slice(0, 10), lines, versions: v.runs.length, allAsExpected };
+  return { date: v.generatedAt.slice(0, 10), versions: v.runs.length, allAsExpected };
 }

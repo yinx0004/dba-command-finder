@@ -78,6 +78,9 @@ export const UI = {
     notFound: '页面不存在',
     notFoundBody: '这条对照可能改名或删除了，试试搜索：',
     footerNote: '命令对照由社区维护，欢迎纠错和补充',
+    labPassed: (d: string) => `${d} 验证通过`,
+    labPassedTitle: '查看构建这个版本的 CI 运行记录',
+    license: '开源 · Apache-2.0',
     langSwitch: 'EN',
     categoryEmpty: '没找到要的？',
     home3: {
@@ -110,7 +113,7 @@ export const UI = {
       ],
       indexEyebrow: 'INDEX',
       indexTitle: '按类别浏览',
-      footer: (v: number) => `开源 · Apache-2.0 · 改动需在 ${v} 个数据库版本上通过验证才会上线`,
+      footer: (v: number) => `改动需在 ${v} 个数据库版本上通过验证才会上线`,
     },
   },
 } as const;
