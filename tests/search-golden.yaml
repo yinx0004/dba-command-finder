@@ -260,5 +260,16 @@
 - {q: create table like, top: copy-table}
 - {q: 复制表, top: copy-table}
 
+- {q: revoke, top: revoke-privileges}
+- {q: 回收权限, top: revoke-privileges}
+- {q: validate_password, top: password-policy}
+- {q: 密码复杂度, top: password-policy}
+- {q: authenticationRestrictions, top: restrict-user-host}
+- {q: 限制登录 IP, top: restrict-user-host}
+- {q: rename column, top: rename-column}
+- {q: 改字段名, top: rename-column}
+- {q: modify column, top: modify-column}
+- {q: int 改 bigint, top: modify-column}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

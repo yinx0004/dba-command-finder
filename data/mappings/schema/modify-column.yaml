@@ -1,0 +1,41 @@
+schema_version: 2
+id: modify-column
+category: schema
+title: {zh: 修改列类型}
+summary: {zh: 整数快用完要从 INT 改成 BIGINT，或者字符串要加长。}
+keywords:
+  zh: [修改列类型, 改字段类型, 加长字段, 改列长度, int 改 bigint]
+  en: [modify column, alter column type, bigint, $convert, bsontype]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> MODIFY COLUMN <column> BIGINT NOT NULL;
+        note: {zh: 改类型要重建整张表（COPY 算法），期间不能写入，大表要很久}
+      - cmd: ALTER TABLE <table> MODIFY COLUMN <column2> VARCHAR(60), ALGORITHM=INPLACE, LOCK=NONE;
+        note: {zh: 只加长 VARCHAR、且长度字节数不变（加长前后都不超过 255 字节，或都超过）时可以原地完成，不阻塞写入；做不到会直接报错}
+    notes:
+      - zh: MODIFY 要写完整的列定义，漏写的 NOT NULL、DEFAULT、COMMENT 会被去掉，先用 SHOW CREATE TABLE 看原来的定义。
+      - zh: 大表改类型一般用 pt-online-schema-change 或 gh-ost 在线完成。
+    refs:
+      - {title: 'MySQL: Online DDL Operations (Columns)', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html#online-ddl-column-operations'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 VARCHAR(20));
+      vars: {table: t, column: c1, column2: c2}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.<collection>.updateMany({ <field>: { $type: "string" } }, [{ $set: { <field>: { $convert: { input: "$<field>", to: "long", onError: "$<field>" } } } }])'
+        note: {zh: '把字符串存的数字转成 long；转不了的保留原值，之后用 { $type: "string" } 查出来单独处理'}
+      - cmd: 'db.runCommand({ collMod: "<collection>", validator: { $jsonSchema: { properties: { <field>: { bsonType: "long" } } } }, validationLevel: "moderate" })'
+        note: {zh: 要求以后写入的值都是这个类型；moderate 表示不检查已经不合规的老文档}
+    notes:
+      - zh: '字段没有声明的类型，每个值自带类型，同一个字段里可以混着字符串和数字；查询 { <field>: 1 } 匹配不到字符串 "1"，所以类型要统一。'
+      - zh: 数字类型之间不需要「加长」：int 存不下时直接写 long 就行。
+    refs:
+      - {title: 'MongoDB: $convert', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/convert/'}
+      - {title: 'MongoDB: Specify Validation Level', url: 'https://www.mongodb.com/docs/manual/core/schema-validation/handle-invalid-documents/'}
+    verify:
+      setup: 'db.t.insertMany([{ c1: "1" }, { c1: "x" }, { c1: 3 }])'
+      vars: {collection: t, field: c1}
+related: [add-column, rename-column, auto-increment-exhaustion]
