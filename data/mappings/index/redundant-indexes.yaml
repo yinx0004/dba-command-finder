@@ -1,0 +1,36 @@
+schema_version: 2
+id: redundant-indexes
+category: index
+title: {zh: 找出冗余索引}
+summary: {zh: 一个索引是另一个索引的前缀时，前者通常是多余的，白白拖慢写入、占用空间。}
+keywords:
+  zh: [冗余索引, 重复索引, 多余的索引]
+  en: [redundant index, duplicate index, schema_redundant_indexes]
+fields:
+  - {id: redundant, name: {zh: 多余的索引}}
+  - {id: dominant, name: {zh: 覆盖它的索引}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.schema_redundant_indexes WHERE table_schema = '<db>';
+        note: {zh: sql_drop_index 列直接给出删除语句}
+    fields:
+      redundant: redundant_index_name
+      dominant: dominant_index_name
+    refs:
+      - {title: 'MySQL: sys.schema_redundant_indexes', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-schema-redundant-indexes.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_ab (a, b));
+  mongodb:
+    support: none
+    notes:
+      - zh: '没有现成的冗余索引检查。规则和 MySQL 一样：复合索引 { a: 1, b: 1 } 能覆盖只按 a 的查询，单独的 { a: 1 } 通常多余；但带 unique、partialFilterExpression、collation 等选项的索引要单独看，不能简单按前缀删。'
+    alternatives:
+      - title: {zh: 列出索引，对比键的前缀}
+        see: show-indexes
+      - title: {zh: 删除前先看它有没有被用过}
+        see: index-usage
+      - title: {zh: 删除前先隐藏观察}
+        see: invisible-index
+related: [index-usage, drop-index]

@@ -1,0 +1,45 @@
+schema_version: 2
+id: connection-usage
+category: session
+title: {zh: 查看连接数用了多少、从哪来}
+summary: {zh: 报「连接数满了」时，看现在有多少、峰值多少、上限多少，以及是哪些客户端占着。}
+keywords:
+  zh: [连接数, 连接数满了, 最大连接数, 连接来源, too many connections]
+  en: [max_connections, threads_connected, max_used_connections, connections, client]
+fields:
+  - {id: current, name: {zh: 当前连接数}}
+  - {id: peak, name: {zh: 历史峰值}}
+  - {id: limit, name: {zh: 上限}}
+  - {id: client, name: {zh: 客户端}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW GLOBAL STATUS WHERE Variable_name IN ('Threads_connected', 'Max_used_connections', 'Max_used_connections_time', 'Aborted_connects');
+      - cmd: SELECT @@max_connections;
+      - cmd: SELECT SUBSTRING_INDEX(HOST, ':', 1) AS client, USER, COUNT(*) AS connections FROM information_schema.PROCESSLIST GROUP BY client, USER ORDER BY connections DESC;
+        note: {zh: 按来源主机和用户汇总}
+    fields:
+      current: Threads_connected
+      peak: Max_used_connections
+      limit: max_connections
+      client: client
+    refs:
+      - {title: 'MySQL: max_connections', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.serverStatus().connections
+        note: {zh: current 是当前连接数，available 是还能再建多少}
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true, idleConnections: true } }, { $group: { _id: { $arrayElemAt: [{ $split: ["$client", ":"] }, 0] }, connections: { $sum: 1 } } }, { $sort: { connections: -1 } }])'
+        note: {zh: 按来源主机汇总；_id 为 null 的是内部线程}
+    fields:
+      current: current
+      limit: {name: available, note: {zh: 剩余可用的连接数；上限 = current + available}}
+      client: {name: _id, note: {zh: 来源主机}}
+    notes:
+      - zh: 上限由 net.maxIncomingConnections 和操作系统的文件句柄限制（ulimit -n）共同决定，取较小的那个。
+      - zh: 没有历史峰值；totalCreated 是自启动以来一共建过多少连接，持续猛涨通常说明客户端没用好连接池。
+    refs:
+      - {title: 'MongoDB: serverStatus connections', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/#connections'}
+related: [list-active-sessions, kill-session, server-status]

@@ -1,0 +1,44 @@
+schema_version: 2
+id: long-transactions
+category: session
+title: {zh: 查看长事务、未提交的事务}
+summary: {zh: 一个忘了提交的事务会一直持有锁、拖住清理，是很多「突然变慢」的根源；找出开了多久、是谁开的。}
+keywords:
+  zh: [长事务, 未提交事务, 事务没提交, 大事务]
+  en: [innodb_trx, long transaction, open transaction, transactionlifetimelimitseconds]
+fields:
+  - {id: started, name: {zh: 事务开始时间或已开多久}}
+  - {id: session, name: {zh: 所属会话}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT trx_id, trx_state, trx_started, TIMESTAMPDIFF(SECOND, trx_started, NOW()) AS seconds, trx_mysql_thread_id, trx_rows_locked, trx_query FROM information_schema.INNODB_TRX ORDER BY trx_started;
+        note: {zh: trx_mysql_thread_id 就是 SHOW PROCESSLIST 里的 Id，可以拿去 KILL}
+    fields:
+      started: trx_started
+      session: trx_mysql_thread_id
+    notes:
+      - zh: 事务开着但当前没在执行语句时，trx_query 是空的；要看它之前执行了什么，查 performance_schema.events_statements_history。
+    refs:
+      - {title: 'MySQL: The INFORMATION_SCHEMA INNODB_TRX Table', url: 'https://dev.mysql.com/doc/refman/8.4/en/information-schema-innodb-trx-table.html'}
+    verify:
+      skip_fields: {zh: 需要另一个连接上有未提交的事务}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true, idleSessions: true } }, { $match: { transaction: { $exists: true } } }, { $sort: { "transaction.timeOpenMicros": -1 } }])'
+        note: {zh: idleSessions 让开着事务但空闲的会话也显示出来}
+      - cmd: 'db.adminCommand({ getParameter: 1, transactionLifetimeLimitSeconds: 1 })'
+        note: {zh: 事务最长能开多久}
+    fields:
+      started: transaction.timeOpenMicros
+      session: lsid
+    notes:
+      - zh: 多文档事务超过 transactionLifetimeLimitSeconds（默认 60 秒）会被自动中止，所以 MongoDB 里不会出现开了几个小时的事务；长时间运行的普通操作用「查看正在执行的会话」找。
+    refs:
+      - {title: 'MongoDB: $currentOp', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/currentOp/'}
+      - {title: 'MongoDB: transactionLifetimeLimitSeconds', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.transactionLifetimeLimitSeconds'}
+    verify:
+      skip_fields: {zh: 需要另一个连接上有未提交的事务}
+related: [list-active-sessions, lock-waits, kill-session]
