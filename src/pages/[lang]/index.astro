@@ -1,16 +1,16 @@
 ---
 import Base from '../../layouts/Base.astro';
+import CoverageTable from '../../components/CoverageTable.astro';
 import Translator from '../../components/Translator.tsx';
+import { coverageRow } from '../../lib/coverage';
 import { loadDataset } from '../../lib/data';
 import { pairMappings, toSearchDocs } from '../../lib/docs';
 import { homeStats, labStatus } from '../../lib/home';
 import { LANGS, t, UI, type Lang } from '../../lib/i18n';
-import { cmdOnLine, runTotals } from '../../lib/proof';
-import type { Command, DatabaseEntry } from '../../lib/schema';
-import { categoryHref, ciRunUrl, entryHref, GITHUB, href } from '../../lib/site';
+import { runTotals } from '../../lib/proof';
+import { categoryHref, ciRunUrl, GITHUB, href } from '../../lib/site';
 import { translateEntries } from '../../lib/translate';
 import { loadVerification } from '../../lib/verification';
-import { compareVersions, lineOf } from '../../lib/version';
 
 export function getStaticPaths() {
   return LANGS.map((lang) => ({ params: { lang } }));
@@ -33,42 +33,9 @@ const docs = toSearchDocs(ds, lang);
 const entries = translateEntries(ds, v, lang, [source, target]);
 const dbs = pairDbs.map((d) => ({ id: d.id, name: d.name, vers: d.lab_versions }));
 
-// --- Coverage matrix: one strip segment per lab version ---
+// --- Coverage matrix: the tasks picked in data/site.yaml ---
 const byId = new Map(ds.mappings.map((m) => [m.id, m]));
-const bare = (cmd: string) => cmd.replace(/\s*(\\G|;)\s*$/, '');
-type Seg = 'full' | 'partial' | 'none';
-function strip(d: DatabaseEntry | undefined, lines: string[]): Seg[] {
-  return lines.map((line) => {
-    if (!d || d.support === 'none') return 'none';
-    return d.commands.some((c) => cmdOnLine(c, line).state === 'ok' || cmdOnLine(c, line).state === 'deprecated') ? d.support : 'none';
-  });
-}
-/** What changes across the lab's versions, in one sentence; for a side that cannot do the task, why. */
-function stripNote(d: DatabaseEntry | undefined, lines: string[]): string {
-  if (!d) return '';
-  if (d.support === 'none') return d.notes[0] ? t(d.notes[0], lang) : '';
-  const first = lines[0];
-  const after = (x?: string) => !!x && compareVersions(lineOf(x), first) > 0;
-  const parts = d.commands
-    .filter((c: Command) => after(c.since) || after(c.deprecated_in) || after(c.removed_in))
-    .map((c: Command) => {
-      const when = [
-        after(c.since) && ui.proof.avail.since(c.since!),
-        after(c.deprecated_in) && ui.proof.avail.deprecatedAt(c.deprecated_in!),
-        after(c.removed_in) && ui.proof.avail.removedAt(c.removed_in!),
-      ].filter(Boolean);
-      return `${bare(c.cmd)}：${when.join('，')}`;
-    });
-  return parts.join('；');
-}
-const matrix = ds.site.home_matrix.map((id) => {
-  const m = byId.get(id)!;
-  return {
-    title: t(m.title, lang),
-    href: entryHref(lang, m.slug),
-    cells: pairDbs.map((db) => ({ db: db.name, segs: strip(m.databases[db.id], db.lab_versions), note: stripNote(m.databases[db.id], db.lab_versions) })),
-  };
-});
+const matrix = ds.site.home_matrix.map((id) => coverageRow(byId.get(id)!, pairDbs, lang));
 const counts = new Map<string, number>();
 for (const m of mappings) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
 const categories = ds.categories.filter((c) => counts.get(c.id));
@@ -110,47 +77,7 @@ const ledger = runTotals(ds, v);
           <span class="cov-hint">ⓘ {h.matrixHint}</span>
         </span>
       </div>
-      <div class="cov">
-        <div class="cov-row cov-header" aria-hidden="true">
-          <span>{h.matrixTask}</span>
-          {
-            pairDbs.map((db) => (
-              <span>
-                <b>{db.name}</b>
-                <small>{db.lab_versions.join(' · ')}</small>
-              </span>
-            ))
-          }
-        </div>
-        {
-          matrix.map((row) => (
-            <div class="cov-row">
-              <a class="cov-title" href={row.href}>{row.title}</a>
-              {row.cells.map((c) => (
-                <span class="cov-cell">
-                  <span class="cov-db">{c.db}</span>
-                  <span class="strip" role="img" aria-label={`${c.db}：${c.segs.map((s) => h.support[s]).join(' / ')}`}>
-                    {c.segs.map((s) => (
-                      <i class={`seg-${s}`} />
-                    ))}
-                  </span>
-                  {c.note && (
-                    <span class="tip">
-                      <button type="button" class="tip-btn" aria-label={c.note} aria-expanded="false">
-                        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                          <circle cx="12" cy="12" r="9" />
-                          <path d="M12 11v5M12 7.5h.01" />
-                        </svg>
-                      </button>
-                      <span class="tip-bubble" role="tooltip">{c.note}</span>
-                    </span>
-                  )}
-                </span>
-              ))}
-            </div>
-          ))
-        }
-      </div>
+      <CoverageTable lang={lang} dbs={pairDbs} rows={matrix} />
       <nav id="browse" class="home-browse" aria-label={ui.homePage.navIndex}>
         <span>{h.browse(stats.entries)}</span>
         {
@@ -215,19 +142,3 @@ const ledger = runTotals(ds, v);
   </main>
 </Base>
 
-<script>
-  // ⓘ bubbles open on hover and focus by CSS; a tap toggles them on touch screens.
-  document.addEventListener('click', (e) => {
-    const btn = e.target instanceof Element ? e.target.closest('.tip-btn') : null;
-    for (const tip of document.querySelectorAll('.tip.open')) {
-      if (tip !== btn?.parentElement) {
-        tip.classList.remove('open');
-        tip.querySelector('.tip-btn')?.setAttribute('aria-expanded', 'false');
-      }
-    }
-    if (btn) {
-      const open = btn.parentElement!.classList.toggle('open');
-      btn.setAttribute('aria-expanded', String(open));
-    }
-  });
-</script>

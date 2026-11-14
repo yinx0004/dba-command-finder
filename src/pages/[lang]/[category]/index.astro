@@ -1,11 +1,11 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import EqBadge from '../../../components/EqBadge.astro';
+import CoverageTable from '../../../components/CoverageTable.astro';
+import { coverageRow } from '../../../lib/coverage';
 import { loadDataset } from '../../../lib/data';
-import { pairMappings, versionedCmds } from '../../../lib/docs';
+import { pairMappings } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
-import { equivalence } from '../../../lib/pair';
-import { categoryHref, entryHref, langHome, newIssueUrl } from '../../../lib/site';
+import { categoryHref, langHome, newIssueUrl } from '../../../lib/site';
 
 export function getStaticPaths() {
   const ds = loadDataset();
@@ -19,26 +19,28 @@ const lang = Astro.params.lang as Lang;
 const ui = UI[lang];
 const ds = loadDataset();
 const { source, target } = ds.site.pair;
-const dbName = new Map(ds.databases.map((d) => [d.id, d.name]));
+const pairDbs = [source, target].map((id) => ds.databases.find((d) => d.id === id)!);
+const [S, T] = pairDbs.map((d) => d.name);
 const mappings = pairMappings(ds);
-const used = new Set(mappings.map((m) => m.category));
-const categories = ds.categories.filter((c) => used.has(c.id));
+const counts = new Map<string, number>();
+for (const m of mappings) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
+const categories = ds.categories.filter((c) => counts.get(c.id));
 const cat = categories.find((c) => c.id === Astro.params.category)!;
-const entries = mappings
+const rows = mappings
   .filter((m) => m.category === cat.id)
-  .sort((a, b) => Number(a.status === 'deprecated') - Number(b.status === 'deprecated'));
+  .sort((a, b) => Number(a.status === 'deprecated') - Number(b.status === 'deprecated'))
+  .map((m) => coverageRow(m, pairDbs, lang));
 const name = t(cat.name, lang);
-const S = dbName.get(source)!;
-const T = dbName.get(target)!;
 ---
 <Base lang={lang} title={`${name}：${ui.tagline(S, T)} | ${ui.siteName}`} description={`${name}相关的 ${S} 运维命令在 ${T} 中的对应写法：${t(cat.desc, lang)}`}>
   <div class="wrap cat-layout">
-    <nav class="cat-nav" aria-label="类别">
-      <span class="label">类别</span>
+    <nav class="cat-nav" aria-label={ui.homePage.navIndex}>
+      <span class="label">{ui.homePage.navIndex}</span>
       {
         categories.map((c) => (
           <a href={categoryHref(lang, c.id)} aria-current={c.id === cat.id ? 'page' : undefined}>
             {t(c.name, lang)}
+            <small>{counts.get(c.id)}</small>
           </a>
         ))
       }
@@ -48,44 +50,19 @@ const T = dbName.get(target)!;
       <nav class="crumbs" aria-label="面包屑">
         <a href={langHome(lang)}>{ui.home}</a><span>/</span><span>{name}</span>
       </nav>
-      <h1 style="margin: 12px 0 8px">{name}</h1>
-      <p class="lede" style="margin-bottom: 24px">{t(cat.desc, lang)}</p>
+      <h1 class="cat-title">{name}</h1>
+      <p class="lede">{t(cat.desc, lang)}</p>
+      <p class="cat-legend">
+        {ui.homePage.matrixLegend}
+        <span><i class="seg-full" aria-hidden="true"></i>{ui.homePage.support.full}</span>
+        <span><i class="seg-partial" aria-hidden="true"></i>{ui.homePage.support.partial}</span>
+        <span><i class="seg-none" aria-hidden="true"></i>{ui.homePage.support.none}</span>
+        <span>ⓘ {ui.homePage.matrixHint}</span>
+      </p>
 
-      <div class="card">
-        {
-          entries.map((m) => {
-            const s = m.databases[source];
-            const tg = m.databases[target];
-            const eq = equivalence(s, tg);
-            return (
-              <a class="row-link" href={entryHref(lang, m.slug)}>
-                <div class="row-title">
-                  <strong>{t(m.title, lang)}</strong>
-                  <EqBadge lang={lang} eq={eq} target={T} />
-                  {m.status === 'deprecated' && <span class="tag">{ui.deprecated}</span>}
-                </div>
-                <div class="row-cmds">
-                  {s.commands.length ? (
-                    <span data-pick={JSON.stringify(versionedCmds(s))} data-db={source}>{s.commands[0].cmd}</span>
-                  ) : (
-                    ui.noEquivalent
-                  )}{' '}
-                  →{' '}
-                  {tg?.commands.length ? (
-                    <span data-pick={JSON.stringify(versionedCmds(tg))} data-db={target}>{tg.commands[0].cmd}</span>
-                  ) : eq === 'none' ? (
-                    ui.noEquivalent
-                  ) : (
-                    ui.eq.missing
-                  )}
-                </div>
-              </a>
-            );
-          })
-        }
-      </div>
+      <CoverageTable lang={lang} dbs={pairDbs} rows={rows} commands />
 
-      <p class="muted" style="margin-top: 20px; font-size: 14px">
+      <p class="section-foot" style="font-size: 14px">
         {ui.categoryEmpty}<a href={newIssueUrl()}>{ui.submitMapping}</a>
       </p>
     </main>
