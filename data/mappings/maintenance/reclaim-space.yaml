@@ -43,4 +43,20 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.deleteOne({ a: 1 })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO memory
+        note:
+          zh: mem_fragmentation_ratio 明显大于 1（例如超过 1.5）说明碎片多
+      - cmd: CONFIG SET activedefrag yes
+        note:
+          zh: 打开主动碎片整理，在后台慢慢把数据挪紧
+      - cmd: MEMORY PURGE
+        note:
+          zh: 让内存分配器把空闲的内存页还给操作系统
+    notes:
+      - zh: 删掉的数据占的内存会被复用，但碎片多时进程占用的内存降不下来；主动碎片整理会占用一些 CPU。
+    verify:
+      teardown: CONFIG SET activedefrag no
 related: [table-size, check-table]

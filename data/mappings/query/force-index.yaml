@@ -42,4 +42,8 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 1, b: 2 }]); db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 })'
       vars: {collection: t, index: a_1}
+  redis:
+    support: none
+    notes:
+      - zh: 没有查询优化器，也就没有选错索引、强制用某个索引这回事。
 related: [explain, invisible-index, index-usage]

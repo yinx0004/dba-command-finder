@@ -35,4 +35,8 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ c1: 1 }, { c1: 2 }]); db.t.createIndex({ c1: 1 })'
       vars: {collection: t, field: c1, new_field: c1_new}
+  redis:
+    support: none
+    notes:
+      - zh: 没有列，也没有重命名哈希字段的命令；只能按键遍历，读出旧字段、写入新字段、再删掉旧字段。
 related: [add-column, modify-column, show-create-table]

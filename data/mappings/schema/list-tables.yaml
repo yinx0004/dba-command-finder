@@ -29,4 +29,21 @@ databases:
     refs:
       - title: 'MongoDB: db.getCollectionInfos()'
         url: https://www.mongodb.com/docs/manual/reference/method/db.getCollectionInfos/
+  redis:
+    support: partial
+    commands:
+      - cmd: SCAN 0 MATCH app:* COUNT 100
+        note:
+          zh: 按模式分批列出键；返回的第一个值是下一次的游标，回到 0 表示遍历完了
+      - cmd: redis-cli --scan --pattern 'app:*'
+        shell: true
+        note:
+          zh: 让 redis-cli 自己翻完所有游标
+    notes:
+      - zh: 没有表，常见做法是用键名前缀表示“表”，例如 user:1、user:2。不要在生产环境用 KEYS，它会一次遍历所有键，期间挡住其他命令。
+    verify:
+      setup: |-
+        SET app:1 a
+        SET app:2 b
+      teardown: DEL app:1 app:2
 related: [list-databases, show-indexes]

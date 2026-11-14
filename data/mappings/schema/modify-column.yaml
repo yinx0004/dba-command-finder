@@ -38,4 +38,8 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ c1: "1" }, { c1: "x" }, { c1: 3 }])'
       vars: {collection: t, field: c1}
+  redis:
+    support: none
+    notes:
+      - zh: 没有列类型，值都是字节串，INCR 这类命令执行时才按整数解释。要改值的格式，只能按键遍历后重写。
 related: [add-column, rename-column, auto-increment-exhaustion]

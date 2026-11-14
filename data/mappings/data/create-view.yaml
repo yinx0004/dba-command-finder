@@ -32,4 +32,8 @@ databases:
     verify:
       setup: 'db.t.insertOne({ a: 1, b: 2 })'
       vars: {collection: t, view: v}
+  redis:
+    support: none
+    notes:
+      - zh: 没有视图。
 related: [show-create-table, list-tables]

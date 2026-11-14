@@ -36,4 +36,26 @@ databases:
     verify:
       setup: 'db.t.insertOne({ createdAt: new Date() })'
       vars: {collection: t}
+  redis:
+    support: full
+    commands:
+      - cmd: EXPIRE <key> 3600
+        note:
+          zh: 3600 秒后自动删除这个键
+      - cmd: SET <key> v EX 3600
+        note:
+          zh: 写入时就带上过期时间
+      - cmd: TTL <key>
+        note:
+          zh: 还剩多少秒；-1 表示不过期，-2 表示键不存在
+      - cmd: HEXPIRE <hash_key> 3600 FIELDS 1 <field>
+        since: '7.4'
+        note:
+          zh: 只让哈希里的某个字段过期
+    notes:
+      - zh: 过期是按键设置的，过期的键在被访问时或后台定期清理时删除。
+    verify:
+      setup: HSET app:user:1 name a age 1
+      vars: {key: 'app:session:1', hash_key: 'app:user:1', field: name}
+      teardown: DEL app:session:1 app:user:1
 related: [batch-delete, partitioning]

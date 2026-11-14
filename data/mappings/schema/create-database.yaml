@@ -33,4 +33,15 @@ databases:
       - {title: 'MongoDB: Databases and Collections', url: 'https://www.mongodb.com/docs/manual/core/databases-and-collections/'}
     verify:
       vars: {name: lab_new_db, collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET databases
+        note:
+          zh: 库的个数，默认 16，编号从 0 开始；只能在配置文件里改，重启生效
+      - cmd: SELECT 1
+        note:
+          zh: 切换到 1 号库
+    notes:
+      - zh: 库没有名字，也不用创建，个数在启动时就定了。Redis Cluster 只有 0 号库，所以很多团队只用 0 号库，用键名前缀区分业务。
 related: [list-databases]

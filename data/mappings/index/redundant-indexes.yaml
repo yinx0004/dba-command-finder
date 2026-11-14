@@ -33,4 +33,8 @@ databases:
         see: index-usage
       - title: {zh: 删除前先隐藏观察}
         see: invisible-index
+  redis:
+    support: none
+    notes:
+      - zh: 没有能自动比较的索引定义，找不出冗余索引。
 related: [index-usage, drop-index]

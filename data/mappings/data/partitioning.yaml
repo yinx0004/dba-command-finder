@@ -31,4 +31,15 @@ databases:
         cmd: 'db.createCollection("<collection>", { timeseries: { timeField: "ts", metaField: "meta" }, expireAfterSeconds: 2592000 })'
     refs:
       - {title: 'MongoDB: Time Series Collections', url: 'https://www.mongodb.com/docs/manual/core/timeseries-collections/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CLUSTER KEYSLOT <key>
+        on: [cluster]
+        note:
+          zh: 这个键落在哪个槽位（0 到 16383）
+      - cmd: CLUSTER COUNTKEYSINSLOT <slot>
+        on: [cluster]
+    notes:
+      - zh: 没有分区表。Redis Cluster 把键按哈希分到 16384 个槽位，再分给各个节点；键名里用 {} 包住的部分决定槽位，可以让相关的键落在同一个节点上。
 related: [ttl-expiry, batch-delete]

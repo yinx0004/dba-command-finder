@@ -46,4 +46,8 @@ databases:
     verify:
       setup: 'db.t.insertOne({ a: 1, b: 1 }); db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 }); db.t.find({ a: 1 }).toArray()'
       vars: {collection: t}
+  redis:
+    support: none
+    notes:
+      - zh: 没有按索引统计使用次数的命令。
 related: [show-indexes, drop-index, invisible-index]

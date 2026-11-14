@@ -5,7 +5,7 @@ title: {zh: 复制表结构和数据}
 summary: {zh: 改数据或做变更前先留一份副本，或者复制一张表的结构建新表。}
 keywords:
   zh: [复制表, 备份表, 拷贝表, 复制表结构, 表副本]
-  en: [create table like, create table as select, insert select, $out, clone collection]
+  en: [create table like, create table as select, insert select, $out, clone collection, COPY]
 databases:
   mysql:
     support: full
@@ -39,4 +39,17 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 })'
       vars: {collection: t, new_collection: t_copy}
+  redis:
+    support: partial
+    commands:
+      - cmd: COPY <key> <new_key>
+        since: '6.2'
+        note:
+          zh: 复制一个键和它的值；加 DB 1 可以复制到另一个库，加 REPLACE 覆盖已有的键
+    notes:
+      - zh: 没有表，只能按键复制；要复制一批键，用 SCAN 按模式遍历后逐个 COPY。
+    verify:
+      setup: HSET app:user:1 name a age 1
+      vars: {key: 'app:user:1', new_key: 'app:user:1:copy'}
+      teardown: DEL app:user:1 app:user:1:copy
 related: [show-create-table, export-data, rename-table]

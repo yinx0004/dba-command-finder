@@ -35,4 +35,22 @@ databases:
     verify:
       setup: 'db.createCollection("t", { validator: { $jsonSchema: { bsonType: "object", required: ["a"] } } }); db.t.insertOne({ a: "x" })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: TYPE <key>
+        note:
+          zh: 值的类型：string、hash、list、set、zset、stream
+      - cmd: OBJECT ENCODING <key>
+        note:
+          zh: 底层用的存储结构，例如 listpack、hashtable
+      - cmd: HKEYS <key>
+        note:
+          zh: 哈希有哪些字段
+    notes:
+      - zh: 没有表结构，每个键有自己的类型，哈希里的字段也可以各不相同。
+    verify:
+      setup: HSET app:user:1 name a age 1
+      vars: {key: 'app:user:1'}
+      teardown: DEL app:user:1
 related: [list-tables, show-indexes, add-column]

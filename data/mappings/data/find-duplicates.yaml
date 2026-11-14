@@ -44,4 +44,8 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ email: "a@x.com" }, { email: "a@x.com" }, { email: "b@x.com" }, { email: "a@x.com" }])'
       vars: {collection: t, field: email}
+  redis:
+    support: none
+    notes:
+      - zh: 没有按值分组统计的命令。需要去重的数据，一般直接存进集合（SADD），集合本身不会有重复的成员。
 related: [create-index, batch-delete]

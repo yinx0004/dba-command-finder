@@ -329,3 +329,16 @@
 - {q: MEMORY USAGE, top: table-size}
 - {q: BGREWRITEAOF, top: purge-binlog}
 - {q: MONITOR, top: general-log}
+- {q: FT.CREATE, top: create-index}
+- {q: FT.EXPLAIN, top: explain}
+- {q: FT.DROPINDEX, top: drop-index}
+- {q: FT._LIST, top: show-indexes}
+- {q: HEXPIRE, top: ttl-expiry}
+- {q: FLUSHDB, top: truncate-table}
+- {q: UNLINK, top_any: [batch-delete, drop-table]}
+- {q: RENAMENX, top: rename-table}
+- {q: redis-check-rdb, top: check-table}
+- {q: MEMORY PURGE, top: reclaim-space}
+- {q: SCAN, top_any: [list-tables, full-table-scans]}
+- {q: CLUSTER KEYSLOT, top: partitioning}
+- {q: COPY, top: copy-table}

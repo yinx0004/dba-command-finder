@@ -63,4 +63,22 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 })'
       vars: {collection: t, filter: '{ a: 1 }', pipeline: '{ $match: { a: 1 } }'}
+  redis:
+    support: partial
+    commands:
+      - cmd: 'FT.EXPLAIN <index> "@age:[20 40]"'
+        since: '8.0'
+        note:
+          zh: 查询引擎会怎样执行这个查询，例如按数值范围查 age
+    notes:
+      - zh: 核心命令没有执行计划，每个命令的复杂度是固定的，写在命令文档里（例如 HGET 是 O(1)，SMEMBERS 是 O(N)）。只有查询引擎的查询才有执行计划。
+      - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    verify:
+      setup: |-
+        HSET app:user:1 name alice age 30
+        FT.CREATE idx:users ON HASH PREFIX 1 app:user: SCHEMA name TEXT age NUMERIC
+      vars: {index: 'idx:users'}
+      teardown: |-
+        FT.DROPINDEX idx:users
+        DEL app:user:1
 related: [show-indexes, slow-query-log]
