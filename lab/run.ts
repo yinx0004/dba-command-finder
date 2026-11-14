@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { loadDataset } from '../src/lib/data';
+import { compareVersions } from '../src/lib/version';
 import { ENGINES } from './engines';
 import { expectation, fieldPaths, fill, labDatabase, outputHasPath, type CommandResult, type EntryResult, type FieldResult, type RunResult } from './plan';
 
@@ -117,9 +118,11 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
         for (const [id, f] of fieldNames) {
           const name = typeof f === 'string' ? f : f.name;
           const skip = (typeof f === 'string' ? undefined : f.skip) ?? d.verify?.skip_fields;
+          const fieldSince = typeof f === 'string' ? undefined : f.since;
           const paths = fieldPaths(name);
           let r: FieldResult;
           if (skip) r = { id, name, status: 'skip', detail: skip.zh };
+          else if (fieldSince && compareVersions(server, fieldSince) < 0) r = { id, name, status: 'unchecked', detail: `added in ${fieldSince}` };
           else if (!paths) r = { id, name, status: 'unchecked', detail: 'not a plain field name' };
           else if (outputs.length === 0) r = { id, name, status: 'unchecked', detail: `no command produced output on ${server}` };
           else {

@@ -7,7 +7,7 @@
   desc: {zh: 状态计数、连接数、缓存}
 - id: diagnosis
   name: {zh: 性能诊断}
-  desc: {zh: 最耗时的语句、全表扫描、等待、缓存、内存}
+  desc: {zh: 慢语句、全表扫描、等待、缓存、内存、吞吐、热点表}
 - id: config
   name: {zh: 参数配置}
   desc: {zh: 查看与修改运行参数}

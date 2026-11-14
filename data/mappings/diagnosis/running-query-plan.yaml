@@ -1,0 +1,31 @@
+schema_version: 2
+id: running-query-plan
+category: diagnosis
+title: {zh: 查看正在执行的查询用了什么执行计划}
+summary: {zh: 某条查询正在跑、迟迟不结束时，不用等它结束，直接看它走了哪个索引。}
+keywords:
+  zh: [正在执行的执行计划, 运行中的查询, 卡住的查询走了什么索引]
+  en: [explain for connection, planSummary, running query plan]
+fields:
+  - {id: plan, name: {zh: 执行计划}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: EXPLAIN FOR CONNECTION <processlist_id>;
+        skip: {zh: 需要另一个连接上正好有一条在执行的查询}
+        note: {zh: processlist_id 从 SHOW PROCESSLIST 里取}
+    refs:
+      - {title: 'MySQL: EXPLAIN FOR CONNECTION', url: 'https://dev.mysql.com/doc/refman/8.4/en/explain-for-connection.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.currentOp({ active: true, planSummary: { $exists: true } })'
+        note: {zh: '每个正在执行的查询都带着 planSummary，例如 IXSCAN { a: 1 } 或 COLLSCAN'}
+    fields:
+      plan: {name: planSummary, skip: {zh: 需要另一个连接上正好有一条在执行的查询}}
+    notes:
+      - zh: planSummary 只是摘要；要看完整计划，拿 currentOp 里的 command 重新 explain 一次。
+    refs:
+      - {title: 'MongoDB: db.currentOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.currentOp/'}
+related: [list-active-sessions, explain]

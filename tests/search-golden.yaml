@@ -182,5 +182,15 @@
 - {q: 内存占用, top: memory-usage}
 - {q: tcmalloc, top: memory-usage}
 
+- {q: mongostat, top: live-throughput}
+- {q: 每秒吞吐, top: live-throughput}
+- {q: QPS, top: live-throughput}
+- {q: mongotop, top: hot-tables}
+- {q: 最忙的表, top: hot-tables}
+- {q: Created_tmp_disk_tables, top: disk-spills}
+- {q: 排序溢出, top: disk-spills}
+- {q: explain for connection, top: running-query-plan}
+- {q: planSummary, top: running-query-plan}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
