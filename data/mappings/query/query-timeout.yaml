@@ -27,10 +27,12 @@ databases:
     support: full
     commands:
       - cmd: db.<collection>.find({}).maxTimeMS(1000)
+        on: [mongod, mongos]
         note: {zh: 单位毫秒，只对这一条查询生效}
       - cmd: 'db.adminCommand({ setClusterParameter: { defaultMaxTimeMS: { readOperations: 1000 } } })'
         since: '8.0'
-        note: {zh: 设置所有读操作的默认超时}
+        on: [mongod, mongos]
+        note: {zh: 设置所有读操作的默认超时；分片集群在 mongos 上设置，对整个集群生效}
     notes:
       - zh: maxTimeMS 读写命令都可以设，不只是查询。
     refs:

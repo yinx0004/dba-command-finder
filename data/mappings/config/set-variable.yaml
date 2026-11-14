@@ -24,14 +24,15 @@ databases:
     support: partial
     commands:
       - cmd: 'db.adminCommand({ setParameter: 1, <name>: <value> })'
+        on: [mongod, mongos, configsvr]
         note: {zh: 重启后失效}
     notes:
       - zh: setParameter 只对当前进程生效。要持久化，得把参数写进配置文件的 setParameter 段，没有 SET PERSIST 这样的命令。
       - zh: 只有允许运行时修改的参数才能改；很多选项（例如 net.maxIncomingConnections）只能改配置文件后重启。
-      - zh: 副本集和分片集群的每个成员要分别设置。
+      - zh: 只对执行命令的那一个进程生效。副本集的每个成员、分片集群的每个 mongos、分片成员和 config server 都要分别设置，而且不是每个参数在所有角色上都有（例如 mongos 没有存储引擎参数）。
     refs:
       - title: 'MongoDB: setParameter'
         url: https://www.mongodb.com/docs/manual/reference/command/setParameter/
     verify:
       vars: {name: logLevel, value: '0'}
-related: [show-variables]
+related: [show-variables, persist-parameters]

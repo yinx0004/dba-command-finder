@@ -1,0 +1,49 @@
+schema_version: 2
+id: log-verbosity
+category: config
+title: {zh: 调整日志的详细程度}
+summary: {zh: 排查问题时临时让日志记得更详细，排查完再调回去。}
+keywords:
+  zh: [日志级别, 日志详细程度, 调高日志, 错误日志级别, 调试日志]
+  en: [log_error_verbosity, loglevel, setloglevel, getlogcomponents, verbosity]
+fields:
+  - {id: level, name: {zh: 日志级别}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@log_error_verbosity AS log_error_verbosity, @@log_error AS log_error;
+        note: {zh: 1 只记错误，2 再加警告，3 再加提示信息；默认 5.7 是 3，8.0 起是 2}
+      - cmd: SET GLOBAL log_error_verbosity = 3;
+        note: {zh: 在线生效，重启后失效}
+    fields:
+      level: log_error_verbosity
+    notes:
+      - zh: 这里调的是错误日志。想记录执行过的语句，用通用日志或慢查询日志。
+    refs:
+      - {title: 'MySQL: log_error_verbosity', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_log_error_verbosity'}
+    verify:
+      teardown: SET GLOBAL log_error_verbosity = DEFAULT;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.getLogComponents()
+        on: [mongod, mongos, configsvr]
+        note: {zh: 全局和各组件（query、replication、network……）的级别；-1 表示跟随全局}
+      - cmd: 'db.setLogLevel(1, "query")'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 只把 query 组件调到 1；不写组件名就是调全局}
+      - cmd: 'db.adminCommand({ getParameter: 1, logLevel: 1 })'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 全局级别，默认 0}
+    fields:
+      level: verbosity
+    notes:
+      - zh: 级别是 0–5，数字越大越详细，可以只调某一个组件。调高后日志量增长很快，排查完记得调回 0 或 -1。
+      - zh: 在线修改重启后失效；要长期生效写配置文件的 systemLog.verbosity 或 systemLog.component.<组件>.verbosity。mongod、mongos、config server 各自设置。
+    refs:
+      - {title: 'MongoDB: Log Messages Verbosity Levels', url: 'https://www.mongodb.com/docs/manual/reference/log-messages/#verbosity-levels'}
+      - {title: 'MongoDB: db.setLogLevel()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.setLogLevel/'}
+    verify:
+      teardown: 'db.setLogLevel(-1, "query")'
+related: [error-log, general-log, slow-query-log]
