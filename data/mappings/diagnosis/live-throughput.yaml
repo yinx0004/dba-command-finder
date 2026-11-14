@@ -1,0 +1,40 @@
+schema_version: 2
+id: live-throughput
+category: diagnosis
+title: {zh: 实时观察每秒吞吐}
+summary: {zh: 像看 top 一样，每秒刷新一次请求量、写入量和连接数，确认负载是不是突然变了。}
+keywords:
+  zh: [每秒吞吐, 实时监控, QPS, TPS, 负载突增]
+  en: [mongostat, mysqladmin extended-status, qps, tps, throughput]
+fields:
+  - {id: queries, name: {zh: 每秒查询}}
+  - {id: inserts, name: {zh: 每秒插入}}
+  - {id: connections, name: {zh: 连接}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: mysqladmin -r -i 1 -c 2 extended-status | grep -E 'Questions|Com_select|Com_insert|Threads_connected|Threads_running'
+        shell: true
+        note: {zh: -i 1 每秒一次，-c 2 共两次；-r 显示和上一次的差值，第一组是累计值，第二组起才是每秒增量}
+    fields:
+      queries: Questions
+      inserts: Com_insert
+      connections: Threads_connected
+    refs:
+      - {title: 'MySQL: mysqladmin', url: 'https://dev.mysql.com/doc/refman/8.4/en/mysqladmin.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: mongostat -n 2 1
+        shell: true
+        note: {zh: 每秒一行、共两行；去掉 -n 会一直刷新}
+    fields:
+      queries: query
+      inserts: insert
+      connections: conn
+    notes:
+      - zh: 每行直接就是每秒的量。dirty、used 两列是 WiredTiger 缓存的脏数据和使用比例，qrw、arw 是排队和正在执行的读写数，一屏就能看出是不是卡在缓存或锁上。
+    refs:
+      - {title: 'MongoDB: mongostat', url: 'https://www.mongodb.com/docs/database-tools/mongostat/'}
+related: [server-status, hot-tables]

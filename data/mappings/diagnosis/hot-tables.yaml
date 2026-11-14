@@ -1,0 +1,49 @@
+schema_version: 2
+id: hot-tables
+category: diagnosis
+title: {zh: 找出最忙的表}
+summary: {zh: 看读写时间主要花在哪几张表（集合）上，定位热点。}
+keywords:
+  zh: [最忙的表, 热点表, 哪张表最忙, 表的读写]
+  en: [mongotop, schema_table_statistics, hot table, latencystats]
+fields:
+  - {id: table, name: {zh: 表（集合）}}
+  - {id: total_time, name: {zh: 总耗时}}
+  - {id: read_time, name: {zh: 读耗时}}
+  - {id: write_time, name: {zh: 写耗时}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.schema_table_statistics LIMIT 10;
+        note: {zh: 自启动以来每张表的累计读写行数和耗时，按总耗时排序}
+    fields:
+      table: table_name
+      total_time: total_latency
+      read_time: fetch_latency
+      write_time: {name: insert_latency, note: {zh: 写入按 insert / update / delete 分开统计}}
+    refs:
+      - {title: 'MySQL: sys.schema_table_statistics', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-schema-table-statistics.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: mongotop -n 1 1
+        shell: true
+        note: {zh: 每个集合在这 1 秒里花在读写上的时间；去掉 -n 会一直刷新}
+      - cmd: 'db.<collection>.aggregate([{ $collStats: { latencyStats: {} } }])'
+        note: {zh: 某个集合自启动以来的累计读写次数和延迟}
+    fields:
+      table: ns
+      total_time: total
+      read_time: read
+      write_time: write
+    notes:
+      - zh: mongotop 看的是采样间隔内的时间，sys.schema_table_statistics 是自启动以来的累计值；要看 MongoDB 的累计值，用 $collStats 的 latencyStats。
+    refs:
+      - {title: 'MongoDB: mongotop', url: 'https://www.mongodb.com/docs/database-tools/mongotop/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.find({ a: 1 }).toArray()'
+      vars: {collection: t}
+related: [live-throughput, top-statements, table-size]

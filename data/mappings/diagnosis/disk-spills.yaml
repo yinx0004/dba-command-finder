@@ -1,0 +1,49 @@
+schema_version: 2
+id: disk-spills
+category: diagnosis
+title: {zh: 查看临时表和排序溢出到磁盘}
+summary: {zh: 排序、分组用的内存不够时会写临时文件，查询会明显变慢；看看有多少、是哪些语句。}
+keywords:
+  zh: [磁盘临时表, 排序溢出, 临时表, 用到磁盘]
+  en: [created_tmp_disk_tables, sort_merge_passes, usedisk, allowdiskuse, spill]
+fields:
+  - {id: disk_temp, name: {zh: 用到磁盘的临时表 / 操作}}
+  - {id: sort_spill, name: {zh: 排序溢出}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW GLOBAL STATUS WHERE Variable_name IN ('Created_tmp_disk_tables', 'Created_tmp_tables', 'Sort_merge_passes');
+        note: {zh: Created_tmp_disk_tables 占 Created_tmp_tables 的比例越高越要关注}
+      - cmd: SELECT * FROM sys.statements_with_temp_tables LIMIT 10;
+        note: {zh: 是哪些语句用了临时表}
+      - cmd: SELECT * FROM sys.statements_with_sorting LIMIT 10;
+        note: {zh: 是哪些语句在排序}
+    fields:
+      disk_temp: Created_tmp_disk_tables
+      sort_spill: Sort_merge_passes
+    notes:
+      - zh: 磁盘临时表多，通常是 tmp_table_size / max_heap_table_size 不够，或者查询里有 TEXT、BLOB 列；Sort_merge_passes 持续增长说明 sort_buffer_size 不够。
+    refs:
+      - {title: 'MySQL: Internal Temporary Tables', url: 'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT a, COUNT(*) FROM t GROUP BY a ORDER BY COUNT(*) DESC;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.system.profile.find({ usedDisk: true }).sort({ ts: -1 }).limit(10)'
+        note: {zh: 用到磁盘的操作；要先打开 profiler}
+      - cmd: db.serverStatus().metrics.query
+        note: {zh: 自启动以来排序、分组等溢出到磁盘的累计次数（7.0 起才有这些计数）}
+    fields:
+      disk_temp: usedDisk
+      sort_spill: {name: sort.spillToDisk, since: '7.0', note: {zh: 7.0 起才有这类溢出计数（还有 group.spills、lookup.hashLookupSpillToDisk 等）}}
+    notes:
+      - zh: 6.0 起 allowDiskUseByDefault 默认为 true，内存不够时会自动写磁盘而不是报错；以前要在查询上显式加 allowDiskUse。
+    refs:
+      - {title: 'MongoDB: allowDiskUseByDefault', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.allowDiskUseByDefault'}
+    verify:
+      # Shrink the sort memory limit so a small sort spills, and profile it.
+      setup: 'db.t.insertMany(Array.from({ length: 200 }, (_, i) => ({ a: i, pad: "x".repeat(200) }))); db.adminCommand({ setParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 1024 }); db.setProfilingLevel(2); db.t.find().sort({ pad: 1, a: -1 }).toArray()'
+      teardown: 'db.adminCommand({ setParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 104857600 }); db.setProfilingLevel(0)'
+related: [top-statements, explain]

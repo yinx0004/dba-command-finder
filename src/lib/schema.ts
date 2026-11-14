@@ -59,7 +59,8 @@ const Ref = z.strictObject({
 // skip says why one cannot be checked (e.g. it only appears with authentication on).
 const FieldName = z.union([
   z.string().min(1),
-  z.strictObject({ name: z.string().min(1), note: Text.optional(), skip: Text.optional() }),
+  // since: the first version whose output has this field; the lab only checks it from there on.
+  z.strictObject({ name: z.string().min(1), note: Text.optional(), skip: Text.optional(), since: Version.optional() }),
 ]);
 
 /**
