@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { expectation, fieldPaths, fill, labDatabase, merge, outputHasPath, parseServerVersion, type RunResult } from '../lab/plan';
+import { expectation, fieldPaths, fill, labDatabase, merge, outputHasPath, parseServerVersion, redisFailed, type RunResult } from '../lab/plan';
 import { availableIn, compareVersions } from '../src/lib/version';
 
 describe('versions', () => {
@@ -106,5 +106,20 @@ describe('merge', () => {
     ]);
     expect(v.entries.a.mysql.fields.f.verified).toEqual(['5.7']);
     expect(v.entries.a.mysql.versions).toEqual(['5.7']);
+  });
+});
+
+describe('redis replies', () => {
+  it('fails on an error reply, which redis-cli does not signal by its exit code', () => {
+    expect(redisFailed("ERR unknown subcommand 'NO-EVICT'. Try CLIENT HELP.")).toBe(true);
+    expect(redisFailed('PONG\nWRONGTYPE Operation against a key holding the wrong kind of value')).toBe(true);
+    expect(redisFailed("NOPERM User app has no permissions to run the 'config|get' command")).toBe(true);
+  });
+
+  it('passes ordinary output, including values that mention errors', () => {
+    expect(redisFailed('PONG')).toBe(false);
+    expect(redisFailed('maxclients\n10000')).toBe(false);
+    expect(redisFailed('errorstat_ERR:count=1\ntotal_error_replies:1')).toBe(false);
+    expect(redisFailed('id=3 addr=127.0.0.1:52342 laddr=127.0.0.1:6379 fd=8 name= age=0 cmd=client|list')).toBe(false);
   });
 });

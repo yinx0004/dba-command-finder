@@ -91,7 +91,7 @@ data/
 
 ## 验证 lab
 
-页面上的每条命令都会在真实数据库上**原样执行**：MySQL 用 `mysql` 命令行，MongoDB 用镜像自带的 `mongosh`。要验证的版本写在 [data/databases.yaml](data/databases.yaml) 的 `lab_versions` 里。
+页面上的每条命令都会在真实数据库上**原样执行**：MySQL 用 `mysql` 命令行，MongoDB 用镜像自带的 `mongosh`，Redis 用 `redis-cli`（命令从标准输入送入，一行一条）。要验证的版本写在 [data/databases.yaml](data/databases.yaml) 的 `lab_versions` 里。
 
 - 版本在 `since` 和 `removed_in` 之间：必须执行成功
 - 早于 `since` 或从 `removed_in` 起：必须报错，这样版本区间写错也能被发现
@@ -118,11 +118,12 @@ mysql:
     # teardown: ...   # 最后执行，出错不影响结果
 ```
 
-每条记录都在一个单独的空库里执行，占位符 `<db>` 会自动填成这个库的名字。
+每条记录都在一个单独的空库里执行，占位符 `<db>` 会自动填成这个库的名字。Redis 没有按名字区分的库，所有记录都用 0 号库。
 
 - **命令行工具**（`mysqldump`、`mongodump`、`mongoexport`……）：给命令加 `shell: true`，lab 会在容器里用 bash 执行。MySQL 容器里已经写好 `~/.my.cnf`，所以命令不用带 `-u`、`-p`。需要先准备文件时（例如恢复前先有一份备份），用 `verify.setup_shell`。
 - **没法自动执行的命令**（例如 `KILL` 需要另一个连接）：给命令加 `skip: {zh: 原因}`，页面上会显示「未自动验证」和原因。
-- **只能在 mongos 或 config server 上执行的命令**：lab 只有副本集（`roles` 里标了 `lab: true` 的角色）。`on` 里没有 mongod 的命令会被自动跳过，页面上显示 `roles_unverified` 写的原因，不用再写 `skip`。
+- **只能在 mongos 或 config server 上执行的命令**：lab 只有副本集（`roles` 里标了 `lab: true` 的角色）。`on` 里没有 mongod 的命令会被自动跳过，页面上显示 `roles_unverified` 写的原因，不用再写 `skip`。Redis 同理：lab 只跑单机 `redis-server`，集群（`on: [cluster]`）和 Sentinel（`on: [sentinel]`）的命令会被跳过。
+- **Redis 命令的成败**：`redis-cli` 碰到错误回复也返回 0，lab 改看输出里有没有 `ERR`、`WRONGTYPE`、`NOPERM` 这类错误前缀。
 - **没法检查的字段**：单个字段在字段名后面加 `skip: {zh: 原因}`；整条记录的字段都查不了（例如只有从库上才有的字段），用 `verify.skip_fields`。某个字段从某个版本起才出现在输出里时，给它加 `since`，更早的版本上就不检查它。
 
 字段检查只确认字段名出现在输出里，不确认它出现在哪一行。例如 `effectiveUsers` 只出现在内部线程上，客户端连接上没有，这种情况要靠 `skip` 写明。

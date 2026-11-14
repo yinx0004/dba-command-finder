@@ -39,4 +39,19 @@ databases:
       host: host
     refs:
       - {title: 'MongoDB: rs.conf()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.conf/'}
+  redis:
+    support: full
+    commands:
+      - cmd: INFO replication
+        note: {zh: 在主库上执行；slave0、slave1 等行列出每个从库的地址、状态和复制偏移}
+      - cmd: ROLE
+        note: {zh: 主库返回 master、复制偏移和每个从库的地址}
+      - cmd: CLUSTER REPLICAS <node_id>
+        on: [cluster]
+        note: {zh: 集群模式下，列出某个主节点的从节点}
+      - cmd: SENTINEL REPLICAS <master_name>
+        on: [sentinel]
+        note: {zh: 在 Sentinel 上执行，列出它监控的主库有哪些从库}
+    fields:
+      host: {name: ip, skip: {zh: 只在有从库时出现，lab 只跑单机}}
 related: [replica-role, replication-status]

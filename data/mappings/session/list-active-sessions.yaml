@@ -86,4 +86,21 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/method/db.currentOp/
       - title: 'MongoDB: $currentOp'
         url: https://www.mongodb.com/docs/manual/reference/operator/aggregation/currentOp/
+  redis:
+    support: partial
+    commands:
+      - cmd: CLIENT LIST
+        note: {zh: 每个连接一行；cmd 是这个连接最近执行的命令}
+      - cmd: CLIENT INFO
+        since: '6.2'
+        note: {zh: 只看当前这个连接}
+    fields:
+      session_id: id
+      user: user
+      client: addr
+      database: db
+      elapsed: {name: age, note: {zh: 连接建立了多少秒，不是命令执行时间；idle 是空闲了多少秒}}
+      statement: {name: cmd, note: {zh: 最近执行的命令名，不含参数}}
+    notes:
+      - zh: 没有“正在执行的语句”：Redis 在一个线程里依次执行命令，一条慢命令会挡住所有连接。找慢命令看 SLOWLOG。
 related: [kill-session, lock-waits, server-status]

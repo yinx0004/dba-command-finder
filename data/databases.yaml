@@ -13,3 +13,11 @@
     - {id: mongos, name: mongos}
     - {id: configsvr, name: config server}
   roles_unverified: {zh: 只能在 mongos 或 config server 上执行，需要分片集群，lab 只有副本集}
+- id: redis
+  name: Redis
+  lab_versions: ['6.2', '7.2', '8.0']
+  roles:
+    - {id: server, name: redis-server, lab: true}
+    - {id: cluster, name: cluster}
+    - {id: sentinel, name: Sentinel}
+  roles_unverified: {zh: 需要集群模式或 Sentinel，lab 只跑单机 redis-server}

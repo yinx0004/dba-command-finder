@@ -57,4 +57,19 @@ databases:
     refs:
       - {title: 'MongoDB: net.maxIncomingConnections', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/#mongodb-setting-net.maxIncomingConnections'}
       - {title: 'MongoDB: UNIX ulimit Settings', url: 'https://www.mongodb.com/docs/manual/reference/ulimit/'}
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG GET maxclients
+      - cmd: CONFIG SET maxclients 2000
+        note: {zh: 立即生效；要写回配置文件，再执行 CONFIG REWRITE}
+      - cmd: INFO stats
+        note: {zh: rejected_connections 是超过 maxclients 被拒绝的连接数}
+    fields:
+      limit: maxclients
+      rejected: rejected_connections
+    notes:
+      - zh: maxclients 还受进程能打开的文件数限制；启动时文件数不够，Redis 会自动调小 maxclients 并在日志里提示。
+    verify:
+      teardown: CONFIG SET maxclients 10000
 related: [connection-usage, sharding-conn-pool, set-variable]
