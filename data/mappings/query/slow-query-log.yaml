@@ -21,7 +21,7 @@ databases:
     commands:
       - cmd: SET GLOBAL slow_query_log = ON;
       - cmd: SET GLOBAL long_query_time = 1;
-        note: {zh: 阈值，单位秒}
+        note: {zh: 阈值，单位秒；默认慢日志是关的，阈值 10 秒}
     fields:
       elapsed: Query_time
       rows_examined: Rows_examined
@@ -36,9 +36,14 @@ databases:
     support: partial
     commands:
       - cmd: 'db.setProfilingLevel(1, { slowms: 100 })'
+        on: [mongod, configsvr]
         note: {zh: 对当前库开启 profiler，阈值单位毫秒}
       - cmd: 'db.system.profile.find().sort({ ts: -1 }).limit(10)'
+        on: [mongod, configsvr]
         note: {zh: 查看最近 10 条慢操作}
+      - cmd: 'db.setProfilingLevel(0, { slowms: 100 })'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 不开 profiler，只设置写进日志的慢操作阈值；mongos 上只能这样设置}
     fields:
       elapsed: millis
       rows_examined: docsExamined
@@ -46,6 +51,7 @@ databases:
       statement: command
     notes:
       - zh: 即使 profiler 关闭，超过 slowms（默认 100 毫秒）的操作也会写进 mongod 日志，相当于慢日志默认就开着。
+      - zh: mongos 上不能开 profiler（会报 Profiling is not permitted on mongoS），慢操作只写进 mongos 自己的日志；要看分片上实际执行的慢操作，到分片成员上开 profiler。
       - zh: profiler 按库开启，结果存在该库的 system.profile 集合里（固定大小，旧记录会被覆盖）；MySQL 的慢日志是全局的。
       - zh: 4.4 起 mongod 日志是 JSON 格式，可以用 jq 或 mtools 分析，替代 pt-query-digest。
     refs:

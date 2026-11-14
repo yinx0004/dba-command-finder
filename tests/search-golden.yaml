@@ -44,7 +44,7 @@
 
 - {q: "show variables like 'max_connections'", top: show-variables}
 - {q: set global, top: set-variable}
-- {q: set persist, top: set-variable}
+- {q: set persist, top_any: [persist-parameters, set-variable]}
 - {q: show global status, top: server-status}
 - {q: serverStatus, top: server-status}
 - {q: show databases, top: list-databases}
@@ -297,6 +297,12 @@
 - {q: 写关注, top: default-rw-concern}
 - {q: transaction_isolation, top: isolation-level}
 - {q: 隔离级别, top: isolation-level}
+
+- {q: log_error_verbosity, top: log-verbosity}
+- {q: 日志级别, top: log-verbosity}
+- {q: setLogLevel, top: log-verbosity}
+- {q: 重启后失效, top: persist-parameters}
+- {q: setClusterParameter, top_any: [persist-parameters, query-timeout]}
 
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

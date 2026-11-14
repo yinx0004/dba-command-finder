@@ -1,0 +1,57 @@
+schema_version: 2
+id: persist-parameters
+category: config
+title: {zh: 修改参数并在重启后保留}
+summary: {zh: 在线改了参数之后，确保重启后还生效，并能查到哪些参数是这样改过的。}
+keywords:
+  zh: [参数持久化, 重启后失效, 重启后保留, 永久修改参数]
+  en: [set persist, persist_only, persisted_variables, reset persist, setclusterparameter, getclusterparameter]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SET PERSIST max_connections = 300;
+        since: '8.0'
+        note: {zh: 立即生效，同时写进数据目录下的 mysqld-auto.cnf}
+      - cmd: SET PERSIST_ONLY innodb_log_buffer_size = 33554432;
+        since: '8.0'
+        note: {zh: 只写进 mysqld-auto.cnf，下次重启才生效；用于不能在线修改的参数}
+      - cmd: SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.persisted_variables;
+        since: '8.0'
+        note: {zh: 列出所有这样持久化过的参数}
+      - cmd: RESET PERSIST max_connections;
+        since: '8.0'
+        note: {zh: 从 mysqld-auto.cnf 里去掉，当前值不变}
+    notes:
+      - zh: 5.7 没有 SET PERSIST，只能 SET GLOBAL 后再手动改 my.cnf。
+      - zh: mysqld-auto.cnf 在启动时最后读取，会覆盖 my.cnf 里的同名设置；改了 my.cnf 却不生效时先查这里。
+    refs:
+      - {title: 'MySQL: Persisted System Variables', url: 'https://dev.mysql.com/doc/refman/8.4/en/persisted-system-variables.html'}
+    verify:
+      teardown: SET GLOBAL max_connections = 151; RESET PERSIST;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 }).parsed.setParameter'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 配置文件 setParameter 段里设置的参数；没有设置时没有输出}
+      - cmd: 'db.adminCommand({ getClusterParameter: "*" })'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 集群参数：存在集群元数据里，重启后仍然生效}
+      - cmd: 'db.adminCommand({ setClusterParameter: { changeStreamOptions: { preAndPostImages: { expireAfterSeconds: 3600 } } } })'
+        on: [mongod, mongos]
+        note: {zh: 设置集群参数；分片集群在 mongos 上执行，副本集在主节点上执行}
+    notes:
+      - zh: setParameter 只改当前进程，重启就丢；要长期生效，得写进配置文件的 setParameter 段（mongod、mongos、config server 各有自己的配置文件），重启后生效。没有 SET PERSIST 这样一步到位的命令。
+      - zh: 只有少数参数是「集群参数」（getClusterParameter 列出的那些），用 setClusterParameter 设置后整个集群生效并持久保存。
+    alternatives:
+      - title: {zh: 写进配置文件}
+        cmd: |-
+          setParameter:
+            internalQueryMaxBlockingSortMemoryUsageBytes: 209715200
+    refs:
+      - {title: 'MongoDB: setClusterParameter', url: 'https://www.mongodb.com/docs/manual/reference/command/setClusterParameter/'}
+      - {title: 'MongoDB: setParameter Option', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/#setparameter-option'}
+    verify:
+      teardown: 'db.adminCommand({ setClusterParameter: { changeStreamOptions: { preAndPostImages: { expireAfterSeconds: "off" } } } })'
+related: [set-variable, show-variables, config-file]

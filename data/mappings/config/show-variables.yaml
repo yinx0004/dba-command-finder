@@ -19,15 +19,23 @@ databases:
     support: partial
     commands:
       - cmd: 'db.adminCommand({ getParameter: ''*'' })'
+        on: [mongod, mongos, configsvr]
         note: {zh: 运行时参数}
       - cmd: 'db.adminCommand({ getCmdLineOpts: 1 })'
+        on: [mongod, mongos, configsvr]
         note: {zh: 启动时的配置文件和命令行选项}
+      - cmd: 'db.adminCommand({ getClusterParameter: "*" })'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 整个集群共用的集群参数}
     notes:
       - zh: MongoDB 的配置分两类：启动时的配置文件和命令行选项（用 getCmdLineOpts 查看），以及运行时参数（用 getParameter 查看）。很多 MySQL 变量对应的是前者，例如 max_connections 对应配置文件里的 net.maxIncomingConnections。
       - zh: 'getParameter 不支持通配，按名字查单个参数：db.adminCommand({ getParameter: 1, <name>: 1 })。'
+      - zh: 每个进程只返回它自己的参数，各角色不完全一样：例如 mongos 不存数据，没有存储引擎相关的参数。分片集群要分别在 mongos、分片成员和 config server 上查。
     refs:
       - title: 'MongoDB: getParameter'
         url: https://www.mongodb.com/docs/manual/reference/command/getParameter/
       - title: 'MongoDB: getCmdLineOpts'
         url: https://www.mongodb.com/docs/manual/reference/command/getCmdLineOpts/
-related: [set-variable, server-status]
+      - title: 'MongoDB: getClusterParameter'
+        url: https://www.mongodb.com/docs/manual/reference/command/getClusterParameter/
+related: [set-variable, persist-parameters, server-status]
