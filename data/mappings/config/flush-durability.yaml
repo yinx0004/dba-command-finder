@@ -1,0 +1,55 @@
+schema_version: 2
+id: flush-durability
+category: config
+title: {zh: 刷盘策略：宕机会不会丢数据}
+summary: {zh: 确认已提交的写入在宕机后还在不在，以及为了性能放宽刷盘时要付出什么代价。}
+keywords:
+  zh: [刷盘, 双 1, 宕机丢数据, 持久性, 落盘策略]
+  en: [innodb_flush_log_at_trx_commit, sync_binlog, journal, journalcommitinterval, writeconcern j, durability]
+fields:
+  - {id: log_flush, name: {zh: 事务日志多久刷一次盘}}
+  - {id: binlog_flush, name: {zh: binlog 多久刷一次盘}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@innodb_flush_log_at_trx_commit AS innodb_flush_log_at_trx_commit, @@sync_binlog AS sync_binlog;
+        note: {zh: 默认都是 1，也就是常说的「双 1」：每次提交都刷盘，最安全}
+      - cmd: SET GLOBAL innodb_flush_log_at_trx_commit = 2;
+        note: {zh: 2：提交时只写到操作系统缓存，每秒刷一次盘；mysqld 崩溃不丢，机器掉电可能丢约 1 秒的提交}
+      - cmd: SET GLOBAL sync_binlog = 1;
+        note: {zh: 1 是每次提交都刷 binlog；0 交给操作系统决定，N 是每 N 次提交刷一次}
+    fields:
+      log_flush: innodb_flush_log_at_trx_commit
+      binlog_flush: sync_binlog
+    notes:
+      - zh: innodb_flush_log_at_trx_commit 设为 0 时连 mysqld 崩溃都可能丢最近 1 秒的提交。主库和要提升为主库的从库建议保持双 1。
+    refs:
+      - {title: 'MySQL: innodb_flush_log_at_trx_commit', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-parameters.html#sysvar_innodb_flush_log_at_trx_commit'}
+      - {title: 'MySQL: sync_binlog', url: 'https://dev.mysql.com/doc/refman/8.4/en/replication-options-binary-log.html#sysvar_sync_binlog'}
+    verify:
+      teardown: SET GLOBAL innodb_flush_log_at_trx_commit = 1; SET GLOBAL sync_binlog = 1;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getParameter: 1, journalCommitInterval: 1, syncdelay: 1 })'
+        on: [mongod, configsvr]
+        note: {zh: journal 默认每 100 毫秒刷一次盘；数据文件每 60 秒做一次 checkpoint}
+      - cmd: 'db.adminCommand({ setParameter: 1, journalCommitInterval: 50 })'
+        on: [mongod, configsvr]
+        note: {zh: 在线生效，范围 1–500 毫秒；重启后失效}
+      - cmd: 'db.<collection>.insertOne({ a: 1 }, { writeConcern: { w: "majority", j: true } })'
+        on: [mongod, mongos]
+        note: {zh: 'j: true 表示等写进 journal 再返回，相当于对这一次写入要求刷盘'}
+    fields:
+      log_flush: journalCommitInterval
+    notes:
+      - zh: 是否等刷盘由每次写入的写关注决定，而不是全局开关。默认写关注 w：majority 会等多数节点写进 journal 再返回（writeConcernMajorityJournalDefault 默认 true），单个节点宕机不会丢已确认的写入；用 w：1 时不等 journal，宕机可能丢最近一个刷盘周期内的写入。
+      - zh: mongos 不存数据，没有 journal；在 mongos 上只能通过写关注要求分片刷盘。没有 binlog 一说，oplog 和数据一起写进 journal。
+    refs:
+      - {title: 'MongoDB: Journaling', url: 'https://www.mongodb.com/docs/manual/core/journaling/'}
+      - {title: 'MongoDB: Write Concern', url: 'https://www.mongodb.com/docs/manual/reference/write-concern/'}
+    verify:
+      vars: {collection: t}
+      teardown: 'db.adminCommand({ setParameter: 1, journalCommitInterval: 100 })'
+related: [default-rw-concern, binlog-retention]

@@ -1,0 +1,41 @@
+schema_version: 2
+id: default-rw-concern
+category: config
+title: {zh: 默认读写关注：写到几个节点才算成功}
+summary: {zh: 查看和修改集群默认的写关注（写入要几个节点确认）和读关注（读到的数据要多「稳」）。}
+keywords:
+  zh: [写关注, 读关注, 默认写关注, 写几个节点, 读写一致性]
+  en: [getdefaultrwconcern, setdefaultrwconcern, write concern, read concern, w majority]
+fields:
+  - {id: write, name: {zh: 默认写关注}}
+  - {id: read, name: {zh: 默认读关注}}
+  - {id: source, name: {zh: 是内置默认还是设置过}}
+databases:
+  mysql:
+    support: none
+    notes:
+      - zh: 没有这个设置。MySQL 复制默认是异步的，主库提交后不等从库；想要「至少一个从库收到才算成功」，用半同步复制（rpl_semi_sync_source_wait_for_replica_count，8.0.26 之前叫 rpl_semi_sync_master_wait_for_slave_count）或 Group Replication。
+      - zh: 读一致性对应的是从库读到的数据新不新，要看复制延迟。
+    alternatives:
+      - title: {zh: 查看复制延迟}
+        see: replication-status
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.adminCommand({ getDefaultRWConcern: 1 })'
+        on: [mongod, mongos]
+        note: {zh: 在副本集或 mongos 上执行；分片集群的分片成员上会报不支持}
+      - cmd: 'db.adminCommand({ setDefaultRWConcern: 1, defaultWriteConcern: { w: "majority" }, defaultReadConcern: { level: "local" } })'
+        on: [mongod, mongos]
+        note: {zh: 分片集群在 mongos 上设置，对整个集群生效；副本集在主节点上设置}
+    fields:
+      write: defaultWriteConcern
+      read: defaultReadConcern
+      source: defaultWriteConcernSource
+    notes:
+      - zh: 没设置过时 defaultWriteConcernSource 是 implicit，用的是内置默认：通常是 w：majority；有仲裁节点的副本集可能是 w：1，以 getDefaultRWConcern 的结果为准。默认读关注是 local。
+      - zh: 每次读写还可以单独指定写关注和读关注，会覆盖默认值。
+    refs:
+      - {title: 'MongoDB: setDefaultRWConcern', url: 'https://www.mongodb.com/docs/manual/reference/command/setDefaultRWConcern/'}
+      - {title: 'MongoDB: Implicit Default Write Concern', url: 'https://www.mongodb.com/docs/manual/reference/write-concern/#implicit-default-write-concern'}
+related: [flush-durability, isolation-level, replication-status]
