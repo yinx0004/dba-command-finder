@@ -1,0 +1,36 @@
+schema_version: 2
+id: skip-replication-error
+category: replication
+title: {zh: 跳过一个复制错误}
+summary: {zh: 从库因为某条事件执行失败而停下（例如主键冲突），临时跳过它让复制继续。}
+keywords:
+  zh: [跳过复制错误, 复制中断, 主从断了, '1062']
+  en: [sql_slave_skip_counter, sql_replica_skip_counter, skip error, gtid_next]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SET GLOBAL sql_slave_skip_counter = 1;
+        deprecated_in: 8.0.26
+        note: {zh: 在 STOP REPLICA 之后执行，再 START REPLICA}
+      - cmd: SET GLOBAL sql_replica_skip_counter = 1;
+        since: 8.0.26
+      - cmd: SET GTID_NEXT = '<gtid>'; BEGIN; COMMIT; SET GTID_NEXT = 'AUTOMATIC';
+        skip: {zh: 需要实例开启 GTID}
+        note: {zh: 开了 GTID 时不能用 skip counter，要为出错的那个 GTID 注入一个空事务}
+    notes:
+      - zh: 跳过只是让复制接着跑，主从数据已经不一致了，事后要做数据校验（例如 pt-table-checksum）。
+    refs:
+      - {title: 'MySQL: Skipping Transactions', url: 'https://dev.mysql.com/doc/refman/8.4/en/replication-administration-skip.html'}
+  mongodb:
+    support: none
+    notes:
+      - zh: 没有跳过某条 oplog 的办法。从节点应用 oplog 失败会停下（进入 RECOVERING 或直接退出），要么修好数据后重启，要么清空这个成员重新做初始同步（initial sync）。
+    alternatives:
+      - title: {zh: 先看是哪个成员、什么状态}
+        see: replication-status
+      - title: {zh: 重新同步一个成员}
+        note: {zh: 停掉该成员、清空它的数据目录、再启动，它会自动从其他成员做初始同步}
+    refs:
+      - {title: 'MongoDB: Resync a Member of a Replica Set', url: 'https://www.mongodb.com/docs/manual/tutorial/resync-replica-set-member/'}
+related: [replication-status, pause-replication]

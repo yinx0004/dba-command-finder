@@ -1,0 +1,34 @@
+schema_version: 2
+id: purge-binlog
+category: replication
+title: {zh: 清理 binlog / 调整 oplog 大小}
+summary: {zh: binlog 占满磁盘时手动清理；在 MongoDB 里对应的是调整 oplog 的大小和保留时间。}
+keywords:
+  zh: [清理 binlog, binlog 太大, 删除 binlog, oplog 大小, 调整 oplog]
+  en: [purge binary logs, replsetresizeoplog, minretentionhours, binlog_expire_logs_seconds]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: PURGE BINARY LOGS BEFORE NOW() - INTERVAL 7 DAY;
+        note: {zh: 删掉 7 天前的 binlog 文件}
+      - cmd: SET GLOBAL binlog_expire_logs_seconds = 604800;
+        since: 8.0.1
+        note: {zh: 以后自动清理 7 天前的}
+    notes:
+      - zh: 清理前确认所有从库都已经读过这些文件，否则从库会因为找不到 binlog 而中断；不要直接删文件，要用 PURGE。
+    refs:
+      - {title: 'MySQL: PURGE BINARY LOGS', url: 'https://dev.mysql.com/doc/refman/8.4/en/purge-binary-logs.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ replSetResizeOplog: 1, size: 16384 })'
+        note: {zh: 把 oplog 改成 16 GB（单位 MB，最小 990），在线生效}
+      - cmd: 'db.adminCommand({ replSetResizeOplog: 1, minRetentionHours: 24 })'
+        since: '4.4'
+        note: {zh: 至少保留 24 小时，哪怕超过了设定的大小}
+    notes:
+      - zh: oplog 不需要手动清理，写满后自动覆盖最旧的记录；要保留更久就调大，而不是删除。每个成员要分别执行。
+    refs:
+      - {title: 'MongoDB: replSetResizeOplog', url: 'https://www.mongodb.com/docs/manual/reference/command/replSetResizeOplog/'}
+related: [binlog-retention, rotate-logs]

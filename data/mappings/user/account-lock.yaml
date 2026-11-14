@@ -1,0 +1,35 @@
+schema_version: 2
+id: account-lock
+category: user
+title: {zh: 锁定、解锁账号}
+summary: {zh: 临时禁止某个账号登录（例如员工离职、账号可疑），又不想删掉它。}
+keywords:
+  zh: [锁定账号, 禁用账号, 解锁账号, 禁止登录]
+  en: [account lock, account unlock, disable user]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER USER '<user>'@'<host>' ACCOUNT LOCK;
+        since: 5.7.6
+      - cmd: ALTER USER '<user>'@'<host>' ACCOUNT UNLOCK;
+        since: 5.7.6
+    notes:
+      - zh: 锁定只影响新的登录，已经连着的会话不会断开，要立即生效还得 KILL 掉它们。
+    refs:
+      - {title: 'MySQL: Account Locking', url: 'https://dev.mysql.com/doc/refman/8.4/en/account-locking.html'}
+    verify:
+      setup: CREATE USER 'app_lock'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {user: app_lock, host: '%'}
+  mongodb:
+    support: none
+    notes:
+      - zh: 没有锁定账号的开关。常见做法是收回它的全部角色（能登录但什么都做不了），或者用 authenticationRestrictions 限制它只能从不存在的地址登录；要恢复时再改回来。
+    alternatives:
+      - title: {zh: 收回全部角色}
+        cmd: 'db.updateUser("<user>", { roles: [] })'
+      - title: {zh: 限制登录来源}
+        cmd: 'db.updateUser("<user>", { authenticationRestrictions: [{ clientSource: ["127.0.0.1"] }] })'
+    refs:
+      - {title: 'MongoDB: db.updateUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.updateUser/'}
+related: [drop-user, kill-session]

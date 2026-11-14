@@ -1,0 +1,38 @@
+schema_version: 2
+id: replication-position
+category: replication
+title: {zh: 查看复制位点}
+summary: {zh: 记下或对比主从各自执行到哪了，做切换、搭从库、按位点恢复时都要用。}
+keywords:
+  zh: [复制位点, 同步位置, GTID, binlog 位置]
+  en: [gtid_executed, executed_gtid_set, binlog position, optime]
+fields:
+  - {id: position, name: {zh: 位点}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@gtid_mode, @@gtid_executed;
+        note: {zh: 开了 GTID 时，gtid_executed 就是执行到哪的完整记录}
+      - cmd: SHOW MASTER STATUS;
+        deprecated_in: 8.2.0
+        removed_in: '8.4'
+        note: {zh: 当前 binlog 文件名和偏移}
+      - cmd: SHOW BINARY LOG STATUS;
+        since: 8.2.0
+    fields:
+      position: {name: Executed_Gtid_Set, note: {zh: 不开 GTID 时用 File + Position 表示位点}}
+    refs:
+      - {title: 'MySQL: GTID Concepts', url: 'https://dev.mysql.com/doc/refman/8.4/en/replication-gtids-concepts.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'rs.status().members.map(m => ({ name: m.name, state: m.stateStr, optimeDate: m.optimeDate }))'
+        note: {zh: 每个成员执行到的 oplog 时间点}
+    fields:
+      position: optimeDate
+    notes:
+      - zh: 位点就是 oplog 里的时间戳（optime），没有「文件名 + 偏移」这种形式，也不需要手动记录：从节点会自己找到同步起点。
+    refs:
+      - {title: 'MongoDB: rs.status()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.status/'}
+related: [replication-status, binlog-retention, point-in-time-recovery]
