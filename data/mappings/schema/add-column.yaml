@@ -1,0 +1,35 @@
+schema_version: 2
+id: add-column
+category: schema
+title: {zh: 给表加一列}
+summary: {zh: 业务要多存一个字段。}
+keywords:
+  zh: [加列, 加字段, 增加字段, 改表结构]
+  en: [add column, alter table, instant ddl, collmod]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> ADD COLUMN <column> INT NULL;
+      - cmd: ALTER TABLE <table> ADD COLUMN <column2> INT NULL, ALGORITHM=INSTANT;
+        since: 8.0.12
+        note: {zh: 只改元数据，大表也能瞬间完成；做不到时直接报错，而不是悄悄改成重建表}
+    refs:
+      - {title: 'MySQL: Online DDL Operations', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t, column: c1, column2: c2}
+  mongodb:
+    support: none
+    notes:
+      - zh: '集合没有固定结构，不需要先加列：新字段直接写进新文档就行。老文档上没有这个字段，查询时按「不存在」处理（{ field: null } 也会匹配到它们）。'
+    alternatives:
+      - title: {zh: 给老文档补上默认值}
+        cmd: 'db.<collection>.updateMany({ <field>: { $exists: false } }, { $set: { <field>: 0 } })'
+      - title: {zh: 要求以后的文档必须有这个字段（加校验规则）}
+        cmd: 'db.runCommand({ collMod: "<collection>", validator: { $jsonSchema: { required: ["<field>"] } } })'
+      - title: {zh: 查看现在的校验规则}
+        see: show-create-table
+    refs:
+      - {title: 'MongoDB: Schema Validation', url: 'https://www.mongodb.com/docs/manual/core/schema-validation/'}
+related: [show-create-table]

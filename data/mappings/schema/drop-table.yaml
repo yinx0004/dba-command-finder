@@ -1,0 +1,31 @@
+schema_version: 2
+id: drop-table
+category: schema
+title: {zh: 删除表}
+summary: {zh: 删除整张表（集合）和它的数据、索引。}
+keywords:
+  zh: [删表, 删除表, 删除集合]
+  en: [drop table, drop collection]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: DROP TABLE <table>;
+      - cmd: DROP TABLE IF EXISTS <table>;
+        note: {zh: 表不存在时只给警告，不报错}
+    refs:
+      - {title: 'MySQL: DROP TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/drop-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.<collection>.drop()
+        note: {zh: 集合不存在也不会报错}
+    refs:
+      - {title: 'MongoDB: db.collection.drop()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.drop/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 })'
+      vars: {collection: t}
+related: [rename-table]
