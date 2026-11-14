@@ -1,0 +1,32 @@
+schema_version: 2
+id: rename-table
+category: schema
+title: {zh: 修改表名}
+summary: {zh: 给表（集合）改名，常用于新旧表切换。}
+keywords:
+  zh: [改表名, 重命名表, 表改名]
+  en: [rename table, renamecollection]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: RENAME TABLE <table> TO <new_table>;
+    notes:
+      - zh: '一条 RENAME TABLE 可以原子地改多张表，例如交换新旧表：RENAME TABLE t TO t_old, t_new TO t;'
+    refs:
+      - {title: 'MySQL: RENAME TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/rename-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t, new_table: t_new}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.<collection>.renameCollection("<new_collection>")
+    notes:
+      - zh: '一次只能改一个集合，没有原子交换两个集合名的办法。跨库改名用 db.adminCommand({ renameCollection: "a.c", to: "b.c" })，会复制全部数据，大集合很慢。'
+    refs:
+      - {title: 'MongoDB: db.collection.renameCollection()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.renameCollection/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 })'
+      vars: {collection: t, new_collection: t_new}
+related: [drop-table]

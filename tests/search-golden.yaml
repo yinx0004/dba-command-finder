@@ -117,5 +117,17 @@
 - {q: shutdown, top: shutdown}
 - {q: 关闭数据库, top: shutdown}
 
+- {q: create database, top: create-database}
+- {q: 建库, top: create-database}
+- {q: show create table, top: show-create-table}
+- {q: 表结构, top: show-create-table}
+- {q: desc, top: show-create-table}
+- {q: rename table, top: rename-table}
+- {q: renameCollection, top: rename-table}
+- {q: drop table, top: drop-table}
+- {q: 删表, top: drop-table}
+- {q: add column, top: add-column}
+- {q: 加字段, top: add-column}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

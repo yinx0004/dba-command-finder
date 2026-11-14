@@ -1,0 +1,38 @@
+schema_version: 2
+id: show-create-table
+category: schema
+title: {zh: 查看表结构}
+summary: {zh: 看一张表有哪些列、类型和约束；在 MongoDB 里是看集合的选项和文档长什么样。}
+keywords:
+  zh: [表结构, 建表语句, 字段类型, 有哪些列]
+  en: [show create table, desc, describe, getcollectioninfos, jsonschema]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW CREATE TABLE <table>;
+        note: {zh: 完整的建表语句，包括索引、字符集、引擎}
+      - cmd: DESC <table>;
+        note: {zh: 只看列和类型}
+    refs:
+      - {title: 'MySQL: SHOW CREATE TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-create-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10) NOT NULL);
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.getCollectionInfos({ name: "<collection>" })'
+        note: {zh: 集合的选项：校验规则（validator）、固定集合、排序规则等}
+      - cmd: db.<collection>.findOne()
+        note: {zh: 看一条样例文档}
+    notes:
+      - zh: 集合没有固定结构，所以没有「建表语句」。字段和类型只能从文档本身看；要了解字段分布，可以用 Compass 的 Schema 页抽样分析。
+      - zh: 如果建集合时设置了 $jsonSchema 校验规则，getCollectionInfos 里的 validator 就是最接近表结构的东西。索引另外用 getIndexes() 看。
+    refs:
+      - {title: 'MongoDB: db.getCollectionInfos()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.getCollectionInfos/'}
+      - {title: 'MongoDB: Schema Validation', url: 'https://www.mongodb.com/docs/manual/core/schema-validation/'}
+    verify:
+      setup: 'db.createCollection("t", { validator: { $jsonSchema: { bsonType: "object", required: ["a"] } } }); db.t.insertOne({ a: "x" })'
+      vars: {collection: t}
+related: [list-tables, show-indexes, add-column]

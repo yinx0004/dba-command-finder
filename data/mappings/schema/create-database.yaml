@@ -1,0 +1,36 @@
+schema_version: 2
+id: create-database
+category: schema
+title: {zh: 创建数据库}
+summary: {zh: 给新应用建一个库。}
+keywords:
+  zh: [建库, 新建数据库, 创建库]
+  en: [create database, create schema, use]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE DATABASE <name> DEFAULT CHARACTER SET utf8mb4;
+      - cmd: CREATE DATABASE IF NOT EXISTS <name>;
+        note: {zh: 库已存在时只给警告，不报错}
+    notes:
+      - zh: 不写字符集时，8.0 起默认 utf8mb4，5.7 默认 latin1，建库时最好显式写上。
+    refs:
+      - {title: 'MySQL: CREATE DATABASE', url: 'https://dev.mysql.com/doc/refman/8.4/en/create-database.html'}
+    verify:
+      vars: {name: lab_new_db}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: use <name>
+        note: {zh: 只是切换过去，这时库还不存在}
+      - cmd: db.getSiblingDB("<name>").createCollection("<collection>")
+        note: {zh: 第一次建集合（或写入数据）时，库才真正创建}
+    notes:
+      - zh: 没有建库命令。use 一个不存在的库不会创建它，show dbs 里也看不到，直到第一次写入或建集合。
+      - zh: 没有库级字符集，字符串一律是 UTF-8；排序规则（collation）在集合或索引上设置。
+    refs:
+      - {title: 'MongoDB: Databases and Collections', url: 'https://www.mongodb.com/docs/manual/core/databases-and-collections/'}
+    verify:
+      vars: {name: lab_new_db, collection: t}
+related: [list-databases]
