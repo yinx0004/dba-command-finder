@@ -40,4 +40,20 @@ databases:
     verify:
       setup: 'db.createUser({ user: "app_show", pwd: "Lab#Pass123", roles: [{ role: "read", db: "<db>" }] })'
       vars: {user: app_show}
+  redis:
+    support: full
+    commands:
+      - cmd: ACL GETUSER <user>
+        note:
+          zh: flags 是状态，commands 是允许的命令，keys 是能访问的键名模式
+      - cmd: ACL DRYRUN <user> SET app:1 x
+        since: '7.0'
+        note:
+          zh: 不真正执行，只检查这个用户能不能执行这条命令
+    fields:
+      privileges: commands
+    verify:
+      setup: 'ACL SETUSER app_show on >Lab#Pass123 ~* +@all'
+      vars: {user: app_show}
+      teardown: ACL DELUSER app_show
 related: [grant-privileges, list-users]

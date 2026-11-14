@@ -37,4 +37,13 @@ databases:
     refs:
       - {title: 'MongoDB: rs.printReplicationInfo()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.printReplicationInfo/'}
       - {title: 'MongoDB: Replica Set Oplog', url: 'https://www.mongodb.com/docs/manual/core/replica-set-oplog/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO replication
+        note:
+          zh: repl_backlog_histlen 是积压缓冲区里实际有多少字节，repl_backlog_first_byte_offset 是能续传的最早位置
+      - cmd: CONFIG GET repl-backlog-size
+    notes:
+      - zh: 复制积压缓冲区在内存里，大小固定、循环覆盖；从库断开期间主库写入的量超过它，就只能全量同步。
 related: [binlog-events, replication-status, point-in-time-recovery]

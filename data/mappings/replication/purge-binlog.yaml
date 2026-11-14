@@ -31,4 +31,18 @@ databases:
       - zh: oplog 不需要手动清理，写满后自动覆盖最旧的记录；要保留更久就调大，而不是删除。每个成员要分别执行。
     refs:
       - {title: 'MongoDB: replSetResizeOplog', url: 'https://www.mongodb.com/docs/manual/reference/command/replSetResizeOplog/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET repl-backlog-size
+        note:
+          zh: 复制积压缓冲区的大小，从库断开后能增量续传的范围就这么大
+      - cmd: CONFIG SET repl-backlog-size 64mb
+      - cmd: BGREWRITEAOF
+        note:
+          zh: 后台重写 AOF，把同一个键的多次修改压成一条，文件变小
+    notes:
+      - zh: 没有 binlog。复制靠内存里的积压缓冲区，大小固定、循环覆盖，不用清理；AOF 文件会一直变大，用 BGREWRITEAOF 或 auto-aof-rewrite-percentage 自动重写来缩小。
+    verify:
+      teardown: CONFIG SET repl-backlog-size 1mb
 related: [binlog-retention, rotate-logs]

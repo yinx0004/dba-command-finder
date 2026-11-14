@@ -47,4 +47,17 @@ databases:
       # Operations on system.profile itself are not profiled, so profile one query before looking.
       setup: 'db.t.insertOne({ a: 1 }); db.setProfilingLevel(2); db.t.find({ a: 1 }).toArray()'
       teardown: db.setProfilingLevel(0)
+  redis:
+    support: partial
+    commands:
+      - cmd: MONITOR
+        skip: {zh: MONITOR 会一直输出，不会自己结束}
+        note:
+          zh: 实时打印实例收到的每条命令，带时间戳、库号和客户端地址
+    fields:
+      time: {name: MONITOR 每行开头的时间戳}
+      client: {name: MONITOR 每行方括号里的客户端地址}
+      statement: {name: MONITOR 每行后面的命令和参数}
+    notes:
+      - zh: MONITOR 只在连接期间输出，不落盘，而且会明显拖慢实例，只适合短时间排查；没有能一直开着的语句日志。
 related: [slow-query-log, error-log]

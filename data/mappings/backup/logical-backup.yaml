@@ -48,4 +48,19 @@ databases:
       - {title: 'MongoDB: mongodump', url: 'https://www.mongodb.com/docs/database-tools/mongodump/'}
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }])'
+  redis:
+    support: partial
+    commands:
+      - cmd: BGSAVE
+        note:
+          zh: 后台 fork 子进程生成 RDB 快照，写到 dir 目录下的 dbfilename
+      - cmd: LASTSAVE
+        note:
+          zh: 最近一次快照成功的 Unix 时间
+      - cmd: redis-cli --rdb /tmp/backup.rdb
+        shell: true
+        note:
+          zh: 从远程把快照下载到本地文件
+    notes:
+      - zh: 备份就是 RDB 快照，二进制、整个实例一份，不能只备份某个库或某些键。fork 时内存会按写入量额外增长，大实例要预留内存。
 related: [logical-restore, global-read-lock, point-in-time-recovery]

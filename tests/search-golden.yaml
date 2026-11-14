@@ -317,3 +317,15 @@
 - {q: latency doctor, top: wait-events}
 - {q: appendfsync, top: flush-durability}
 - {q: redis-cli --bigkeys, top: hot-tables}
+- {q: ACL DELUSER, top: drop-user}
+- {q: ACL GETUSER, top: show-grants}
+- {q: ACL LIST, top: list-users}
+- {q: ACL GENPASS, top: password-policy}
+- {q: BGSAVE, top: logical-backup}
+- {q: REPLICAOF NO ONE, top: pause-replication}
+- {q: ROLE, top: replica-role}
+- {q: CLIENT PAUSE, top_any: [global-read-lock, set-read-only]}
+- {q: DBSIZE, top_any: [database-size, row-count]}
+- {q: MEMORY USAGE, top: table-size}
+- {q: BGREWRITEAOF, top: purge-binlog}
+- {q: MONITOR, top: general-log}

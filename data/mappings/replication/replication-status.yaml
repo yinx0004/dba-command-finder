@@ -63,4 +63,19 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/method/rs.status/
       - title: 'MongoDB: rs.printSecondaryReplicationInfo()'
         url: https://www.mongodb.com/docs/manual/reference/method/rs.printSecondaryReplicationInfo/
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO replication
+        note:
+          zh: 在从库上执行；master_link_status 为 up 表示正常
+      - cmd: ROLE
+    fields:
+      lag: {name: 主库的 master_repl_offset 减从库的 slave_repl_offset, note: {zh: 落后的是字节数，不是秒数；master_last_io_seconds_ago 是多少秒没收到主库的数据}}
+      health: master_link_status
+      source: master_host / master_port
+    notes:
+      - zh: 没有复制错误这一说：从库只是按顺序重放主库发来的命令，连接断了就重连续传，续不上就全量同步。
+    verify:
+      skip_fields: {zh: 这些字段只在从库上出现}
 related: [server-status]

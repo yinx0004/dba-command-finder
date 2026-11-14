@@ -31,4 +31,17 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/method/db.fsyncLock/
     verify:
       teardown: db.fsyncUnlock()
+  redis:
+    support: partial
+    commands:
+      - cmd: CLIENT PAUSE 2000 WRITE
+        since: '6.2'
+        note:
+          zh: 让所有客户端的写命令等待 2000 毫秒，读命令照常，到时间自动恢复
+      - cmd: CLIENT UNPAUSE
+        since: '6.2'
+        note:
+          zh: 提前恢复
+    notes:
+      - zh: 做备份不需要锁：BGSAVE 用 fork 出来的子进程写快照，快照是 fork 那一刻的数据，主进程照常处理读写。
 related: [lock-waits]

@@ -32,4 +32,19 @@ databases:
         cmd: 'db.updateUser("<user>", { authenticationRestrictions: [{ clientSource: ["127.0.0.1"] }] })'
     refs:
       - {title: 'MongoDB: db.updateUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.updateUser/'}
+  redis:
+    support: full
+    commands:
+      - cmd: ACL SETUSER <user> off
+        note:
+          zh: 禁用用户，之后不能再用它登录
+      - cmd: ACL SETUSER <user> on
+        note:
+          zh: 重新启用
+    notes:
+      - zh: 禁用只挡住新的登录，已经登录的连接还能继续用；要立即生效，再执行 CLIENT KILL USER <user>。
+    verify:
+      setup: 'ACL SETUSER app_lock on >Lab#Pass123 ~* +@all'
+      vars: {user: app_lock}
+      teardown: ACL DELUSER app_lock
 related: [drop-user, kill-session]

@@ -37,4 +37,16 @@ databases:
       - {title: 'MongoDB: db.getUsers()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.getUsers/'}
     verify:
       setup: 'db.createUser({ user: "app_list", pwd: "Lab#Pass123", roles: [] })'
+  redis:
+    support: full
+    commands:
+      - cmd: ACL LIST
+        note:
+          zh: 每个用户一行：状态、密码的哈希、能访问的键和命令
+      - cmd: ACL USERS
+        note:
+          zh: 只列用户名
+    fields:
+      user: user
+      auth: {name: nopass 或以井号开头的密码哈希, note: {zh: nopass 表示不需要密码}}
 related: [create-user, drop-user]

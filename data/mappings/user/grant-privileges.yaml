@@ -42,4 +42,20 @@ databases:
     verify:
       setup: 'db.createUser({ user: "app_grant", pwd: "Lab#Pass123", roles: [] })'
       vars: {user: app_grant, role: app_rw}
+  redis:
+    support: partial
+    commands:
+      - cmd: ACL SETUSER <user> +@write ~app:*
+        note:
+          zh: +@write 加上所有写命令；~app:* 允许访问以「app:」开头的键
+      - cmd: ACL SETUSER <user> (+@write ~cache:*)
+        since: '7.0'
+        note:
+          zh: 括号里是一组单独的权限（selector）：只对「cache:」开头的键允许写
+    notes:
+      - zh: 没有按库授权，权限按命令（或命令类别）和键名模式来给；同一个用户的权限会累加。
+    verify:
+      setup: 'ACL SETUSER app_grant on >Lab#Pass123 ~app:* +@read'
+      vars: {user: app_grant}
+      teardown: ACL DELUSER app_grant
 related: [create-user, show-grants]

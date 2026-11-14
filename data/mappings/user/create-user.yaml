@@ -33,4 +33,16 @@ databases:
       - {title: 'MongoDB: db.createUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.createUser/'}
     verify:
       vars: {user: app_create, password: 'Lab#Pass123'}
+  redis:
+    support: full
+    commands:
+      - cmd: ACL SETUSER <user> on ><password> ~* +@read
+        note:
+          zh: on 启用；>后面是密码；~* 允许访问所有键；+@read 允许所有读命令
+    notes:
+      - zh: 新建的用户默认是禁用的，也没有任何权限，要写上 on 和权限。
+      - zh: 用户只在内存里，重启就没了；用了 aclfile 时执行 ACL SAVE 保存，否则执行 CONFIG REWRITE 写回配置文件。
+    verify:
+      vars: {user: app_new, password: 'Lab#Pass123'}
+      teardown: ACL DELUSER app_new
 related: [grant-privileges, list-users]

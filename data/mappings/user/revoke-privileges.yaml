@@ -41,4 +41,19 @@ databases:
     verify:
       setup: 'db.createUser({ user: "app_revoke", pwd: "Lab#Pass123", roles: [{ role: "readWrite", db: "<db>" }] }); db.createRole({ role: "app_role", privileges: [{ resource: { db: "<db>", collection: "" }, actions: ["find", "insert"] }], roles: [] })'
       vars: {user: app_revoke, role: app_role}
+  redis:
+    support: partial
+    commands:
+      - cmd: ACL SETUSER <user> -@write
+        note:
+          zh: 去掉所有写命令
+      - cmd: ACL SETUSER <user> resetkeys ~app:*
+        note:
+          zh: 清掉原来能访问的键，只留「app:」开头的
+    notes:
+      - zh: 没有按库回收，权限按命令类别和键名模式来改。
+    verify:
+      setup: 'ACL SETUSER app_revoke on >Lab#Pass123 ~* +@all'
+      vars: {user: app_revoke}
+      teardown: ACL DELUSER app_revoke
 related: [grant-privileges, show-grants, account-lock]

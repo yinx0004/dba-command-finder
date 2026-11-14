@@ -43,4 +43,15 @@ databases:
     verify:
       setup_shell: printf 'a,b\n1,x\n2,y\n' > <collection>.csv && printf '{"a":1,"b":"x"}\n{"a":2,"b":"y"}\n' > <collection>.json
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: redis-cli --pipe < /tmp/data.txt
+        shell: true
+        note:
+          zh: 批量执行文件里的命令，一行一条，例如 SET app:1 a
+    notes:
+      - zh: 没有导入 CSV 的命令，要先把数据转成命令（或 Redis 协议格式）再用 --pipe 灌进去。
+    verify:
+      setup_shell: printf 'SET app:1 a\nSET app:2 b\n' > /tmp/data.txt
 related: [export-data, logical-restore]

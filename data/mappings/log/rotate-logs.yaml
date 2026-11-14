@@ -29,4 +29,8 @@ databases:
       - zh: 要配合系统的 logrotate 使用，把 systemLog.logRotate 设为 reopen，由 logrotate 改名、mongod 只重新打开。
     refs:
       - {title: 'MongoDB: logRotate', url: 'https://www.mongodb.com/docs/manual/reference/command/logRotate/'}
+  redis:
+    support: none
+    notes:
+      - zh: 没有切换日志文件的命令，Redis 不会重新打开日志文件。日志写到文件时，用 logrotate 的 copytruncate 方式切割。
 related: [error-log, binlog-retention]

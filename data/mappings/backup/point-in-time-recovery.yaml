@@ -42,4 +42,25 @@ databases:
       - {title: 'MongoDB: mongorestore --oplogReplay', url: 'https://www.mongodb.com/docs/database-tools/mongorestore/#std-option-mongorestore.--oplogReplay'}
     verify:
       setup: 'db.t.insertOne({ a: 1 })'
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG SET appendonly yes
+        note:
+          zh: 打开 AOF，每个写命令都追加记录
+      - cmd: CONFIG SET aof-timestamp-enabled yes
+        since: '7.0'
+        note:
+          zh: 在 AOF 里记录时间戳
+      - cmd: redis-check-aof --truncate-to-timestamp <timestamp> <aof_file>
+        shell: true
+        skip: {zh: 要停掉 Redis 再截断 AOF 文件，lab 没法在运行中验证}
+        note:
+          zh: 把 AOF 截到某个时间点，再用它启动
+    notes:
+      - zh: 只有开着 AOF、并且打开了时间戳记录，才能恢复到某个时间点；只有 RDB 快照时只能回到某次快照。
+    verify:
+      teardown: |-
+        CONFIG SET aof-timestamp-enabled no
+        CONFIG SET appendonly no
 related: [logical-backup, logical-restore]

@@ -40,4 +40,20 @@ databases:
       - {title: 'MongoDB: db.stats()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.stats/'}
     verify:
       setup: 'db.t.insertOne({ a: 1 })'
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG GET dir
+        note:
+          zh: RDB 快照和 AOF 文件所在的目录
+      - cmd: df -h "$(redis-cli CONFIG GET dir | tail -n 1)"
+        shell: true
+        note:
+          zh: 这个目录所在磁盘的空间
+    fields:
+      data_dir: dir
+      disk_used: Used
+      disk_total: Size
+    notes:
+      - zh: 数据都在内存里，磁盘只放快照和 AOF；但 BGSAVE 和 AOF 重写时会临时多出一份文件，要留够空间。
 related: [database-size, table-size]
