@@ -18,7 +18,7 @@ const ui = UI[lang];
 const h = ui.homePage;
 const eq = eqLabels(lang, dbs[1].name);
 ---
-<div class:list={['cov', { 'cov-cmds': commands }]}>
+<div class:list={['cov', { 'cov-cmds': commands }]} style={`--n: ${dbs.length}`}>
   <div class="cov-row cov-header" aria-hidden="true">
     <span>{h.matrixTask}</span>
     {
@@ -35,7 +35,6 @@ const eq = eqLabels(lang, dbs[1].name);
       <div class="cov-row">
         <span class="cov-title">
           <a href={entryHref(lang, row.slug)}>{row.title}</a>
-          {row.eq !== 'exact' && <span class={`cov-eq cov-eq-${row.eq}`}>{eq[row.eq]}</span>}
           {row.deprecated && <span class="cov-eq">{ui.deprecated}</span>}
         </span>
         {row.cells.map((c) => (
@@ -69,7 +68,7 @@ const eq = eqLabels(lang, dbs[1].name);
                   {c.cmd}
                 </code>
               ) : (
-                <span class="cov-cmd cov-nil">{row.eq === 'missing' ? eq.missing : ui.noEquivalent}</span>
+                <span class="cov-cmd cov-nil">{c.written ? ui.noEquivalent : eq.missing}</span>
               ))}
           </span>
         ))}

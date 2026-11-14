@@ -19,8 +19,11 @@ export const UI = {
   zh: {
     siteName: 'DBA Command Finder',
     tagline: (s: string, t: string) => `${s} → ${t} 运维命令对照`,
+    taglineAll: (dbs: string[]) => `${dbs.join('、')} 运维命令对照`,
+    categoryDesc: (cat: string, dbs: string[], desc: string) => `${cat}相关的运维命令在 ${dbs.join('、')} 里分别怎么写：${desc}`,
     heroTitle: (s: string, t: string) => `${s} 运维命令，在 ${t} 里怎么做？`,
     heroSub: (s: string, t: string) => `输入 ${s} 命令、${t} 命令或中文关键词。每条对照都写清版本差异，没有等价命令时会明确告诉你。`,
+    heroSubAll: (dbs: string[]) => `输入 ${dbs.join('、')} 的命令或中文关键词，查同一件运维任务在其他数据库里怎么做。每条对照都写清版本差异，没有对应命令时会明确告诉你。`,
     searchLabel: '搜索命令或关键词',
     searchPlaceholder: '例如 show processlist、锁等待、主从延迟、db.currentOp',
     tryLabel: '试试：',
@@ -124,7 +127,7 @@ export const UI = {
       browse: (n: number) => `按类别浏览全部 ${n} 条`,
       methodTitle: '命令是怎么验证的',
       method: [
-        '页面上的命令一个字不改，在 Docker 里的真实 MySQL 和 MongoDB 上执行。',
+        '页面上的命令一个字不改，在 Docker 里的真实数据库上执行。',
         '标了「8.0 起」的命令，在 5.7 上必须报错；标了「8.4 移除」的，在 8.4 上必须报错。版本写错，CI 不会通过。',
         '字段对照表里的名字，必须出现在命令的实际输出里。需要从库或分片集群才能看到的字段，页面上会直接写明没有核对。',
         '数据、验证脚本和每次结果都在 GitHub 上，Apache-2.0。',
@@ -138,6 +141,8 @@ export const UI = {
     // The translator's labels; {x} slots are filled in the browser.
     tr: {
       inputLabel: '输入命令或要做的事',
+      fromDb: '从哪个数据库',
+      toDb: '换成哪个数据库',
       placeholder: '粘贴一条命令，或者写要做的事，例如「锁等待」',
       swap: '⇄ 互换',
       copy: '复制',

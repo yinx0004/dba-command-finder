@@ -3,6 +3,7 @@
 // versions the lab verifies. The script below adjusts any page that marks its commands with
 // data-ver (intent pages), data-verified (verified-version tags) or data-pick (one-line summaries).
 import { loadDataset } from '../lib/data';
+import { siteDbs } from '../lib/docs';
 import { UI, type Lang } from '../lib/i18n';
 
 interface Props {
@@ -11,8 +12,8 @@ interface Props {
 const { lang } = Astro.props;
 const ui = UI[lang];
 const ds = loadDataset();
-const ids = [ds.site.pair.source, ds.site.pair.target];
-const dbs = ids.map((id) => ds.databases.find((d) => d.id === id)!).filter((d) => d.lab_versions.length);
+const sides = siteDbs(ds);
+const dbs = sides.map((s) => s.def);
 const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
 ---
 <div class="version-bar" data-options={JSON.stringify(options)} data-labels={JSON.stringify(ui.ver)}>
@@ -21,9 +22,9 @@ const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
     {
       dbs.map((d, i) => (
         <>
-          {i > 0 && <span aria-hidden="true">→</span>}
+          {i > 0 && <span class="version-sep" aria-hidden="true" />}
           <span class="version-pick">
-            <span class:list={['version-db', i === 0 ? 'side-source' : 'side-target']}>{d.name}</span>
+            <span class:list={['version-db', `side-${sides[i].role}`]}>{d.name}</span>
             <span class="seg" role="group" aria-label={ui.ver.groupLabel(d.name)}>
               {['', ...d.lab_versions].map((v) => (
                 <button type="button" data-db={d.id} data-line={v} aria-pressed={v === '' ? 'true' : 'false'}>

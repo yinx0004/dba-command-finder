@@ -4,7 +4,7 @@ import CoverageTable from '../../components/CoverageTable.astro';
 import Translator from '../../components/Translator.tsx';
 import { coverageRow } from '../../lib/coverage';
 import { loadDataset } from '../../lib/data';
-import { pairMappings, toSearchDocs } from '../../lib/docs';
+import { pairMappings, siteDbs, toSearchDocs } from '../../lib/docs';
 import { homeStats, labStatus } from '../../lib/home';
 import { LANGS, t, UI, type Lang } from '../../lib/i18n';
 import { runTotals } from '../../lib/proof';
@@ -22,7 +22,8 @@ const h = ui.homePage;
 const ds = loadDataset();
 const v = loadVerification();
 const { source, target } = ds.site.pair;
-const pairDbs = [source, target].map((id) => ds.databases.find((d) => d.id === id)!);
+const sides = siteDbs(ds);
+const pairDbs = sides.map((s) => s.def);
 const [S, T] = pairDbs.map((d) => d.name);
 const stats = homeStats(ds);
 const lab = labStatus(ds, v);
@@ -30,8 +31,8 @@ const mappings = pairMappings(ds);
 
 // The translator's data, built here so the browser does no lab arithmetic of its own.
 const docs = toSearchDocs(ds, lang);
-const entries = translateEntries(ds, v, lang, [source, target]);
-const dbs = pairDbs.map((d) => ({ id: d.id, name: d.name, vers: d.lab_versions }));
+const entries = translateEntries(ds, v, lang, pairDbs.map((d) => d.id));
+const dbs = sides.map((s) => ({ id: s.def.id, name: s.def.name, vers: s.def.lab_versions, role: s.role }));
 
 // --- Coverage matrix: the tasks picked in data/site.yaml ---
 const byId = new Map(ds.mappings.map((m) => [m.id, m]));
@@ -42,7 +43,7 @@ const categories = ds.categories.filter((c) => counts.get(c.id));
 
 const ledger = runTotals(ds, v);
 ---
-<Base lang={lang} title={`${ui.siteName}：${ui.tagline(S, T)}`} description={ui.heroSub(S, T)} variant="home" versionBar={false} footerNote={h.footer(stats.versions)}>
+<Base lang={lang} title={`${ui.siteName}：${ui.taglineAll(pairDbs.map((d) => d.name))}`} description={ui.heroSubAll(pairDbs.map((d) => d.name))} variant="home" versionBar={false} footerNote={h.footer(stats.versions)}>
   <main class="wrap home">
     <section class="home-top">
       <h1>{h.title}</h1>

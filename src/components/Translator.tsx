@@ -16,12 +16,14 @@ interface Db {
   id: string;
   name: string;
   vers: string[];
+  /** color: source blue, target green, any other in a third color */
+  role: 'source' | 'target' | 'third';
 }
 
 interface Props {
   docs: SearchDoc[];
   entries: Record<string, TEntry>;
-  /** the pair, source first */
+  /** the databases the site shows, the pair first */
   dbs: Db[];
   tries: string[];
   /** link prefix for entries, e.g. "/dba-command-finder/zh/" */
@@ -45,7 +47,8 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
   const ids = dbs.map((d) => d.id);
   const [q, setQ] = useState(tries[0] ?? '');
   const [typed, setTyped] = useState(false);
-  const [dir, setDir] = useState(0);
+  // The reader's choice of databases, [from, to]; a pasted command overrides "from".
+  const [pick, setPick] = useState<[string, string]>([dbs[0].id, dbs[1].id]);
   const [pref, setPref] = useState<Pref>({});
   const [copied, setCopied] = useState('');
 
@@ -80,10 +83,11 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
   // A command none of the entries has is not "close enough" to another task: say so, and list what is near.
   const top = match || !looksLikeCommand(q) ? best : undefined;
   const nearby = top ? [] : results.slice(0, 3);
-  // A pasted command decides the direction; otherwise the reader's choice does.
-  const fromIdx = match ? ids.indexOf(match.db) : dir;
-  const from = dbs[fromIdx];
-  const to = dbs[1 - fromIdx];
+  // A pasted command decides which database it is from; the reader picks the other side.
+  const fromId = match ? match.db : pick[0];
+  const toId = pick[1] !== fromId ? pick[1] : pick[0] !== fromId ? pick[0] : ids.find((x) => x !== fromId)!;
+  const from = dbs.find((d) => d.id === fromId)!;
+  const to = dbs.find((d) => d.id === toId)!;
   const fromLine = pref[from.id] ?? '';
   const toLine = pref[to.id] ?? '';
   const fromSide = top?.sides[from.id];
@@ -99,8 +103,11 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
   const swap = () => {
     const next = picks?.usable[0]?.cmd.cmd;
     if (match && next) type(next);
-    setDir(1 - fromIdx);
+    setPick([toId, fromId]);
   };
+  // Picking the database the other side shows swaps the two.
+  const choose = (side: 0 | 1, id: string) =>
+    setPick(side === 0 ? [id, id === toId ? fromId : toId] : [id === fromId ? toId : fromId, id]);
   const copy = async (cmd: string) => {
     try {
       await navigator.clipboard.writeText(cmd);
@@ -118,7 +125,7 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
     <section className="tr" aria-label={L.inputLabel}>
       <div className="tr-grid">
         <div className="tr-pane">
-          <PaneHead db={from} role={fromIdx === 0 ? 'source' : 'target'} line={fromLine} setLine={setLine} L={L}>
+          <PaneHead db={from} dbs={dbs} label={L.fromDb} onPick={(id) => choose(0, id)} line={fromLine} setLine={setLine} L={L}>
             <button type="button" className="tr-swap" onClick={swap}>
               {L.swap}
             </button>
@@ -154,7 +161,7 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
         </div>
 
         <div className="tr-pane tr-pane-out">
-          <PaneHead db={to} role={fromIdx === 0 ? 'target' : 'source'} line={toLine} setLine={setLine} L={L}>
+          <PaneHead db={to} dbs={dbs} label={L.toDb} onPick={(id) => choose(1, id)} line={toLine} setLine={setLine} L={L}>
             {eq && <span className={`badge badge-${eq}`}>{fmt(L.badge[eq], { db: to.name })}</span>}
           </PaneHead>
           <div className="tr-out" aria-live="polite">
@@ -319,14 +326,19 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
 
 function PaneHead({
   db,
-  role,
+  dbs,
+  label,
+  onPick,
   line,
   setLine,
   L,
   children,
 }: {
   db: Db;
-  role: 'source' | 'target';
+  dbs: Db[];
+  /** accessible name of the database picker */
+  label: string;
+  onPick: (id: string) => void;
   line: string;
   setLine: (db: string, line: string) => void;
   L: Labels;
@@ -334,7 +346,13 @@ function PaneHead({
 }) {
   return (
     <div className="tr-head">
-      <span className={`tr-db side-${role}`}>{db.name}</span>
+      <select className={`tr-db side-${db.role}`} aria-label={label} value={db.id} onChange={(e) => onPick(e.target.value)}>
+        {dbs.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
       <span className="seg" role="group" aria-label={fmt(L.versionsOf, { db: db.name })}>
         {['', ...db.vers].map((v) => (
           <button key={v || 'all'} type="button" data-line={v} aria-pressed={line === v} onClick={() => setLine(db.id, v)}>
