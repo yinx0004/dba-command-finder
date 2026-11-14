@@ -1,0 +1,38 @@
+schema_version: 2
+id: rename-column
+category: schema
+title: {zh: 重命名列}
+summary: {zh: 字段名起错了或者含义变了，把列（字段）改个名字。}
+keywords:
+  zh: [重命名列, 改列名, 改字段名, 字段改名]
+  en: [rename column, change column, $rename]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> RENAME COLUMN <column> TO <new_column>;
+        since: '8.0'
+        note: {zh: 只改名字，不用重写列定义；只改元数据，很快}
+      - cmd: ALTER TABLE <table> CHANGE COLUMN <column2> <new_column2> INT NOT NULL;
+        note: {zh: 5.7 只能这样写，要把列定义完整写一遍，漏写的 NOT NULL、DEFAULT、COMMENT 会被去掉}
+    notes:
+      - zh: 引用这个列的视图、存储过程和应用 SQL 不会跟着改，要一起改；索引会自动跟着新名字走。
+    refs:
+      - {title: 'MySQL: ALTER TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/alter-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 INT NOT NULL, KEY idx_c1 (c1));
+      vars: {table: t, column: c1, new_column: c1_new, column2: c2, new_column2: c2_new}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.<collection>.updateMany({ <field>: { $exists: true } }, { $rename: { "<field>": "<new_field>" } })'
+        note: {zh: 逐个改写每个文档，集合大时要分批、避开高峰}
+    notes:
+      - zh: 建在旧字段上的索引不会跟着改名，要在新字段上重新建索引，再删掉旧索引。
+      - zh: 改写期间新旧两种字段名同时存在，应用要能同时读两种，或者先停写。校验规则里引用的字段名也要用 collMod 一起改。
+    refs:
+      - {title: 'MongoDB: $rename', url: 'https://www.mongodb.com/docs/manual/reference/operator/update/rename/'}
+    verify:
+      setup: 'db.t.insertMany([{ c1: 1 }, { c1: 2 }]); db.t.createIndex({ c1: 1 })'
+      vars: {collection: t, field: c1, new_field: c1_new}
+related: [add-column, modify-column, show-create-table]

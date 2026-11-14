@@ -1,0 +1,44 @@
+schema_version: 2
+id: revoke-privileges
+category: user
+title: {zh: 回收权限}
+summary: {zh: 收回用户的部分或全部权限，例如应用账号只该读、却被授了写权限。}
+keywords:
+  zh: [回收权限, 收回权限, 撤销权限, 去掉权限]
+  en: [revoke, revokerolesfromuser, revokeprivilegesfromrole]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: REVOKE INSERT, UPDATE, DELETE ON <db>.* FROM '<user>'@'<host>';
+        note: {zh: 收回指定的权限，范围要和当初 GRANT 时写的一致}
+      - cmd: REVOKE ALL PRIVILEGES, GRANT OPTION FROM '<user>'@'<host>';
+        note: {zh: 收回全部权限，账号还在、还能登录}
+    notes:
+      - zh: 已连着的会话不一定马上受影响：表级权限下一条语句就生效，库级权限要等下次 USE，全局权限要等重新连接。要立即生效就 KILL 掉它的会话。
+      - zh: 收回后用 SHOW GRANTS FOR 确认；权限是按 ON 的范围分别记录的，GRANT ... ON *.* 的权限不能用 REVOKE ... ON <db>.* 收回。
+    refs:
+      - {title: 'MySQL: REVOKE', url: 'https://dev.mysql.com/doc/refman/8.4/en/revoke.html'}
+      - {title: 'MySQL: When Privilege Changes Take Effect', url: 'https://dev.mysql.com/doc/refman/8.4/en/privilege-changes.html'}
+    verify:
+      setup: CREATE USER 'app_revoke'@'%' IDENTIFIED BY 'Lab#Pass123'; GRANT SELECT, INSERT, UPDATE, DELETE ON <db>.* TO 'app_revoke'@'%';
+      vars: {user: app_revoke, host: '%'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.revokeRolesFromUser("<user>", [{ role: "readWrite", db: "<db>" }])'
+        note: {zh: 收回用户身上的某个角色}
+      - cmd: 'db.revokePrivilegesFromRole("<role>", [{ resource: { db: "<db>", collection: "" }, actions: ["insert"] }])'
+        note: {zh: 从自建角色里去掉某个操作，拥有这个角色的所有用户都会受影响}
+      - cmd: 'db.updateUser("<user>", { roles: [] })'
+        note: {zh: 收回全部角色，用户还在、还能登录}
+    notes:
+      - zh: 权限只能通过角色授予，所以也只能按角色收回；想去掉内置角色里的某一个操作，要改成自建角色再从角色里去掉。
+      - zh: 命令要在用户（或角色）所属的认证库里执行。
+    refs:
+      - {title: 'MongoDB: db.revokeRolesFromUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.revokeRolesFromUser/'}
+      - {title: 'MongoDB: db.revokePrivilegesFromRole()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.revokePrivilegesFromRole/'}
+    verify:
+      setup: 'db.createUser({ user: "app_revoke", pwd: "Lab#Pass123", roles: [{ role: "readWrite", db: "<db>" }] }); db.createRole({ role: "app_role", privileges: [{ resource: { db: "<db>", collection: "" }, actions: ["find", "insert"] }], roles: [] })'
+      vars: {user: app_revoke, role: app_role}
+related: [grant-privileges, show-grants, account-lock]
