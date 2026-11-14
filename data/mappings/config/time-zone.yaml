@@ -1,0 +1,30 @@
+schema_version: 2
+id: time-zone
+category: config
+title: {zh: 查看时区设置}
+summary: {zh: 时间差了 8 小时这类问题，先确认数据库按哪个时区存和显示时间。}
+keywords:
+  zh: [时区, 差 8 小时, 时间不对, UTC]
+  en: [time_zone, system_time_zone, utc, timezone]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@global.time_zone, @@session.time_zone, @@system_time_zone, NOW(), UTC_TIMESTAMP();
+        note: {zh: SYSTEM 表示跟随操作系统时区}
+      - cmd: SET time_zone = '+08:00';
+        note: {zh: 只改当前会话}
+    notes:
+      - zh: TIMESTAMP 按会话时区换算后显示，DATETIME 原样存原样取、不带时区；同一个值用两种类型存，换个时区连接看到的结果可能不同。
+    refs:
+      - {title: 'MySQL: Time Zone Support', url: 'https://dev.mysql.com/doc/refman/8.4/en/time-zone-support.html'}
+  mongodb:
+    support: none
+    notes:
+      - zh: 没有服务器或会话时区。日期一律按 UTC 存成毫秒数；要显示成本地时间，在查询里用 $dateToString 等运算符的 timezone 参数换算，或者在应用里换算。
+    alternatives:
+      - title: {zh: 查询时按时区显示}
+        cmd: 'db.<collection>.aggregate([{ $project: { local: { $dateToString: { date: "$createdAt", timezone: "Asia/Shanghai" } } } }])'
+    refs:
+      - {title: 'MongoDB: $dateToString', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/'}
+related: [charset-collation, show-variables]

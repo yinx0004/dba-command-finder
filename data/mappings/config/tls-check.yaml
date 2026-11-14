@@ -1,0 +1,29 @@
+schema_version: 2
+id: tls-check
+category: config
+title: {zh: 检查连接是否加密}
+summary: {zh: 安全审计时确认服务器是否启用 TLS、是否强制加密，以及当前连接有没有加密。}
+keywords:
+  zh: [TLS, SSL, 加密连接, 是否加密, 安全审计]
+  en: [tls, ssl, ssl_cipher, require_secure_transport, net.tls]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW SESSION STATUS LIKE 'Ssl_cipher';
+        note: {zh: 当前连接用的加密算法；为空就是没加密}
+      - cmd: SELECT @@require_secure_transport;
+        since: 5.7.8
+        note: {zh: ON 表示拒绝不加密的连接}
+    refs:
+      - {title: 'MySQL: Using Encrypted Connections', url: 'https://dev.mysql.com/doc/refman/8.4/en/encrypted-connections.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 }).parsed.net'
+        note: {zh: tls.mode 为 requireTLS 表示强制加密，没有 tls 就是没启用}
+    notes:
+      - zh: 服务器端只能看配置；当前连接有没有加密要在客户端确认，例如连接串里的 tls=true。
+    refs:
+      - {title: 'MongoDB: Configure mongod and mongos for TLS/SSL', url: 'https://www.mongodb.com/docs/manual/tutorial/configure-ssl/'}
+related: [config-file, create-user]
