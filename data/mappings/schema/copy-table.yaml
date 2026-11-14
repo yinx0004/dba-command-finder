@@ -1,0 +1,42 @@
+schema_version: 2
+id: copy-table
+category: schema
+title: {zh: 复制表结构和数据}
+summary: {zh: 改数据或做变更前先留一份副本，或者复制一张表的结构建新表。}
+keywords:
+  zh: [复制表, 备份表, 拷贝表, 复制表结构, 表副本]
+  en: [create table like, create table as select, insert select, $out, clone collection]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE TABLE <new_table> LIKE <table>;
+        note: {zh: 只复制结构，包括索引和 AUTO_INCREMENT，不复制数据}
+      - cmd: INSERT INTO <new_table> SELECT * FROM <table>;
+        note: {zh: 再把数据复制过去}
+      - cmd: CREATE TABLE <new_table2> AS SELECT * FROM <table>;
+        note: {zh: 一步复制数据，但主键、索引、AUTO_INCREMENT 都不会带过去}
+    notes:
+      - zh: 外键和触发器不会被 CREATE TABLE ... LIKE 复制。大表的 INSERT ... SELECT 是一个大事务，会长时间持有源表的锁，可以分批复制。
+    refs:
+      - {title: 'MySQL: CREATE TABLE ... LIKE', url: 'https://dev.mysql.com/doc/refman/8.4/en/create-table-like.html'}
+      - {title: 'MySQL: CREATE TABLE ... SELECT', url: 'https://dev.mysql.com/doc/refman/8.4/en/create-table-select.html'}
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t (a) VALUES (1), (2);
+      vars: {table: t, new_table: t_copy, new_table2: t_copy2}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.<collection>.aggregate([{ $out: "<new_collection>" }])'
+        note: {zh: 复制全部文档；可以在前面加 $match 只复制一部分。目标集合已存在会被整个替换}
+      - cmd: 'db.<collection>.getIndexes().filter((i) => i.name !== "_id_").forEach((i) => { const { key, v, ns, ...opts } = i; db.<new_collection>.createIndex(key, opts) })'
+        note: {zh: $out 不复制索引，再把索引逐个建过去}
+    notes:
+      - zh: 集合的校验规则、排序规则等选项也不会被复制；需要的话先用 db.getCollectionInfos() 看原集合的 options，用 db.createCollection() 建好目标集合再 $out。
+      - zh: '复制到另一个库用 { $out: { db: "<db>", coll: "<collection>" } }。'
+    refs:
+      - {title: 'MongoDB: $out', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/out/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 })'
+      vars: {collection: t, new_collection: t_copy}
+related: [show-create-table, export-data, rename-table]

@@ -1,0 +1,45 @@
+schema_version: 2
+id: force-index
+category: query
+title: {zh: 强制使用或不用某个索引}
+summary: {zh: 优化器选错了索引导致查询变慢时，指定用哪个索引，或者排除某个索引。}
+keywords:
+  zh: [强制索引, 指定索引, 走错索引, 不走索引, 索引提示]
+  en: [force index, use index, ignore index, hint, natural]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM <table> FORCE INDEX (<index>) WHERE a = 1;
+        note: {zh: 只要能用这个索引就不做全表扫描}
+      - cmd: SELECT * FROM <table> USE INDEX (<index>) WHERE a = 1;
+        note: {zh: 只在列出的索引里选，优化器仍可能选全表扫描}
+      - cmd: SELECT * FROM <table> IGNORE INDEX (<index>) WHERE a = 1;
+        note: {zh: 排除这个索引}
+    notes:
+      - zh: 8.0.20 起也可以写成优化器提示，例如 SELECT /*+ INDEX(t idx_a) */ ...，效果和 FORCE INDEX 相同。
+      - zh: 提示写在应用的 SQL 里，索引改名或删除后 FORCE INDEX 会直接报错，要一起维护。
+    refs:
+      - {title: 'MySQL: Index Hints', url: 'https://dev.mysql.com/doc/refman/8.4/en/index-hints.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b)); INSERT INTO t VALUES (1, 1, 1), (2, 1, 2);
+      vars: {table: t, index: idx_a}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.<collection>.find({ a: 1 }).hint("<index>")'
+        note: {zh: '也可以写成索引的键，例如 .hint({ a: 1 })'}
+      - cmd: 'db.<collection>.find({ a: 1 }).hint({ $natural: 1 })'
+        note: {zh: 不用任何索引，强制全集合扫描}
+      - cmd: 'db.<collection>.aggregate([{ $match: { a: 1 } }], { hint: "<index>" })'
+        note: {zh: 聚合在选项里指定}
+    notes:
+      - zh: 没有「排除某个索引」的写法；可以把那个索引隐藏（db.collection.hideIndex()），所有查询都不会再用它。
+      - zh: 8.0 起可以用 setQuerySettings 给某一类查询固定索引，不用改应用代码。
+    refs:
+      - {title: 'MongoDB: cursor.hint()', url: 'https://www.mongodb.com/docs/manual/reference/method/cursor.hint/'}
+      - {title: 'MongoDB: setQuerySettings', url: 'https://www.mongodb.com/docs/manual/reference/command/setQuerySettings/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 1, b: 2 }]); db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 })'
+      vars: {collection: t, index: a_1}
+related: [explain, invisible-index, index-usage]

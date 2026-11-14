@@ -1,0 +1,37 @@
+schema_version: 2
+id: truncate-table
+category: data
+title: {zh: 清空表}
+summary: {zh: 删除一张表里的全部数据，但保留表本身和表结构。}
+keywords:
+  zh: [清空表, 清空数据, 删除全部数据, 截断表]
+  en: [truncate, deletemany, delete all]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: TRUNCATE TABLE <table>;
+    notes:
+      - zh: TRUNCATE 是 DDL：不能回滚，会把 AUTO_INCREMENT 重置为 1，需要 DROP 权限；被其他表的外键引用时会报错。
+      - zh: 要能回滚、或者只删一部分，用 DELETE；数据量大时分批删。
+    refs:
+      - {title: 'MySQL: TRUNCATE TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY); INSERT INTO t VALUES (), (), ();
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.<collection>.deleteMany({})'
+        note: {zh: 逐个删除文档，保留索引和集合选项；数据多时很慢，每个文档都会写一条 oplog}
+      - cmd: db.<collection>.drop()
+        note: {zh: 直接删掉集合，很快；但索引、校验规则、排序规则也一起没了，要重新创建}
+    notes:
+      - zh: 没有 TRUNCATE。数据量大时一般先用 db.collection.getIndexes() 记下索引，drop 后重新创建集合和索引。
+    refs:
+      - {title: 'MongoDB: db.collection.deleteMany()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.deleteMany/'}
+      - {title: 'MongoDB: db.collection.drop()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.drop/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]); db.t.createIndex({ a: 1 })'
+      vars: {collection: t}
+related: [batch-delete, drop-table, copy-table]

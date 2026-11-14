@@ -1,0 +1,47 @@
+schema_version: 2
+id: find-duplicates
+category: data
+title: {zh: 查找并删除重复数据}
+summary: {zh: 加唯一索引失败、或者数据被重复导入时，找出哪些值重复了，只保留一条。}
+keywords:
+  zh: [重复数据, 查重, 去重, 删除重复, 唯一索引建不上]
+  en: [duplicates, duplicate key, group by having, dedupe]
+fields:
+  - {id: value, name: {zh: 重复的值}}
+  - {id: count, name: {zh: 重复次数}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT <column>, COUNT(*) AS cnt FROM <table> GROUP BY <column> HAVING COUNT(*) > 1 ORDER BY cnt DESC;
+      - cmd: DELETE t1 FROM <table> t1 JOIN <table> t2 ON t1.<column> = t2.<column> AND t1.id > t2.id;
+        note: {zh: 每组只保留 id 最小的一行；先备份或在事务里执行}
+    fields:
+      value: email
+      count: cnt
+    notes:
+      - zh: 删完再加唯一索引（ALTER TABLE ... ADD UNIQUE），防止以后再出现重复。
+    refs:
+      - {title: 'MySQL: DELETE (multiple-table syntax)', url: 'https://dev.mysql.com/doc/refman/8.4/en/delete.html'}
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(50)); INSERT INTO t (email) VALUES ('a@x.com'), ('a@x.com'), ('b@x.com'), ('a@x.com');
+      vars: {table: t, column: email}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.<collection>.aggregate([{ $group: { _id: "$<field>", count: { $sum: 1 }, ids: { $push: "$_id" } } }, { $match: { count: { $gt: 1 } } }, { $sort: { count: -1 } }], { allowDiskUse: true })'
+        note: {zh: _id 是重复的值，ids 是这些文档的 _id}
+      - cmd: 'db.<collection>.aggregate([{ $group: { _id: "$<field>", count: { $sum: 1 }, ids: { $push: "$_id" } } }, { $match: { count: { $gt: 1 } } }], { allowDiskUse: true }).forEach((d) => db.<collection>.deleteMany({ _id: { $in: d.ids.slice(1) } }))'
+        note: {zh: 每组只保留第一个文档；先备份再执行}
+    fields:
+      value: _id
+      count: count
+    notes:
+      - zh: 删完再建唯一索引（createIndex 加 unique true），防止以后再出现重复。
+      - zh: 重复组很多时 ids 数组会很大，可以先按 count 分批处理。
+    refs:
+      - {title: 'MongoDB: $group', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/group/'}
+    verify:
+      setup: 'db.t.insertMany([{ email: "a@x.com" }, { email: "a@x.com" }, { email: "b@x.com" }, { email: "a@x.com" }])'
+      vars: {collection: t, field: email}
+related: [create-index, batch-delete]

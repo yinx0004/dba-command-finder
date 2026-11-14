@@ -249,5 +249,16 @@
 - {q: lock tables, top: lock-table}
 - {q: 锁表, top: lock-table}
 
+- {q: force index, top: force-index}
+- {q: 强制索引, top: force-index}
+- {q: planCacheStats, top: plan-cache}
+- {q: 执行计划缓存, top: plan-cache}
+- {q: 重复数据, top: find-duplicates}
+- {q: 去重, top: find-duplicates}
+- {q: truncate, top: truncate-table}
+- {q: 清空表, top: truncate-table}
+- {q: create table like, top: copy-table}
+- {q: 复制表, top: copy-table}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
