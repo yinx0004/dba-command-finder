@@ -1,14 +1,24 @@
 ---
+import '@fontsource/ibm-plex-sans/latin-400.css';
+import '@fontsource/ibm-plex-sans/latin-500.css';
+import '@fontsource/ibm-plex-sans/latin-600.css';
+import '@fontsource/ibm-plex-sans/latin-700.css';
+import '@fontsource/ibm-plex-mono/latin-400.css';
+import '@fontsource/ibm-plex-mono/latin-500.css';
+import '@fontsource/ibm-plex-mono/latin-600.css';
 import '../styles/global.css';
+import { loadDataset } from '../lib/data';
+import { labStatus } from '../lib/home';
 import { UI, type Lang } from '../lib/i18n';
-import { GITHUB, href, langHome, newIssueUrl } from '../lib/site';
+import { ciRunUrl, GITHUB, href, langHome, newIssueUrl } from '../lib/site';
+import { loadVerification } from '../lib/verification';
 import VersionBar from '../components/VersionBar.astro';
 
 interface Props {
   lang: Lang;
   title: string;
   description: string;
-  /** home shows the full nav on a dark band; other pages show a search shortcut */
+  /** home shows the site nav; other pages show a search shortcut */
   variant?: 'home' | 'page';
   /** home footer line */
   footerNote?: string;
@@ -17,6 +27,8 @@ interface Props {
 const { lang, title, description, variant = 'page', footerNote } = Astro.props;
 const ui = UI[lang];
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+// Only a clean lab run earns the badge; CI deploys only after every lab job passed.
+const lab = labStatus(loadDataset(), loadVerification());
 ---
 <!doctype html>
 <html lang={lang === 'zh' ? 'zh-CN' : lang}>
@@ -31,12 +43,6 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <meta property="og:description" content={description} />
     {canonical && <meta property="og:url" content={canonical} />}
     <link rel="icon" href={href('favicon.svg')} type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-    />
   </head>
   <body class:list={{ 'page-home': variant === 'home' }}>
     <header class="site-header">
@@ -45,6 +51,14 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
           <span class="logo-mark" aria-hidden="true">&gt;_</span>
           <span class="logo-name">{ui.siteName}</span>
         </a>
+        {
+          lab?.allAsExpected && (
+            <a class="lab-pill" href={ciRunUrl()} title={ui.labPassedTitle}>
+              <span class="lab-dot" aria-hidden="true"></span>
+              {ui.labPassed(lab.date)}
+            </a>
+          )
+        }
         {
           variant === 'home' ? (
             <nav class="site-nav" aria-label="站点">
@@ -72,6 +86,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
     <footer class="site-footer">
       <div class="wrap">
         <span>{footerNote ?? ui.footerNote}</span>
+        <span>{ui.license}</span>
         <a href={GITHUB}>GitHub</a>
         <a href={newIssueUrl()}>{ui.submitMapping}</a>
       </div>

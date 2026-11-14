@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadDataset } from '../src/lib/data';
-import { homeStats, labExcerpt } from '../src/lib/home';
+import { homeStats, labExcerpt, labStatus } from '../src/lib/home';
+import { ciRunUrl, GITHUB } from '../src/lib/site';
 import type { Verification } from '../lab/plan';
 
 const ds = loadDataset();
@@ -46,5 +47,25 @@ describe('lab excerpt', () => {
     ]);
     // most entries have no results in this made-up file, so not everything ran as expected
     expect(ex.allAsExpected).toBe(false);
+  });
+});
+
+describe('lab status', () => {
+  it('is empty without lab results', () => {
+    expect(labStatus(ds, null)).toBeNull();
+    expect(labStatus(ds, { generatedAt: '2026-11-14T05:30:00.000Z', runs: [], entries: {} })).toBeNull();
+  });
+
+  it('is clean only when every entry ran clean on every version', () => {
+    const runs = [{ db: 'mysql', version: '8.4', server: '8.4.11' }];
+    const s = labStatus(ds, { generatedAt: '2026-11-14T05:30:00.000Z', runs, entries: {} })!;
+    expect(s).toEqual({ date: '2026-11-14', versions: 1, allAsExpected: false });
+  });
+});
+
+describe('CI run link', () => {
+  it('points at the run that built the site, else the list of runs', () => {
+    expect(ciRunUrl('123')).toBe(`${GITHUB}/actions/runs/123`);
+    expect(ciRunUrl('')).toBe(`${GITHUB}/actions`);
   });
 });

@@ -15,7 +15,12 @@ export const langHome = (lang: Lang) => href(`${lang}/`);
 export const categoryHref = (lang: Lang, category: string) => href(`${lang}/${category}/`);
 export const entryHref = (lang: Lang, slug: string) => href(`${lang}/${slug}/`);
 
-export const editUrl = (file: string) => `${GITHUB}/edit/main/${file}`;
+/** The CI run that built this site (GitHub Actions sets GITHUB_RUN_ID), else the list of runs. */
+export function ciRunUrl(runId = process.env.GITHUB_RUN_ID): string {
+  return runId ? `${GITHUB}/actions/runs/${runId}` : `${GITHUB}/actions`;
+}
+
+export const editUrl =(file: string) => `${GITHUB}/edit/main/${file}`;
 export const newIssueUrl = (title = '') => `${GITHUB}/issues/new${title ? `?title=${encodeURIComponent(title)}` : ''}`;
 
 /** Date of the last commit that touched a file, or '' outside a git checkout. */
