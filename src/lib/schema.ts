@@ -148,6 +148,8 @@ export const Site = z.strictObject({
   // The comparison the site shows. Becomes the default once readers can pick databases.
   pair: z.strictObject({ source: Slug, target: Slug }),
   featured: z.array(z.string()).default([]),
+  // Commands whose real lab results the home page shows, grouped by database.
+  lab_excerpt: z.array(z.strictObject({ entry: z.string(), db: Slug, cmd: z.string().min(1) })).default([]),
 });
 
 export type Text = z.infer<typeof Text>;

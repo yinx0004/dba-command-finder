@@ -3,10 +3,12 @@ pair:
   source: mysql
   target: mongodb
 
-# Shown under "DBA 最常查的" on the home page.
-featured:
-  - list-active-sessions
-  - kill-session
-  - replication-status
-  - slow-query-log
-  - lock-waits
+# Real lab results shown on the home page: for each database, its newest version the lab ran.
+# A command outside its version range there shows as "fails as expected".
+lab_excerpt:
+  - {entry: replication-status, db: mysql, cmd: 'SHOW REPLICA STATUS\G'}
+  - {entry: replication-status, db: mysql, cmd: 'SHOW SLAVE STATUS\G'}
+  - {entry: binlog-retention, db: mysql, cmd: 'SELECT @@expire_logs_days;'}
+  - {entry: replica-role, db: mongodb, cmd: db.hello()}
+  - {entry: reclaim-space, db: mongodb, cmd: 'db.adminCommand({ autoCompact: true })'}
+  - {entry: replication-status, db: mongodb, cmd: rs.printSlaveReplicationInfo()}

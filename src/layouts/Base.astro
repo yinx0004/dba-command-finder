@@ -8,11 +8,13 @@ interface Props {
   lang: Lang;
   title: string;
   description: string;
-  /** home shows the full nav; other pages show a search shortcut */
+  /** home shows the full nav on a dark band; other pages show a search shortcut */
   variant?: 'home' | 'page';
+  /** home footer line */
+  footerNote?: string;
 }
 
-const { lang, title, description, variant = 'page' } = Astro.props;
+const { lang, title, description, variant = 'page', footerNote } = Astro.props;
 const ui = UI[lang];
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 ---
@@ -36,7 +38,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     />
   </head>
-  <body>
+  <body class:list={{ 'page-home': variant === 'home' }}>
     <header class="site-header">
       <div class="wrap">
         <a class="logo" href={langHome(lang)}>
@@ -46,9 +48,10 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
         {
           variant === 'home' ? (
             <nav class="site-nav" aria-label="站点">
-              {/* Leaves any ?q= behind: while searching, the category section is hidden and #browse goes nowhere. */}
-              <a href={`${langHome(lang)}#browse`}>{ui.browse}</a>
-              <a href={GITHUB}>{ui.contribute}</a>
+              {/* Leave any ?q= behind: while searching, these sections are hidden and the anchors go nowhere. */}
+              <a href={`${langHome(lang)}#browse`}>{ui.home3.navIndex}</a>
+              <a href={`${langHome(lang)}#method`}>{ui.home3.navMethod}</a>
+              <a href={GITHUB}>GitHub</a>
             </nav>
           ) : (
             <a class="search-pill" href={langHome(lang)}>
@@ -68,7 +71,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : un
 
     <footer class="site-footer">
       <div class="wrap">
-        <span>{ui.footerNote}</span>
+        <span>{footerNote ?? ui.footerNote}</span>
         <a href={GITHUB}>GitHub</a>
         <a href={newIssueUrl()}>{ui.submitMapping}</a>
       </div>
