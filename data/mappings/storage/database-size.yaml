@@ -1,0 +1,48 @@
+schema_version: 2
+id: database-size
+category: storage
+title: {zh: 查看库的大小}
+summary: {zh: 看每个库各占多少空间，做容量规划或找出增长最快的库。}
+keywords:
+  zh: [库大小, 数据库大小, 容量, 空间占用]
+  en: [database size, dbstats, db.stats, sizeondisk]
+fields:
+  - {id: name, name: {zh: 库名}}
+  - {id: data, name: {zh: 数据占用}}
+  - {id: index, name: {zh: 索引占用}}
+  - {id: total, name: {zh: 总占用}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT TABLE_SCHEMA, SUM(DATA_LENGTH) AS data_bytes, SUM(INDEX_LENGTH) AS index_bytes, SUM(DATA_LENGTH + INDEX_LENGTH) AS total_bytes FROM information_schema.TABLES GROUP BY TABLE_SCHEMA ORDER BY total_bytes DESC;
+    fields:
+      name: TABLE_SCHEMA
+      data: data_bytes
+      index: index_bytes
+      total: total_bytes
+    notes:
+      - zh: 这是表空间统计值，不含 binlog、redo log 等文件；8.0 起默认缓存 24 小时，原因同「查看表的大小」。
+    refs:
+      - {title: 'MySQL: The INFORMATION_SCHEMA TABLES Table', url: 'https://dev.mysql.com/doc/refman/8.4/en/information-schema-tables-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1);
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.stats()
+        note: {zh: '当前库；要按 MB 显示：db.stats(1024 * 1024)'}
+      - cmd: 'db.adminCommand({ listDatabases: 1 })'
+        note: {zh: 所有库，每个库的 sizeOnDisk}
+    fields:
+      name: db
+      data: {name: storageSize, note: {zh: 压缩后的磁盘占用；dataSize 是未压缩大小}}
+      index: indexSize
+      total: totalSize
+    notes:
+      - zh: 和集合一样，dataSize（未压缩）通常比 storageSize（磁盘实际占用）大。
+    refs:
+      - {title: 'MongoDB: db.stats()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.stats/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 })'
+related: [table-size, list-databases]

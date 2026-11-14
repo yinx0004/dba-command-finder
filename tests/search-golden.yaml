@@ -82,5 +82,15 @@
 - {q: 误删恢复, top: point-in-time-recovery}
 - {q: show master status, top: point-in-time-recovery}
 
+- {q: 表大小, top: table-size}
+- {q: data_length, top: table-size}
+- {q: show table status, top: table-size}
+- {q: collStats, top: table-size}
+- {q: 库大小, top: database-size}
+- {q: db.stats, top: database-size}
+- {q: count(*), top: row-count}
+- {q: 行数, top: row-count}
+- {q: countDocuments, top: row-count}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
