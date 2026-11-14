@@ -24,15 +24,21 @@ const Command = z.strictObject({
   deprecated_in: Version.optional(), // still works from here on, but shown as outdated
   removed_in: Version.optional(), // first version where it no longer works; the lab expects it to fail
   note: Text.optional(),
+  // A command-line tool (mysqldump, mongodump, ...) run in a shell, not a statement for the database's client.
+  shell: z.boolean().optional(),
   // Why the lab does not run this command (e.g. it needs a second connection). Shown on the page.
   skip: Text.optional(),
 });
 
 // How the lab prepares a database before running this entry's commands.
+// <db> is always filled with the entry's own empty lab database unless vars sets it.
 const Verify = z.strictObject({
-  setup: z.string().min(1).optional(), // run first, in an empty database of its own
+  setup: z.string().min(1).optional(), // run first through the database's client, in that database
+  setup_shell: z.string().min(1).optional(), // then this in a shell, e.g. to make a dump to restore
   vars: z.record(z.string().regex(/^[a-z][a-z0-9_.]*$/i), z.string()).default({}), // fills <name> placeholders
   teardown: z.string().min(1).optional(), // run last; errors are ignored
+  // Why the output fields cannot be checked here (e.g. they only appear on a replica).
+  skip_fields: Text.optional(),
 });
 
 // What to look at instead, used mainly when a database cannot do the task.
@@ -49,7 +55,12 @@ const Ref = z.strictObject({
 });
 
 // How one database's output names a field of the task: "opid", or with a note.
-const FieldName = z.union([z.string().min(1), z.strictObject({ name: z.string().min(1), note: Text.optional() })]);
+// The lab checks that plain names and dotted paths ("connections.current") appear in the commands' output;
+// skip says why one cannot be checked (e.g. it only appears with authentication on).
+const FieldName = z.union([
+  z.string().min(1),
+  z.strictObject({ name: z.string().min(1), note: Text.optional(), skip: Text.optional() }),
+]);
 
 /**
  * How one database does the task.

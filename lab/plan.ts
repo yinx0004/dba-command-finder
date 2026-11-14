@@ -34,6 +34,36 @@ export function labDatabase(id: string): string {
   return `lab_${id.replace(/[^a-z0-9]/gi, '_')}`;
 }
 
+const SEGMENT = String.raw`[A-Za-z_$][\w$]*(?:\[\])?`;
+const PATH = new RegExp(`^${SEGMENT}(?:\\.${SEGMENT})*$`);
+
+/**
+ * The paths the lab can look for in a field name, or null when the name is prose
+ * ("COLLSCAN 阶段", "Innodb_buffer_pool_*"). "waitingForLock / desc" names two fields;
+ * "members[].stateStr" is the path members -> stateStr.
+ */
+export function fieldPaths(name: string): string[][] | null {
+  const parts = name.split(/\s+\/\s+/).map((p) => p.trim());
+  if (!parts.every((p) => PATH.test(p))) return null;
+  return parts.map((p) => p.replace(/\[\]/g, '').split('.'));
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Whether every segment of the path shows up as a whole word in the output (a column, key or variable name). */
+export function outputHasPath(output: string, path: string[]): boolean {
+  return path.every((seg) => new RegExp(`(^|[^\\w$])${escapeRe(seg)}([^\\w$]|$)`, 'm').test(output));
+}
+
+export type FieldStatus = 'pass' | 'fail' | 'skip' | 'unchecked';
+
+export interface FieldResult {
+  id: string; // the task's field id
+  name: string; // this database's name for it
+  status: FieldStatus;
+  detail?: string;
+}
+
 export type CommandStatus = 'pass' | 'fail' | 'skip';
 
 export interface CommandResult {
@@ -46,6 +76,7 @@ export interface CommandResult {
 export interface EntryResult {
   setupError?: string;
   commands: CommandResult[];
+  fields?: FieldResult[];
 }
 
 export interface RunResult {
@@ -62,6 +93,8 @@ export interface EntryVerification {
   versions: string[];
   /** command text -> versions where it ran successfully, and whether the lab skips it */
   commands: Record<string, { verified: string[]; skipped: boolean }>;
+  /** field id -> versions where the field showed up in the output */
+  fields: Record<string, { verified: string[] }>;
 }
 
 /** Shape the site reads at build time. */
@@ -80,15 +113,21 @@ export function merge(runs: RunResult[], now = new Date()): Verification {
   for (const run of runs) {
     out.runs.push({ db: run.db, version: run.version, server: run.server });
     for (const [id, entry] of Object.entries(run.entries)) {
-      const v = ((out.entries[id] ??= {})[run.db] ??= { versions: [], commands: {} });
+      const v = ((out.entries[id] ??= {})[run.db] ??= { versions: [], commands: {}, fields: {} });
+      v.fields ??= {};
       // A version counts for the entry only if something actually ran there and nothing failed.
       const ran = entry.commands.some((c) => c.status !== 'skip');
-      const clean = !entry.setupError && entry.commands.every((c) => c.status !== 'fail');
+      const clean =
+        !entry.setupError && entry.commands.every((c) => c.status !== 'fail') && (entry.fields ?? []).every((f) => f.status !== 'fail');
       if (ran && clean) v.versions.push(run.version);
       for (const c of entry.commands) {
         const slot = (v.commands[c.cmd] ??= { verified: [], skipped: false });
         if (c.status === 'skip') slot.skipped = true;
         else if (c.status === 'pass' && c.expect === 'ok' && !entry.setupError) slot.verified.push(run.version);
+      }
+      for (const f of entry.fields ?? []) {
+        const slot = (v.fields[f.id] ??= { verified: [] });
+        if (f.status === 'pass') slot.verified.push(run.version);
       }
     }
   }
@@ -97,6 +136,7 @@ export function merge(runs: RunResult[], now = new Date()): Verification {
     for (const v of Object.values(dbs)) {
       v.versions.sort(byVersion);
       for (const slot of Object.values(v.commands)) slot.verified.sort(byVersion);
+      for (const slot of Object.values(v.fields)) slot.verified.sort(byVersion);
     }
   }
   return out;

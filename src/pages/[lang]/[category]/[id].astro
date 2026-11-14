@@ -48,6 +48,8 @@ const verifiedParts = [
 ]
   .filter(([, v]) => v && (v as NonNullable<typeof srcV>).versions.length)
   .map(([name, v]) => `${name} ${(v as NonNullable<typeof srcV>).versions.join(' · ')}`);
+// Versions whose real output contained this field name ('' when none); shown as a ✓ in the field table.
+const fieldFound = (v: typeof srcV, id: string) => (v?.fields?.[id]?.verified ?? []).join(' · ');
 const anySkipped = [src, tgt].some((d) => d?.commands.some((c) => c.skip));
 const verifiedLabel = verifiedParts.length ? ui.verifiedOn(verifiedParts.join(' ／ ')) : ui.unverified;
 
@@ -150,8 +152,22 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
                 {fields.map((f) => (
                   <tr>
                     <td>{f.name ? t(f.name, lang) : f.id}</td>
-                    <td class="mono">{f.source ?? '—'}</td>
-                    <td class="mono">{f.target ?? '—'}</td>
+                    <td class="mono">
+                      {f.source ?? '—'}
+                      {fieldFound(srcV, f.id) && (
+                        <span class="field-ok" title={ui.fieldFoundIn(fieldFound(srcV, f.id))} aria-label={ui.fieldFoundIn(fieldFound(srcV, f.id))}>
+                          ✓
+                        </span>
+                      )}
+                    </td>
+                    <td class="mono">
+                      {f.target ?? '—'}
+                      {fieldFound(tgtV, f.id) && (
+                        <span class="field-ok" title={ui.fieldFoundIn(fieldFound(tgtV, f.id))} aria-label={ui.fieldFoundIn(fieldFound(tgtV, f.id))}>
+                          ✓
+                        </span>
+                      )}
+                    </td>
                     <td style="color: var(--ink-2)">{t(f.note, lang)}</td>
                   </tr>
                 ))}

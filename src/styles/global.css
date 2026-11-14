@@ -194,3 +194,4 @@ td.mono { overflow-wrap: anywhere; }
 .badge-missing { color: var(--muted); background: var(--surface-2); border: 1px dashed var(--border-strong); }
 .panel-missing { border-style: dashed; }
 .verified-label { color: var(--exact-fg); font-weight: 500; }
+.field-ok { color: var(--exact-fg); margin-left: 6px; font-family: var(--sans); font-size: 12px; cursor: help; }

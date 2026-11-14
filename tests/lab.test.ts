@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { expectation, fill, labDatabase, merge, parseServerVersion, type RunResult } from '../lab/plan';
+import { expectation, fieldPaths, fill, labDatabase, merge, outputHasPath, parseServerVersion, type RunResult } from '../lab/plan';
 import { availableIn, compareVersions } from '../src/lib/version';
 
 describe('versions', () => {
@@ -43,6 +43,28 @@ describe('fill', () => {
   });
 });
 
+describe('field checks', () => {
+  it('turns field names into paths, or null for prose', () => {
+    expect(fieldPaths('opid')).toEqual([['opid']]);
+    expect(fieldPaths('connections.current')).toEqual([['connections', 'current']]);
+    expect(fieldPaths('waitingForLock / desc')).toEqual([['waitingForLock'], ['desc']]);
+    expect(fieldPaths('members[].stateStr / health')).toEqual([['members', 'stateStr'], ['health']]);
+    expect(fieldPaths('COLLSCAN 阶段')).toBeNull();
+    expect(fieldPaths('Innodb_buffer_pool_*')).toBeNull();
+    expect(fieldPaths('Com_select / Com_insert / …')).toBeNull();
+  });
+
+  it('finds whole names in MySQL and mongosh output', () => {
+    const mysql = 'Id\tUser\tHost\tdb\tCommand\tTime\tState\tInfo\n8\troot\tlocalhost\tNULL\tQuery\t0\tinit\tSHOW PROCESSLIST';
+    expect(outputHasPath(mysql, ['Time'])).toBe(true);
+    expect(outputHasPath(mysql, ['Tim'])).toBe(false);
+    const mongo = "{ inprog: [ { opid: 302, secs_running: Long('0'), command: { currentOp: 1 } } ], ok: 1 }";
+    expect(outputHasPath(mongo, ['secs_running'])).toBe(true);
+    expect(outputHasPath(mongo, ['inprog', 'opid'])).toBe(true);
+    expect(outputHasPath(mongo, ['microsecs_running'])).toBe(false);
+  });
+});
+
 describe('merge', () => {
   const run = (version: string, entries: RunResult['entries']): RunResult => ({
     db: 'mysql',
@@ -75,5 +97,14 @@ describe('merge', () => {
     expect(v.entries.skipped.mysql.versions).toEqual([]);
     expect(v.entries.skipped.mysql.commands['KILL <id>;']).toEqual({ verified: [], skipped: true });
     expect(v.entries.broken.mysql.versions).toEqual([]);
+  });
+
+  it('records where each field was found, and a missing field fails the version', () => {
+    const v = merge([
+      run('5.7', { a: { commands: [{ cmd: 'X', expect: 'ok', status: 'pass' }], fields: [{ id: 'f', name: 'F', status: 'pass' }] } }),
+      run('8.4', { a: { commands: [{ cmd: 'X', expect: 'ok', status: 'pass' }], fields: [{ id: 'f', name: 'F', status: 'fail' }] } }),
+    ]);
+    expect(v.entries.a.mysql.fields.f.verified).toEqual(['5.7']);
+    expect(v.entries.a.mysql.versions).toEqual(['5.7']);
   });
 });

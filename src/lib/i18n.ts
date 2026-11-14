@@ -56,6 +56,7 @@ export const UI = {
     verifiedOn: (parts: string) => `已在真实实例上验证：${parts}`,
     someSkipped: '部分命令未自动验证',
     notRunByLab: (why: string) => `未自动验证：${why}`,
+    fieldFoundIn: (versions: string) => `已在 ${versions} 的实际输出里找到`,
     deprecated: '这条对照已过时',
     replacedBy: '请改看',
     notFound: '页面不存在',

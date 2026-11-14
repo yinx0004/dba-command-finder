@@ -55,6 +55,6 @@ databases:
       - title: 'MongoDB: $indexStats'
         url: https://www.mongodb.com/docs/manual/reference/operator/aggregation/indexStats/
     verify:
-      setup: 'db.t.createIndex({ a: 1 })'
+      setup: 'db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 }, { unique: true })'
       vars: {collection: t}
 related: [list-tables, explain]
