@@ -1,5 +1,5 @@
 ---
-// "我的版本" bar. Choices come from lab_versions in data/databases.yaml, so the filter only offers
+// "我的版本" bar: a row of version buttons per database. Choices come from lab_versions in data/databases.yaml, so the filter only offers
 // versions the lab verifies. The script below adjusts any page that marks its commands with
 // data-ver (intent pages), data-verified (verified-version tags) or data-pick (one-line summaries).
 import { loadDataset } from '../lib/data';
@@ -22,18 +22,20 @@ const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
       dbs.map((d, i) => (
         <>
           {i > 0 && <span aria-hidden="true">→</span>}
-          <label class="version-select">
-            <span>{d.name}</span>
-            <select data-db={d.id}>
-              <option value="">{ui.ver.all}</option>
-              {d.lab_versions.map((v) => (
-                <option value={v}>{v}</option>
+          <span class="version-pick">
+            <span class:list={['version-db', i === 0 ? 'side-source' : 'side-target']}>{d.name}</span>
+            <span class="seg" role="group" aria-label={ui.ver.groupLabel(d.name)}>
+              {['', ...d.lab_versions].map((v) => (
+                <button type="button" data-db={d.id} data-line={v} aria-pressed={v === '' ? 'true' : 'false'}>
+                  {v || ui.ver.allShort}
+                </button>
               ))}
-            </select>
-          </label>
+            </span>
+          </span>
         </>
       ))
     }
+    <span class="version-bar-hint">{ui.ver.hint}</span>
   </div>
 </div>
 
@@ -45,10 +47,10 @@ const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
   if (bar) {
     const options = JSON.parse(bar.dataset.options ?? '{}') as Record<string, string[]>;
     const L = JSON.parse(bar.dataset.labels ?? '{}') as Record<string, string>;
-    const selects = [...bar.querySelectorAll<HTMLSelectElement>('select[data-db]')];
+    const buttons = [...bar.querySelectorAll<HTMLButtonElement>('button[data-db]')];
 
     const apply = (pref: Pref) => {
-      for (const s of selects) s.value = pref[s.dataset.db!] ?? '';
+      for (const b of buttons) b.setAttribute('aria-pressed', String((pref[b.dataset.db!] ?? '') === b.dataset.line));
 
       // Command blocks on intent pages: dim what this version can't use, and say why.
       for (const el of document.querySelectorAll<HTMLElement>('[data-ver]')) {
@@ -84,10 +86,10 @@ const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
       }
     };
 
-    for (const s of selects) {
-      s.addEventListener('change', () => {
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
         const pref = readPref(options);
-        pref[s.dataset.db!] = s.value;
+        pref[b.dataset.db!] = b.dataset.line!;
         writePref(pref);
       });
     }
