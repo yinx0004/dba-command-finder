@@ -122,8 +122,18 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
     if (m.id !== fileId) problems.push(`${file}: id "${m.id}" must match the file name "${fileId}"`);
     if (m.category !== dirCat) problems.push(`${file}: category "${m.category}" must match the folder "${dirCat}"`);
     if (!catIds.has(m.category)) problems.push(`${file}: category "${m.category}" is not in data/categories.yaml`);
-    for (const db of Object.keys(m.databases)) {
-      if (!dbIds.has(db)) problems.push(`${file}: database "${db}" is not in data/databases.yaml`);
+    for (const [db, d] of Object.entries(m.databases)) {
+      if (!dbIds.has(db)) {
+        problems.push(`${file}: database "${db}" is not in data/databases.yaml`);
+        continue;
+      }
+      const roles = new Set(databases.find((x) => x.id === db)!.roles.map((r) => r.id));
+      d.commands.forEach((c, i) => {
+        for (const r of c.on ?? []) {
+          if (!roles.has(r)) problems.push(`${file}: databases.${db}.commands.${i}: role "${r}" is not a role of ${db} in data/databases.yaml`);
+        }
+        if (c.on && new Set(c.on).size !== c.on.length) problems.push(`${file}: databases.${db}.commands.${i}: a role is listed twice`);
+      });
     }
     if (byId.has(m.id)) {
       problems.push(`${file}: id "${m.id}" is already used by ${byId.get(m.id)!.file}`);

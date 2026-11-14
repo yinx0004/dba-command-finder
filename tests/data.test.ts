@@ -79,6 +79,46 @@ describe('checkDataset', () => {
     expect(badDb).toMatch(/database "oracle" is not in data\/databases.yaml/);
   });
 
+  it('checks command roles against the database', () => {
+    const roled = [
+      { id: 'mysql', name: 'MySQL' },
+      {
+        id: 'mongodb',
+        name: 'MongoDB',
+        roles: [
+          { id: 'mongod', name: 'mongod', lab: true },
+          { id: 'mongos', name: 'mongos' },
+        ],
+        roles_unverified: { zh: '需要分片集群' },
+      },
+    ];
+    const withOn = (on: string[], db = 'mongodb') =>
+      problems(
+        raw(
+          [
+            {
+              file: 'data/mappings/session/a.yaml',
+              data: mapping({
+                databases: {
+                  mysql: { support: 'full', commands: [{ cmd: 'SHOW A;' }] },
+                  [db]: { support: 'partial', commands: [{ cmd: 'db.a()', on }], notes: [{ zh: '不同' }] },
+                },
+              }),
+            },
+          ],
+          { databases: roled },
+        ),
+      ).join('\n');
+    expect(withOn(['mongod', 'mongos'])).toBe('');
+    expect(withOn(['configsvr'])).toMatch(/role "configsvr" is not a role of mongodb/);
+    expect(withOn(['mongos', 'mongos'])).toMatch(/listed twice/);
+    expect(withOn(['mongod'], 'mysql')).toMatch(/role "mongod" is not a role of mysql/);
+    const noLab = problems(raw([], { databases: [{ id: 'x', name: 'X', roles: [{ id: 'a', name: 'a' }], roles_unverified: { zh: '?' } }] }));
+    expect(noLab.join('\n')).toMatch(/at least one role must be lab: true/);
+    const noWhy = problems(raw([], { databases: [{ id: 'x', name: 'X', roles: [{ id: 'a', name: 'a', lab: true }, { id: 'b', name: 'b' }] }] }));
+    expect(noWhy.join('\n')).toMatch(/roles_unverified/);
+  });
+
   it('checks the site pair', () => {
     const p = problems(raw([], { site: { pair: { source: 'mysql', target: 'redis' } } })).join('\n');
     expect(p).toMatch(/pair database "redis"/);

@@ -1,6 +1,7 @@
 ---
 import { t, UI, type Lang } from '../lib/i18n';
-import type { Command } from '../lib/schema';
+import { labSkip, roleNames } from '../lib/roles';
+import type { Command, Database } from '../lib/schema';
 import type { EntryVerification } from '../lib/verification';
 
 interface Props {
@@ -10,10 +11,12 @@ interface Props {
   /** database id, for the version filter */
   db: string;
   dbName: string;
+  /** the database's definition, for role tags and why the lab skips a command */
+  database?: Database;
   commands: Command[];
   verification?: EntryVerification;
 }
-const { lang, role, db, dbName, commands, verification } = Astro.props;
+const { lang, role, db, dbName, database, commands, verification } = Astro.props;
 const ui = UI[lang];
 
 function versionLabel(c: Command): string {
@@ -39,11 +42,22 @@ function versionLabel(c: Command): string {
         </div>
         <div class="cmd-meta">
           <span class="ver-note badge badge-approx" hidden />
+          {(() => {
+            const names = roleNames(c, database);
+            return names.length ? (
+              <span class="roles" title={ui.runsOn}>
+                {names.map((n) => (
+                  <span class="tag tag-role">{n}</span>
+                ))}
+              </span>
+            ) : null;
+          })()}
           <span class="tag">{versionLabel(c)}</span>
           {c.deprecated_in && <span class="badge badge-approx">{ui.deprecatedIn(c.deprecated_in)}</span>}
           {(() => {
             const v = verification?.commands[c.cmd];
-            if (c.skip) return <span class="badge badge-missing">{ui.notRunByLab(t(c.skip, lang))}</span>;
+            const skip = labSkip(c, database);
+            if (skip) return <span class="badge badge-missing">{ui.notRunByLab(t(skip, lang))}</span>;
             if (v?.verified.length)
               return (
                 <span class="badge badge-exact">

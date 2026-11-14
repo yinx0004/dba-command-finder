@@ -28,6 +28,9 @@ const Command = z.strictObject({
   shell: z.boolean().optional(),
   // Why the lab does not run this command (e.g. it needs a second connection). Shown on the page.
   skip: Text.optional(),
+  // Which of the database's processes it runs on (roles in data/databases.yaml), e.g. [mongod, mongos].
+  // Shown next to the command. The lab runs it only if one of them is a role the lab starts.
+  on: z.array(Slug).min(1).optional(),
 });
 
 // How the lab prepares a database before running this entry's commands.
@@ -127,12 +130,34 @@ export const Mapping = z
     }
   });
 
-export const Database = z.strictObject({
+// A kind of process a database runs as, e.g. mongod / mongos / config server.
+const Role = z.strictObject({
   id: Slug,
   name: z.string().min(1),
-  // Versions the lab runs every command against; also the CI job matrix.
-  lab_versions: z.array(Version).default([]),
+  lab: z.boolean().default(false), // the lab starts this kind of process and runs commands on it
 });
+
+export const Database = z
+  .strictObject({
+    id: Slug,
+    name: z.string().min(1),
+    // Versions the lab runs every command against; also the CI job matrix.
+    lab_versions: z.array(Version).default([]),
+    roles: z.array(Role).default([]),
+    // Why the lab skips commands that only run on roles it does not start. Shown on the page.
+    roles_unverified: Text.optional(),
+  })
+  .superRefine((d, ctx) => {
+    const ids = new Set<string>();
+    d.roles.forEach((r, i) => {
+      if (ids.has(r.id)) ctx.addIssue({ code: 'custom', path: ['roles', i, 'id'], message: `duplicate role "${r.id}"` });
+      ids.add(r.id);
+    });
+    if (d.roles.length && !d.roles.some((r) => r.lab)) ctx.addIssue({ code: 'custom', path: ['roles'], message: 'at least one role must be lab: true' });
+    if (d.roles.some((r) => !r.lab) && !d.roles_unverified) {
+      ctx.addIssue({ code: 'custom', path: ['roles_unverified'], message: 'say why the lab skips commands on roles it does not start' });
+    }
+  });
 
 export const Category = z.strictObject({
   id: Slug,

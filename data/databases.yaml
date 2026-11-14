@@ -1,8 +1,15 @@
 # Databases the site knows about. A mapping describes each one under databases.<id>.
 # lab_versions: the versions `npm run lab` and CI run every command against.
+# roles: the kinds of process a database runs as; a command lists the ones it runs on with `on`.
+#   lab: true marks the ones the lab starts; commands only for other roles are skipped, for roles_unverified.
 - id: mysql
   name: MySQL
   lab_versions: ['5.7', '8.0', '8.4']
 - id: mongodb
   name: MongoDB
   lab_versions: ['6.0', '7.0', '8.0']
+  roles:
+    - {id: mongod, name: mongod, lab: true}
+    - {id: mongos, name: mongos}
+    - {id: configsvr, name: config server}
+  roles_unverified: {zh: 只能在 mongos 或 config server 上执行，需要分片集群，lab 只有副本集}
