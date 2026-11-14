@@ -52,6 +52,11 @@ function runsOf(v: Verification | null, db: string) {
   return (v?.runs ?? []).filter((r) => r.db === db).sort((a, b) => compareVersions(a.version, b.version));
 }
 
+/** Version line -> the server version the lab ran it on, e.g. "8.0" -> "8.0.46". */
+export function labServers(v: Verification | null, db: string): Record<string, string> {
+  return Object.fromEntries(runsOf(v, db).map((r) => [r.version, r.server]));
+}
+
 /** One result per lab run of the database, oldest first; empty without lab results. */
 export function commandRuns(v: Verification | null, entryId: string, db: string, c: Command): CommandRun[] {
   const ev = v?.entries[entryId]?.[db];

@@ -1,0 +1,80 @@
+---
+// "各版本能不能用": one row per command, one column per lab version, each cell saying in words
+// whether the command runs there. Cells the lab did not confirm on that version are drawn dashed.
+import type { Verification } from '../../lab/plan';
+import { UI, type Lang } from '../lib/i18n';
+import { cmdOnLine, commandRuns, labServers } from '../lib/proof';
+import { labSkip } from '../lib/roles';
+import type { Command, Database } from '../lib/schema';
+
+interface Props {
+  lang: Lang;
+  role: 'source' | 'target';
+  db: string;
+  dbName: string;
+  database: Database;
+  commands: Command[];
+  entryId: string;
+  verification: Verification | null;
+}
+const { lang, role, db, dbName, database, commands, entryId, verification } = Astro.props;
+const p = UI[lang].proof;
+const lines = database.lab_versions;
+const servers = labServers(verification, db);
+
+function cell(c: Command, line: string) {
+  const s = cmdOnLine(c, line);
+  const run = labSkip(c, database) ? undefined : commandRuns(verification, entryId, db, c).find((r) => r.line === line);
+  const proven = run?.outcome === 'ok' || run?.outcome === 'fails-as-expected';
+  const text = { ok: p.avail.ok, deprecated: p.avail.deprecated, 'not-yet': p.avail.notYet, removed: p.avail.removed }[s.state];
+  const sub =
+    s.state === 'ok'
+      ? s.since
+        ? p.avail.since(s.since)
+        : s.removed
+          ? p.avail.removedAt(s.removed)
+          : ''
+      : s.state === 'deprecated'
+        ? p.avail.deprecatedAt(s.version)
+        : s.state === 'not-yet'
+          ? p.avail.since(s.version)
+          : p.avail.removedAt(s.version);
+  return { state: s.state, text, sub, proven };
+}
+---
+<div class="avail">
+  <span class:list={['avail-db', `side-${role}`]}>{dbName}</span>
+  <div class="avail-grid" style={`--cols: ${lines.length}`}>
+    <span></span>
+    {
+      lines.map((line) => (
+        <span class="avail-head" data-verified data-db={db} data-v={line}>
+          {line}
+          {servers[line] && <span>{servers[line]}</span>}
+        </span>
+      ))
+    }
+    {
+      commands.map((c) => (
+        <>
+          <code class="avail-cmd">{c.cmd}</code>
+          {lines.map((line) => {
+            const x = cell(c, line);
+            return (
+              <span
+                class:list={['avail-cell', `avail-${x.state}`, { 'avail-unproven': !x.proven }]}
+                title={x.proven ? undefined : p.avail.unproven}
+                data-verified
+                data-db={db}
+                data-v={line}
+              >
+                {x.text}
+                {x.sub && <span>{x.sub}</span>}
+              </span>
+            );
+          })}
+        </>
+      ))
+    }
+  </div>
+</div>

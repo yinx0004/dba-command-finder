@@ -1,15 +1,17 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import EqBadge from '../../../components/EqBadge.astro';
+import AvailTable from '../../../components/AvailTable.astro';
 import CommandPanel from '../../../components/CommandPanel.astro';
 import NonePanel from '../../../components/NonePanel.astro';
 import { loadDataset } from '../../../lib/data';
 import { pairMappings } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
 import { equivalence, fieldRows } from '../../../lib/pair';
+import { fieldCheck } from '../../../lib/proof';
 import { labSkip } from '../../../lib/roles';
 import { categoryHref, editUrl, entryHref, langHome, lastUpdated, newIssueUrl } from '../../../lib/site';
-import { entryVerification } from '../../../lib/verification';
+import { entryVerification, loadVerification } from '../../../lib/verification';
 
 export function getStaticPaths() {
   const ds = loadDataset();
@@ -53,8 +55,34 @@ const verifiedParts = [
 ]
   .filter(([, v]) => v && (v as NonNullable<typeof srcV>).versions.length)
   .map(([name, v]) => `${name} ${(v as NonNullable<typeof srcV>).versions.join(' · ')}`);
-// Versions whose real output contained this field name ('' when none); shown as a ✓ in the field table.
-const fieldFound = (v: typeof srcV, id: string) => (v?.fields?.[id]?.verified ?? []).join(' · ');
+const verification = loadVerification();
+const p = ui.proof;
+// How the lab checked each side's name for a field. A reason shared by every field of a side
+// (verify.skip_fields) is said once under the table instead of on every row.
+const sideSkip = (d: typeof src | undefined) => d?.verify?.skip_fields;
+const fieldMark = (db: string, d: typeof src | undefined, id: string) => {
+  const c = fieldCheck(verification, m, db, id);
+  if (!c) return undefined;
+  if (c.state === 'checked') return { ok: true, label: '✓', title: p.fieldChecked(c.versions.join(' · ')) };
+  if (c.state === 'prose') return { ok: false, label: p.fieldSkipped, title: p.fieldProse };
+  if (c.state === 'skipped' && c.reason !== sideSkip(d)) return { ok: false, label: p.fieldSkipped, title: t(c.reason, lang) };
+  return undefined;
+};
+const skippedAll = (
+  [
+    [S, src],
+    [T, tgt],
+  ] as const
+)
+  .filter(([, d]) => d && sideSkip(d) && Object.keys(d.fields).length)
+  .map(([name, d]) => p.fieldsSkippedAll(name, t(sideSkip(d)!, lang).replace(/[。.]$/, '')));
+// "各版本能不能用" for each side that has commands.
+const availSides = (
+  [
+    ['source', source, S, srcDb, eq === 'only' ? [] : src.commands],
+    ['target', target, T, tgtDb, eq === 'none' ? [] : (tgt?.commands ?? [])],
+  ] as const
+).filter(([, , , def, cmds]) => def && def.lab_versions.length && cmds.length);
 const anySkipped = ([[src, srcDb], [tgt, tgtDb]] as const).some(([d, def]) => d?.commands.some((c) => labSkip(c, def)));
 const verifiedLabel = verifiedParts.length ? ui.verifiedOn(verifiedParts.join(' ／ ')) : ui.unverified;
 
@@ -99,7 +127,10 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
       <p class="lede">{t(m.summary, lang)}</p>
       <div class="meta">
         <EqBadge lang={lang} eq={eq} target={T} large />
-        <span class:list={{ 'verified-label': verifiedParts.length > 0 }}>{verifiedLabel}</span>
+        <span class:list={{ 'verified-label': verifiedParts.length > 0 }}>
+          {verifiedParts.length > 0 && <span class="lab-dot" aria-hidden="true" />}
+          {verifiedLabel}
+        </span>
         {anySkipped && <span>（{ui.someSkipped}）</span>}
         {updated && <span>· 更新于 {updated}</span>}
       </div>
@@ -110,7 +141,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
         eq === 'only' ? (
           <NonePanel lang={lang} role="source" dbName={S} notes={src.notes} />
         ) : (
-          <CommandPanel lang={lang} role="source" db={source} dbName={S} database={srcDb} commands={src.commands} verification={srcV} />
+          <CommandPanel lang={lang} role="source" db={source} dbName={S} database={srcDb} support={src.support} commands={src.commands} entryId={m.id} verification={verification} />
         )
       }
       {
@@ -128,10 +159,24 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
             </div>
           </div>
         ) : (
-          <CommandPanel lang={lang} role="target" db={target} dbName={T} database={tgtDb} commands={tgt!.commands} verification={tgtV} />
+          <CommandPanel lang={lang} role="target" db={target} dbName={T} database={tgtDb} support={tgt!.support} commands={tgt!.commands} entryId={m.id} verification={verification} />
         )
       }
     </section>
+
+    {
+      availSides.length > 0 && (
+        <section class="section">
+          <h2>{p.availTitle}</h2>
+          <div class="avail-list">
+            {availSides.map(([role, db, name, def, cmds]) => (
+              <AvailTable lang={lang} role={role} db={db} dbName={name} database={def!} commands={[...cmds]} entryId={m.id} verification={verification} />
+            ))}
+          </div>
+          <p class="section-foot">{p.availFoot}</p>
+        </section>
+      )
+    }
 
     {
       fields.length > 0 && (
@@ -151,28 +196,33 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
                 {fields.map((f) => (
                   <tr>
                     <td>{f.name ? t(f.name, lang) : f.id}</td>
-                    <td class="mono">
-                      {f.source ?? '—'}
-                      {fieldFound(srcV, f.id) && (
-                        <span class="field-ok" title={ui.fieldFoundIn(fieldFound(srcV, f.id))} aria-label={ui.fieldFoundIn(fieldFound(srcV, f.id))}>
-                          ✓
-                        </span>
-                      )}
-                    </td>
-                    <td class="mono">
-                      {f.target ?? '—'}
-                      {fieldFound(tgtV, f.id) && (
-                        <span class="field-ok" title={ui.fieldFoundIn(fieldFound(tgtV, f.id))} aria-label={ui.fieldFoundIn(fieldFound(tgtV, f.id))}>
-                          ✓
-                        </span>
-                      )}
-                    </td>
+                    {(
+                      [
+                        [source, src, f.source],
+                        [target, tgt, f.target],
+                      ] as const
+                    ).map(([db, d, name]) => {
+                      const mark = name ? fieldMark(db, d, f.id) : undefined;
+                      return (
+                        <td class="mono">
+                          {name ?? '—'}
+                          {mark && (
+                            <span class:list={[mark.ok ? 'field-ok' : 'field-mark']} title={mark.title} aria-label={mark.title}>
+                              {mark.label}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
                     <td style="color: var(--ink-2)">{t(f.note, lang)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {skippedAll.map((line) => (
+            <p class="section-foot">{line}</p>
+          ))}
         </section>
       )
     }
@@ -183,7 +233,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
           <h2>{ui.differences}</h2>
           <ul class="notes">
             {notes.map((n) => (
-              <li class="card">
+              <li>
                 <Fragment set:html={noteIcon} />
                 <span>
                   {notes.some((x) => x.db !== T) && <span class="tag" style="margin-right: 8px">{n.db}</span>}
