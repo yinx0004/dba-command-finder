@@ -1,0 +1,49 @@
+schema_version: 2
+id: plan-cache
+category: query
+title: {zh: 查看和清空查询计划缓存}
+summary: {zh: 同一类查询突然变慢、换了计划时，查看缓存的是哪个计划，必要时清掉让它重新选。}
+keywords:
+  zh: [查询计划缓存, 计划缓存, 清空计划缓存, 执行计划缓存]
+  en: [plan cache, planCacheStats, planCacheClear, getPlanCache, query cache]
+fields:
+  - {id: key, name: {zh: 查询形状}}
+  - {id: active, name: {zh: 是否生效}}
+  - {id: query, name: {zh: 生成计划的查询}}
+databases:
+  mysql:
+    support: none
+    notes:
+      - zh: 没有跨会话共享的查询计划缓存，每条语句执行时都重新优化（预处理语句只在本会话里复用）。8.0 已移除查询缓存（query cache），5.7 的查询缓存缓存的是结果，不是执行计划。
+      - zh: 执行计划变化通常是统计信息变了，用 ANALYZE TABLE 更新统计信息后再看执行计划。
+    alternatives:
+      - title: {zh: 更新统计信息}
+        see: analyze-table
+      - title: {zh: 查看执行计划}
+        see: explain
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.<collection>.aggregate([{ $planCacheStats: {} }])'
+        note: {zh: 这个集合缓存了哪些计划}
+      - cmd: db.<collection>.getPlanCache().list()
+        note: {zh: 同上，mongosh 辅助方法}
+      - cmd: db.<collection>.getPlanCache().clear()
+        note: {zh: 清空这个集合的计划缓存，下次查询会重新评估候选计划}
+      - cmd: 'db.runCommand({ planCacheClear: "<collection>" })'
+        note: {zh: 命令形式，也可以加 query 只清某一类查询}
+    fields:
+      key: planCacheKey
+      active: isActive
+      query: createdFromQuery
+    notes:
+      - zh: 计划缓存只在内存里、只属于当前节点，mongod 重启或建删索引后会自动清空；副本集要在每个成员上分别看。
+      - zh: isActive 为 false 的计划还在观察期，还没真正被使用。
+    refs:
+      - {title: 'MongoDB: Query Plans', url: 'https://www.mongodb.com/docs/manual/core/query-plans/'}
+      - {title: 'MongoDB: $planCacheStats', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/planCacheStats/'}
+    verify:
+      # Two candidate indexes, run twice, so the winning plan is cached and active.
+      setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 1 }]); db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 }); db.t.find({ a: 1, b: 1 }).toArray(); db.t.find({ a: 1, b: 1 }).toArray()'
+      vars: {collection: t}
+related: [explain, force-index, analyze-table]
