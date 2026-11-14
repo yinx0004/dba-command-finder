@@ -192,5 +192,17 @@
 - {q: explain for connection, top: running-query-plan}
 - {q: planSummary, top: running-query-plan}
 
+- {q: 长事务, top: long-transactions}
+- {q: innodb_trx, top: long-transactions}
+- {q: 连接数满了, top: connection-usage}
+- {q: max_connections, top: connection-usage}
+- {q: 建索引进度, top: ddl-progress}
+- {q: alter table progress, top: ddl-progress}
+- {q: 冗余索引, top: redundant-indexes}
+- {q: 自增 ID 用完, top: auto-increment-exhaustion}
+- {q: auto_increment, top: auto-increment-exhaustion}
+- {q: 磁盘空间, top: data-directory-disk}
+- {q: datadir, top: data-directory-disk}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

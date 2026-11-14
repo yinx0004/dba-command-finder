@@ -1,0 +1,44 @@
+schema_version: 2
+id: ddl-progress
+category: maintenance
+title: {zh: 查看 DDL、建索引的进度}
+summary: {zh: 大表上 ALTER TABLE 或建索引跑了很久，看看做到哪了、大概还要多久。}
+keywords:
+  zh: [DDL 进度, 建索引进度, ALTER 进度, 加索引要多久]
+  en: [alter table progress, index build progress, events_stages_current, createindexes]
+fields:
+  - {id: done, name: {zh: 已完成}}
+  - {id: total, name: {zh: 总量}}
+databases:
+  mysql:
+    support: partial
+    commands:
+      - cmd: UPDATE performance_schema.setup_instruments SET ENABLED = 'YES', TIMED = 'YES' WHERE NAME LIKE 'stage/innodb/alter%';
+        note: {zh: 打开 ALTER TABLE 的阶段统计，要在 DDL 开始之前执行}
+      - cmd: UPDATE performance_schema.setup_consumers SET ENABLED = 'YES' WHERE NAME LIKE 'events_stages_%';
+      - cmd: SELECT EVENT_NAME, WORK_COMPLETED, WORK_ESTIMATED FROM performance_schema.events_stages_current;
+        note: {zh: 进度 = WORK_COMPLETED / WORK_ESTIMATED}
+    fields:
+      done: WORK_COMPLETED
+      total: WORK_ESTIMATED
+    notes:
+      - zh: 只有 InnoDB 的 ALTER TABLE（含建索引）提供进度，而且统计要在 DDL 开始前打开；WORK_ESTIMATED 会随执行修正，是估算值。
+    refs:
+      - {title: 'MySQL: Monitoring ALTER TABLE Progress', url: 'https://dev.mysql.com/doc/refman/8.4/en/monitor-alter-table-performance-schema.html'}
+    verify:
+      skip_fields: {zh: 需要另一个连接上有正在执行的 DDL}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.adminCommand({ currentOp: true, $or: [{ op: "command", "command.createIndexes": { $exists: true } }, { op: "none", msg: /^Index Build/ }] })'
+        note: {zh: msg 里直接写着进度，例如 Index Build (background) 1000/5000 20%}
+    fields:
+      done: progress.done
+      total: progress.total
+    notes:
+      - zh: 不用事先打开什么；mongod 日志里也会定期打印建索引进度。4.4 起副本集各成员同时建，每个成员上都能查到。
+    refs:
+      - {title: 'MongoDB: Index Builds on Populated Collections', url: 'https://www.mongodb.com/docs/manual/core/index-creation/'}
+    verify:
+      skip_fields: {zh: 需要另一个连接上有正在执行的建索引}
+related: [create-index, list-active-sessions]

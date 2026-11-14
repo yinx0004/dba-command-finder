@@ -1,0 +1,43 @@
+schema_version: 2
+id: data-directory-disk
+category: storage
+title: {zh: 查看数据目录和磁盘空间}
+summary: {zh: 磁盘告警时，先确认数据放在哪、所在磁盘还剩多少。}
+keywords:
+  zh: [数据目录, 磁盘空间, 磁盘满了, 数据放在哪]
+  en: [datadir, dbpath, disk space, fsusedsize, df]
+fields:
+  - {id: data_dir, name: {zh: 数据目录}}
+  - {id: disk_used, name: {zh: 磁盘已用}}
+  - {id: disk_total, name: {zh: 磁盘总量}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@datadir, @@innodb_data_home_dir, @@log_bin_basename;
+        note: {zh: 数据、InnoDB 系统表空间、binlog 分别在哪}
+      - cmd: df -h "$(mysql -N -e 'SELECT @@datadir')"
+        shell: true
+        note: {zh: 在数据库服务器上看数据目录所在磁盘的空间}
+    fields:
+      data_dir: datadir
+      disk_used: Used
+      disk_total: Size
+    refs:
+      - {title: 'MySQL: datadir', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_datadir'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 }).parsed'
+        note: {zh: storage.dbPath 是数据目录；没配置时默认是 /data/db}
+      - cmd: db.stats()
+        note: {zh: fsUsedSize / fsTotalSize 是数据目录所在磁盘的已用和总量}
+    fields:
+      data_dir: {name: dbPath, skip: {zh: lab 的实例用默认路径启动，参数里没有 dbPath}}
+      disk_used: fsUsedSize
+      disk_total: fsTotalSize
+    refs:
+      - {title: 'MongoDB: db.stats()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.stats/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 })'
+related: [database-size, table-size]

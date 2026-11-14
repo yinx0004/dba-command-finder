@@ -1,0 +1,34 @@
+schema_version: 2
+id: auto-increment-exhaustion
+category: schema
+title: {zh: 检查自增 ID 是否快用完了}
+summary: {zh: INT 类型的自增主键用到上限后，再插入就会报错；提前找出快到头的表。}
+keywords:
+  zh: [自增 ID 用完, 自增主键溢出, 主键快满了]
+  en: [auto_increment, schema_auto_increment_columns, overflow, int max]
+fields:
+  - {id: ratio, name: {zh: 已用比例}}
+  - {id: max, name: {zh: 类型上限}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.schema_auto_increment_columns WHERE table_schema = '<db>';
+        note: {zh: auto_increment_ratio 越接近 1 越危险}
+    fields:
+      ratio: auto_increment_ratio
+      max: max_value
+    notes:
+      - zh: 数据来自 information_schema，8.0 起默认缓存 24 小时，原因同「查看表的大小」。
+    refs:
+      - {title: 'MySQL: sys.schema_auto_increment_columns', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-schema-auto-increment-columns.html'}
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT); INSERT INTO t (a) VALUES (1);
+  mongodb:
+    support: none
+    notes:
+      - zh: 默认的 _id 是 ObjectId（12 字节，包含时间戳和计数器），不存在用完的问题。只有自己用计数器集合生成自增编号、并存成 32 位整数时，才需要关心上限。
+    alternatives:
+      - title: {zh: 看一个数字型编号字段当前的最大值}
+        cmd: 'db.<collection>.find({}, { <field>: 1 }).sort({ <field>: -1 }).limit(1)'
+related: [show-create-table]
