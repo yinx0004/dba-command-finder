@@ -1,0 +1,34 @@
+schema_version: 2
+id: batch-delete
+category: data
+title: {zh: 分批删除大量数据}
+summary: {zh: 一次删几千万行会长时间锁表、撑爆 undo、让从库延迟，要拆成小批一点点删。}
+keywords:
+  zh: [分批删除, 大量删除, 删除数据, 批量删除]
+  en: [delete limit, deletemany, batch delete, chunked delete]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: DELETE FROM <table> WHERE created_at < NOW() - INTERVAL 30 DAY LIMIT 1000;
+        note: {zh: 反复执行，直到影响行数为 0；每批之间可以稍微停一下，给从库喘息}
+    notes:
+      - zh: 按主键范围分批（WHERE id BETWEEN … AND …）比 LIMIT 更稳定，不会每批都重新扫描一遍已删过的区域。
+    refs:
+      - {title: 'MySQL: DELETE', url: 'https://dev.mysql.com/doc/refman/8.4/en/delete.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, created_at DATETIME); INSERT INTO t VALUES (1, NOW() - INTERVAL 40 DAY), (2, NOW());
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'const ids = db.<collection>.find({ createdAt: { $lt: new Date(Date.now() - 30 * 86400000) } }, { _id: 1 }).limit(1000).toArray().map(d => d._id); db.<collection>.deleteMany({ _id: { $in: ids } })'
+        note: {zh: 先取一批 _id 再删，反复执行直到 deletedCount 为 0}
+    notes:
+      - zh: deleteMany 没有 LIMIT，一条命令会把符合条件的全部删掉，所以要自己先取一批 _id。只是要定期清理旧数据的话，TTL 索引更省事。
+    refs:
+      - {title: 'MongoDB: db.collection.deleteMany()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.deleteMany/'}
+    verify:
+      setup: 'db.t.insertMany([{ createdAt: new Date(Date.now() - 40 * 86400000) }, { createdAt: new Date() }])'
+      vars: {collection: t}
+related: [ttl-expiry, drop-table]

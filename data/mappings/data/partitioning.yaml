@@ -1,0 +1,34 @@
+schema_version: 2
+id: partitioning
+category: data
+title: {zh: 分区表}
+summary: {zh: 按时间把大表切成多个分区，查询只扫相关分区，清理旧数据直接删整个分区。}
+keywords:
+  zh: [分区, 分区表, 按月分区, 删除分区]
+  en: [partition by, drop partition, partitioning, time series]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE TABLE <table> (id BIGINT, created_at DATE, PRIMARY KEY (id, created_at)) PARTITION BY RANGE (YEAR(created_at)) (PARTITION p2025 VALUES LESS THAN (2026), PARTITION p2026 VALUES LESS THAN (2027), PARTITION pmax VALUES LESS THAN MAXVALUE);
+        note: {zh: 分区键必须包含在主键和所有唯一索引里}
+      - cmd: ALTER TABLE <table> DROP PARTITION p2025;
+        note: {zh: 删除整个分区，比 DELETE 快得多}
+      - cmd: SELECT PARTITION_NAME, TABLE_ROWS FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = '<db>' AND TABLE_NAME = '<table>';
+        note: {zh: 查看各分区的行数}
+    refs:
+      - {title: 'MySQL: Partitioning', url: 'https://dev.mysql.com/doc/refman/8.4/en/partitioning.html'}
+    verify:
+      vars: {table: t_part}
+  mongodb:
+    support: none
+    notes:
+      - zh: 没有表分区。按时间清理旧数据用 TTL 索引；时序数据（监控、日志）用时间序列集合，内部按时间分桶存储；单机放不下时用分片把数据拆到多台机器上，那是扩容，不是分区。
+    alternatives:
+      - title: {zh: 按时间自动清理}
+        see: ttl-expiry
+      - title: {zh: 时间序列集合（5.0 起）}
+        cmd: 'db.createCollection("<collection>", { timeseries: { timeField: "ts", metaField: "meta" }, expireAfterSeconds: 2592000 })'
+    refs:
+      - {title: 'MongoDB: Time Series Collections', url: 'https://www.mongodb.com/docs/manual/core/timeseries-collections/'}
+related: [ttl-expiry, batch-delete]

@@ -1,0 +1,39 @@
+schema_version: 2
+id: ttl-expiry
+category: data
+title: {zh: 自动清理过期数据}
+summary: {zh: 日志、会话、临时数据只保留一段时间，过期的自动删掉，不用人工清理。}
+keywords:
+  zh: [过期数据, 自动删除, 定期清理, 数据保留]
+  en: [ttl, ttl index, expireafterseconds, create event, retention]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE EVENT purge_old_rows ON SCHEDULE EVERY 1 HOUR DO DELETE FROM <table> WHERE created_at < NOW() - INTERVAL 30 DAY LIMIT 10000;
+        note: {zh: 每小时删一批 30 天前的数据}
+      - cmd: SELECT @@event_scheduler;
+        note: {zh: 必须是 ON，定时任务才会执行}
+    notes:
+      - zh: event_scheduler 在 5.7 默认关闭、8.0 起默认开启；数据量大时更常见的做法是按时间分区，直接删除整个分区。
+    refs:
+      - {title: 'MySQL: CREATE EVENT', url: 'https://dev.mysql.com/doc/refman/8.4/en/create-event.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, created_at DATETIME);
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.<collection>.createIndex({ createdAt: 1 }, { expireAfterSeconds: 2592000 })'
+        note: {zh: TTL 索引：createdAt 超过 30 天的文档会被自动删除}
+      - cmd: 'db.runCommand({ collMod: "<collection>", index: { keyPattern: { createdAt: 1 }, expireAfterSeconds: 604800 } })'
+        note: {zh: 改成保留 7 天，不用重建索引}
+    notes:
+      - zh: 后台线程大约每 60 秒扫一次，过期文档不是到点立刻消失；字段必须是日期类型（或日期数组），不是日期的文档永远不会被删。
+      - zh: 大量文档同时过期时，删除会给主节点和复制带来持续的写压力。
+    refs:
+      - {title: 'MongoDB: TTL Indexes', url: 'https://www.mongodb.com/docs/manual/core/index-ttl/'}
+    verify:
+      setup: 'db.t.insertOne({ createdAt: new Date() })'
+      vars: {collection: t}
+related: [batch-delete, partitioning]

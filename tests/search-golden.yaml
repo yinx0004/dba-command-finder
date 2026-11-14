@@ -215,5 +215,15 @@
 - {q: account lock, top: account-lock}
 - {q: 锁定账号, top: account-lock}
 
+- {q: ttl, top: ttl-expiry}
+- {q: 过期数据, top: ttl-expiry}
+- {q: create event, top: ttl-expiry}
+- {q: 分批删除, top: batch-delete}
+- {q: delete limit, top: batch-delete}
+- {q: 分区表, top: partitioning}
+- {q: drop partition, top: partitioning}
+- {q: create view, top: create-view}
+- {q: 视图, top: create-view}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
