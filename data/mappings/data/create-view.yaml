@@ -1,0 +1,35 @@
+schema_version: 2
+id: create-view
+category: data
+title: {zh: 创建视图}
+summary: {zh: 把常用的过滤和字段裁剪包成一个视图，给报表或只读账号用。}
+keywords:
+  zh: [视图, 创建视图, 只读视图]
+  en: [create view, createview, view]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE VIEW <view> AS SELECT id, a FROM <table> WHERE a > 0;
+      - cmd: SHOW FULL TABLES WHERE Table_type = 'VIEW';
+        note: {zh: 列出当前库的视图}
+    refs:
+      - {title: 'MySQL: CREATE VIEW', url: 'https://dev.mysql.com/doc/refman/8.4/en/create-view.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT);
+      vars: {table: t, view: v}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.createView("<view>", "<collection>", [{ $match: { a: { $gt: 0 } } }, { $project: { a: 1 } }])'
+        note: {zh: 视图就是一个保存起来的聚合管道}
+      - cmd: 'db.getCollectionInfos({ type: "view" })'
+        note: {zh: 列出当前库的视图和它们的管道}
+    notes:
+      - zh: 视图只读，每次查询时现执行管道，不会存结果；要把结果存下来（物化），用 $merge 或 $out 定期写进一个普通集合。
+    refs:
+      - {title: 'MongoDB: Views', url: 'https://www.mongodb.com/docs/manual/core/views/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1, b: 2 })'
+      vars: {collection: t, view: v}
+related: [show-create-table, list-tables]

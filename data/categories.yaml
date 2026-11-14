@@ -23,6 +23,9 @@
 - id: schema
   name: {zh: 库表结构}
   desc: {zh: 库、表与集合}
+- id: data
+  name: {zh: 数据管理}
+  desc: {zh: 清理过期数据、分批删除、分区、视图}
 - id: storage
   name: {zh: 存储容量}
   desc: {zh: 表大小、库大小、行数}
