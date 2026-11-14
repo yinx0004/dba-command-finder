@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Equivalence } from '../lib/pair';
 import { categoryChips, createSearcher, filterByCategory, type SearchDoc, type VersionedCmd } from '../lib/search';
 import { firstUsable } from '../lib/version';
@@ -30,6 +31,8 @@ interface Props {
   versionOptions: Record<string, string[]>;
   /** categories in site order, for the chips over the results */
   categories: { id: string; name: string }[];
+  /** id of an element to render the results into, e.g. below a hero; inline when absent */
+  resultsTarget?: string;
   tries: string[];
   /** link prefix for entries, e.g. "/dba-command-finder/zh/" */
   entryBase: string;
@@ -56,6 +59,7 @@ export default function SearchBox({
   targetName,
   versionOptions,
   categories,
+  resultsTarget,
   tries,
   entryBase,
   submitUrl,
@@ -65,7 +69,12 @@ export default function SearchBox({
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('');
   const [pref, setPref] = useState<Pref>({});
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
   const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (resultsTarget) setSlot(document.getElementById(resultsTarget));
+  }, [resultsTarget]);
 
   // Follow the reader's version choice from the version bar.
   useEffect(() => {
@@ -110,6 +119,61 @@ export default function SearchBox({
     }
   }, [q, searching, filtered.category]);
 
+  const resultsView = searching ? (
+    <section className="results" aria-live="polite">
+      {results.length > 0 ? (
+        <>
+          <p className="muted" style={{ margin: '0 0 2px', fontSize: 14 }}>
+            {labels.found.replace('{n}', String(results.length))}
+          </p>
+          {chips.length > 2 && (
+            <div className="chips" role="group" aria-label={labels.chipsLabel}>
+              {chips.map((c) => (
+                <button
+                  key={c.id || 'all'}
+                  type="button"
+                  aria-pressed={filtered.category === c.id}
+                  onClick={() => setCat(c.id)}
+                >
+                  {c.id ? catName.get(c.id) : labels.all} <span className="chip-count">{c.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {filtered.shown.slice(0, SHOW).map((d) => (
+            <a key={d.slug} className="card result" href={`${entryBase}${d.slug}/`}>
+              <div className="row-title">
+                <strong>{d.title}</strong>
+                <span className="tag">{d.category}</span>
+                <span className={`badge badge-${d.equivalence}`}>{labels.eq[d.equivalence]}</span>
+              </div>
+              <div className="pair">
+                <div>
+                  <span className="side side-source">{sourceName}</span>
+                  <span>{shown(d.sourceCmds, sourceId, d.source)}</span>
+                </div>
+                <div>
+                  <span className="side side-target">{targetName}</span>
+                  <span>
+                    {shown(d.targetCmds, targetId, d.equivalence === 'none' ? labels.noEquivalent : labels.eq.missing)}
+                  </span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </>
+      ) : (
+        <div className="empty">
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>{labels.noResultTitle}</div>
+          <div className="muted">
+            {labels.noResultBody} <a href={submitUrl}>{labels.submitMapping}</a>
+            {labels.noResultTail}
+          </div>
+        </div>
+      )}
+    </section>
+  ) : null;
+
   return (
     <div>
       <div className="searchbox">
@@ -149,60 +213,7 @@ export default function SearchBox({
         ))}
       </div>
 
-      {searching && (
-        <section className="results" aria-live="polite">
-          {results.length > 0 ? (
-            <>
-              <p className="muted" style={{ margin: '0 0 2px', fontSize: 14 }}>
-                {labels.found.replace('{n}', String(results.length))}
-              </p>
-              {chips.length > 2 && (
-                <div className="chips" role="group" aria-label={labels.chipsLabel}>
-                  {chips.map((c) => (
-                    <button
-                      key={c.id || 'all'}
-                      type="button"
-                      aria-pressed={filtered.category === c.id}
-                      onClick={() => setCat(c.id)}
-                    >
-                      {c.id ? catName.get(c.id) : labels.all} <span className="chip-count">{c.count}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {filtered.shown.slice(0, SHOW).map((d) => (
-                <a key={d.slug} className="card result" href={`${entryBase}${d.slug}/`}>
-                  <div className="row-title">
-                    <strong>{d.title}</strong>
-                    <span className="tag">{d.category}</span>
-                    <span className={`badge badge-${d.equivalence}`}>{labels.eq[d.equivalence]}</span>
-                  </div>
-                  <div className="pair">
-                    <div>
-                      <span className="side side-source">{sourceName}</span>
-                      <span>{shown(d.sourceCmds, sourceId, d.source)}</span>
-                    </div>
-                    <div>
-                      <span className="side side-target">{targetName}</span>
-                      <span>
-                        {shown(d.targetCmds, targetId, d.equivalence === 'none' ? labels.noEquivalent : labels.eq.missing)}
-                      </span>
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </>
-          ) : (
-            <div className="empty">
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>{labels.noResultTitle}</div>
-              <div className="muted">
-                {labels.noResultBody} <a href={submitUrl}>{labels.submitMapping}</a>
-                {labels.noResultTail}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
+      {slot ? resultsView && createPortal(resultsView, slot) : resultsView}
     </div>
   );
 }

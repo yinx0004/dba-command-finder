@@ -2,9 +2,11 @@
 import Base from '../../layouts/Base.astro';
 import SearchBox from '../../components/SearchBox.tsx';
 import { loadDataset } from '../../lib/data';
-import { pairMappings, toSearchDocs, versionedCmds } from '../../lib/docs';
+import { pairMappings, toSearchDocs } from '../../lib/docs';
+import { homeStats, labExcerpt } from '../../lib/home';
 import { LANGS, t, UI, type Lang } from '../../lib/i18n';
-import { categoryHref, entryHref, href, newIssueUrl } from '../../lib/site';
+import { categoryHref, GITHUB, href, newIssueUrl } from '../../lib/site';
+import { loadVerification } from '../../lib/verification';
 
 export function getStaticPaths() {
   return LANGS.map((lang) => ({ params: { lang } }));
@@ -12,103 +14,165 @@ export function getStaticPaths() {
 
 const lang = Astro.params.lang as Lang;
 const ui = UI[lang];
+const h = ui.home3;
 const ds = loadDataset();
 const { source, target } = ds.site.pair;
-const dbName = new Map(ds.databases.map((d) => [d.id, d.name]));
-const S = dbName.get(source)!;
-const T = dbName.get(target)!;
+const pairDbs = [source, target].map((id) => ds.databases.find((d) => d.id === id)!);
+const [S, T] = pairDbs.map((d) => d.name);
 const docs = toSearchDocs(ds, lang);
-const versionOptions = Object.fromEntries(
-  ds.databases.filter((d) => d.id === source || d.id === target).map((d) => [d.id, d.lab_versions]),
-);
+const versionOptions = Object.fromEntries(pairDbs.map((d) => [d.id, d.lab_versions]));
 const mappings = pairMappings(ds);
-const byId = new Map(mappings.map((m) => [m.id, m]));
-const featured = ds.site.featured.map((id) => byId.get(id)!).filter(Boolean);
 const counts = new Map<string, number>();
 for (const m of mappings) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
 const categories = ds.categories.filter((c) => counts.get(c.id));
-const targetCmd = (m: (typeof mappings)[number]) => {
-  const d = m.databases[target];
-  return d?.commands[0]?.cmd ?? (d?.support === 'none' ? ui.noEquivalent : ui.eq.missing);
-};
+
+const stats = homeStats(ds);
+const excerpt = labExcerpt(ds, loadVerification());
+const dbName = new Map(ds.databases.map((d) => [d.id, d.name]));
+// The log panel as rows of styled pieces, so the template only lays them out.
+type Piece = { cls?: 'ok' | 'dim' | 'bright'; text: string };
+const logRows: Piece[][] = excerpt
+  ? [
+      ...excerpt.lines.map((l): Piece[] =>
+        l.kind === 'run'
+          ? [{ cls: 'dim', text: '▶ ' + (dbName.get(l.db) ?? l.db).toLowerCase() + ' ' + l.server }]
+          : [{ cls: 'ok', text: '  ✓ ' }, { text: l.cmd }, ...(l.failsAsExpected ? [{ cls: 'dim' as const, text: '   ' + h.failsAsExpected }] : [])],
+      ),
+      [{ cls: 'dim', text: '─'.repeat(40) }],
+      [{ cls: 'bright', text: '  ' + h.summary(stats.labCommands, excerpt.versions) + (excerpt.allAsExpected ? h.allAsExpected : '') }],
+    ]
+  : [];
+// "MYSQL 5.7 / 8.0 / 8.4 · MONGODB 6.0 / 7.0 / 8.0"
+const verifiedVersions = pairDbs.map((d) => `${d.name.toUpperCase()} ${d.lab_versions.join(' / ')}`).join(' · ');
 ---
-<Base lang={lang} title={`${ui.siteName}：${ui.tagline(S, T)}`} description={ui.heroSub(S, T)} variant="home">
-  <main class="wrap" style="padding-bottom: 48px">
-    <section class="hero">
-      <h1>{ui.heroTitle(S, T)}</h1>
-      <p class="lede">{ui.heroSub(S, T)}</p>
+<Base
+  lang={lang}
+  title={`${ui.siteName}：${ui.tagline(S, T)}`}
+  description={ui.heroSub(S, T)}
+  variant="home"
+  footerNote={h.footer(stats.versions)}
+>
+  <section class="hero3">
+    <div class="wrap hero3-grid">
+      <div class="hero3-text">
+        <span class="eyebrow eyebrow-ok">{h.verified} · {verifiedVersions}</span>
+        <h1>
+          <span>{h.title1(S)}</span>
+          <span>{h.title2(T)}</span>
+        </h1>
+        <p class="hero3-lede">{h.lede}</p>
+        <SearchBox
+          client:load
+          docs={docs}
+          sourceId={source}
+          sourceName={S}
+          targetId={target}
+          targetName={T}
+          versionOptions={versionOptions}
+          categories={categories.map((c) => ({ id: c.id, name: t(c.name, lang) }))}
+          tries={['show processlist', '锁等待', 'slave', 'db.currentOp']}
+          entryBase={href(`${lang}/`)}
+          submitUrl={newIssueUrl()}
+          resultsTarget="search-results"
+          labels={{
+            searchLabel: ui.searchLabel,
+            placeholder: ui.searchPlaceholder,
+            tryLabel: h.tries,
+            found: ui.found,
+            noResultTitle: ui.noResultTitle,
+            noResultBody: ui.noResultBody,
+            submitMapping: ui.submitMapping,
+            noResultTail: ui.noResultTail,
+            noEquivalent: ui.noEquivalent,
+            noneOnLine: ui.ver.noneOnLine,
+            all: ui.chipAll,
+            chipsLabel: ui.chipsLabel,
+            eq: ui.eq,
+          }}
+        />
+      </div>
+
+      <figure class="lab-log" aria-label="lab 实际输出节选">
+        <figcaption class="lab-log-head">
+          <span>npm run lab</span>
+          {excerpt && <span>{h.labDate(excerpt.date)}</span>}
+        </figcaption>
+        {
+          excerpt ? (
+            <pre class="lab-log-body">{logRows.map((row) => (
+              <span class="log-row">{row.map((p) => <span class={p.cls}>{p.text}</span>)}</span>
+            ))}</pre>
+          ) : (
+            <p class="lab-log-empty">{h.labMissing}</p>
+          )
+        }
+      </figure>
+    </div>
+  </section>
+
+  <div id="search-results" class="wrap"></div>
+
+  <div class="browse">
+    <section class="stats3" aria-label="数据概况">
+      <div class="wrap stats3-grid">
+        <div>
+          <strong>{stats.entries}</strong>
+          <span>{h.stats.entries(stats.categories)}</span>
+        </div>
+        <div>
+          <strong>{stats.labCommands}</strong>
+          <span>{h.stats.labCommands}</span>
+        </div>
+        <div>
+          <strong>{stats.versions}</strong>
+          <span>{h.stats.versions}</span>
+        </div>
+        <div>
+          <strong>{stats.versionBound}</strong>
+          <span>{h.stats.versionBound}</span>
+        </div>
+      </div>
     </section>
 
-    <SearchBox
-      client:load
-      docs={docs}
-      sourceId={source}
-      sourceName={S}
-      targetId={target}
-      targetName={T}
-      versionOptions={versionOptions}
-      categories={categories.map((c) => ({ id: c.id, name: t(c.name, lang) }))}
-      tries={['show processlist', '锁等待', 'slave', 'db.currentOp', '死锁']}
-      entryBase={href(`${lang}/`)}
-      submitUrl={newIssueUrl()}
-      labels={{
-        searchLabel: ui.searchLabel,
-        placeholder: ui.searchPlaceholder,
-        tryLabel: ui.tryLabel,
-        found: ui.found,
-        noResultTitle: ui.noResultTitle,
-        noResultBody: ui.noResultBody,
-        submitMapping: ui.submitMapping,
-        noResultTail: ui.noResultTail,
-        noEquivalent: ui.noEquivalent,
-        noneOnLine: ui.ver.noneOnLine,
-        all: ui.chipAll,
-        chipsLabel: ui.chipsLabel,
-        eq: ui.eq,
-      }}
-    />
+    <main class="wrap home3-main">
+      <section id="method" class="split">
+        <div class="split-head">
+          <span class="eyebrow">{h.methodEyebrow}</span>
+          <h2>{h.methodTitle}</h2>
+          <p class="muted">{h.methodSub}</p>
+          <a href={`${GITHUB}#验证-lab`} class="strong-link">{h.methodLink}</a>
+        </div>
+        <ol class="steps3">
+          {
+            h.steps.map((s, i) => (
+              <li>
+                <span class="step-no">{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <strong>{s.title}</strong>
+                  <p>{s.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
 
-    <div class="browse">
-      <section class="section" id="browse" style="margin-top: 44px">
-        <h2 style="font-size: 18px">{ui.browse}</h2>
-        <div class="cat-grid">
+      <section id="browse" class="split">
+        <div class="split-head">
+          <span class="eyebrow">{h.indexEyebrow}</span>
+          <h2>{h.indexTitle}</h2>
+        </div>
+        <div class="index3">
           {
             categories.map((c) => (
-              <a class="card cat-card" href={categoryHref(lang, c.id)}>
-                <strong>{t(c.name, lang)}</strong>
-                <span>{t(c.desc, lang)}</span>
-                <span style="font-size: 12px">{ui.count(counts.get(c.id) ?? 0)}</span>
+              <a href={categoryHref(lang, c.id)}>
+                <span>{t(c.name, lang)}</span>
+                <span class="mono">{counts.get(c.id)}</span>
               </a>
             ))
           }
         </div>
       </section>
-
-      <section class="section" style="margin-top: 40px">
-        <h2 style="font-size: 18px">{ui.popular}</h2>
-        <div class="card">
-          {
-            featured.map((m) => (
-              <a class="pop" href={entryHref(lang, m.slug)}>
-                <strong>{t(m.title, lang)}</strong>
-                <code>
-                  <span data-pick={JSON.stringify(versionedCmds(m.databases[source]))} data-db={source}>
-                    {m.databases[source].commands[0]?.cmd}
-                  </span>{' '}
-                  →{' '}
-                  {m.databases[target]?.commands.length ? (
-                    <span data-pick={JSON.stringify(versionedCmds(m.databases[target]))} data-db={target}>
-                      {targetCmd(m)}
-                    </span>
-                  ) : (
-                    targetCmd(m)
-                  )}
-                </code>
-              </a>
-            ))
-          }
-        </div>
-      </section>
-    </div>
-  </main>
+    </main>
+  </div>
 </Base>

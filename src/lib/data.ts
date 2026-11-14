@@ -159,6 +159,14 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
     if (!slugs.has(r.to)) problems.push(`data/redirects.yaml: target "${r.to}" does not exist`);
   }
 
+  for (const p of site.lab_excerpt) {
+    const m = byId.get(p.entry);
+    if (!m) problems.push(`data/site.yaml: lab_excerpt entry "${p.entry}" does not exist`);
+    else if (!m.databases[p.db]?.commands.some((c) => c.cmd === p.cmd)) {
+      problems.push(`data/site.yaml: lab_excerpt command ${JSON.stringify(p.cmd)} is not in ${p.entry} / ${p.db}`);
+    }
+  }
+
   for (const id of site.featured) {
     const m = byId.get(id);
     if (!m) problems.push(`data/site.yaml: featured "${id}" does not exist`);
