@@ -283,5 +283,12 @@
 - {q: max_allowed_packet, top: max-packet}
 - {q: 文档太大, top: max-packet}
 
+- {q: sort_buffer_size, top: sort-memory}
+- {q: 排序内存, top: sort-memory}
+- {q: allowDiskUseByDefault, top: sort-memory}
+- {q: innodb_thread_concurrency, top: concurrency-tickets}
+- {q: ticket, top: concurrency-tickets}
+- {q: cacheSizeGB, top: resize-cache}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

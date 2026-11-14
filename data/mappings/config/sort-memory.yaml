@@ -1,0 +1,58 @@
+schema_version: 2
+id: sort-memory
+category: config
+title: {zh: 排序和临时数据的内存上限}
+summary: {zh: 大排序、大分组报内存不够或者频繁落盘时，查看并调整每次操作能用多少内存。}
+keywords:
+  zh: [排序内存, 临时表内存, 分组内存, 内存不够, 落盘]
+  en: [sort_buffer_size, tmp_table_size, join_buffer_size, internalquerymaxblockingsortmemoryusagebytes, allowdiskusebydefault, allowdiskuse]
+fields:
+  - {id: sort, name: {zh: 排序内存上限}}
+  - {id: tmp, name: {zh: 临时表或分组的内存上限}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@sort_buffer_size AS sort_buffer_size, @@join_buffer_size AS join_buffer_size, @@tmp_table_size AS tmp_table_size, @@max_heap_table_size AS max_heap_table_size;
+        note: {zh: 默认 256KB、256KB、16MB、16MB；每个会话、每次操作分别分配}
+      - cmd: SELECT @@internal_tmp_mem_storage_engine AS tmp_engine, @@temptable_max_ram AS temptable_max_ram;
+        since: '8.0'
+        note: {zh: 8.0 起内部临时表默认用 TempTable 引擎，所有会话共用 temptable_max_ram（默认 1GB）}
+      - cmd: SET SESSION sort_buffer_size = 4194304;
+        note: {zh: 只对当前会话生效，适合给个别大查询临时调大}
+      - cmd: SET GLOBAL sort_buffer_size = 4194304;
+        note: {zh: 对之后新建的连接生效；每个连接都会按这个值分配，全局调太大会浪费内存}
+    fields:
+      sort: sort_buffer_size
+      tmp: tmp_table_size
+    notes:
+      - zh: 内存临时表的实际上限是 tmp_table_size 和 max_heap_table_size 中较小的那个，超过后转成磁盘临时表；落盘多不多看「查看排序和临时表落盘」。
+    refs:
+      - {title: 'MySQL: sort_buffer_size', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_sort_buffer_size'}
+      - {title: 'MySQL: Internal Temporary Table Use', url: 'https://dev.mysql.com/doc/refman/8.4/en/internal-temporary-tables.html'}
+    verify:
+      teardown: SET GLOBAL sort_buffer_size = DEFAULT;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 1, internalDocumentSourceGroupMaxMemoryBytes: 1 })'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 排序和 $group 的内存上限，默认都是 100MB}
+      - cmd: 'db.adminCommand({ getParameter: 1, allowDiskUseByDefault: 1 })'
+        on: [mongod, configsvr]
+        note: {zh: 默认 true：超过内存上限时自动写临时文件，而不是报错；mongos 上没有这个参数}
+      - cmd: 'db.adminCommand({ setParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 209715200 })'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 在线生效，重启后失效；要持久化写进配置文件的 setParameter 段}
+    fields:
+      sort: internalQueryMaxBlockingSortMemoryUsageBytes
+      tmp: internalDocumentSourceGroupMaxMemoryBytes
+    notes:
+      - zh: 上限是每个操作单独算的，不是全局共用。单条查询可以用 allowDiskUse 覆盖默认行为。
+      - zh: 这两个是 internal 开头的参数，官方不保证各版本行为一致，调整前先在测试环境确认。分片集群里 mongos 合并各分片结果时也受排序上限限制，要和分片一起调。
+    refs:
+      - {title: 'MongoDB: internalQueryMaxBlockingSortMemoryUsageBytes', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.internalQueryMaxBlockingSortMemoryUsageBytes'}
+      - {title: 'MongoDB: allowDiskUseByDefault', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.allowDiskUseByDefault'}
+    verify:
+      teardown: 'db.adminCommand({ setParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 104857600 })'
+related: [disk-spills, memory-usage, set-variable]
