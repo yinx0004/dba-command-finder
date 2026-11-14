@@ -1,0 +1,38 @@
+schema_version: 2
+id: pause-replication
+category: replication
+title: {zh: 暂停、恢复复制}
+summary: {zh: 维护从库或排查问题时，让从库暂时不再应用主库的变更。}
+keywords:
+  zh: [暂停复制, 停止复制, 恢复复制, 停从库]
+  en: [stop replica, start replica, stop slave, start slave]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: STOP SLAVE;
+        deprecated_in: 8.0.22
+        removed_in: '8.4'
+      - cmd: STOP REPLICA;
+        since: 8.0.22
+      - cmd: START SLAVE;
+        deprecated_in: 8.0.22
+        removed_in: '8.4'
+        skip: {zh: lab 的实例没有配置复制源，启动复制会报错}
+      - cmd: START REPLICA;
+        since: 8.0.22
+        skip: {zh: lab 的实例没有配置复制源，启动复制会报错}
+    notes:
+      - zh: '可以只停一个线程：STOP REPLICA IO_THREAD 停止拉取，STOP REPLICA SQL_THREAD 停止应用。'
+    refs:
+      - {title: 'MySQL: STOP REPLICA', url: 'https://dev.mysql.com/doc/refman/8.4/en/stop-replica.html'}
+  mongodb:
+    support: none
+    notes:
+      - zh: 没有暂停复制的命令。在从节点上执行 db.fsyncLock() 会阻塞所有写入，包括应用 oplog，效果上等于暂停；db.fsyncUnlock() 后自动追上。
+    alternatives:
+      - title: {zh: 在从节点上暂时阻塞写入（含复制）}
+        see: global-read-lock
+    refs:
+      - {title: 'MongoDB: db.fsyncLock()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.fsyncLock/'}
+related: [skip-replication-error, replication-status]

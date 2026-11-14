@@ -80,7 +80,7 @@
 - {q: 导入数据, top: import-data}
 - {q: mysqlbinlog, top: point-in-time-recovery}
 - {q: 误删恢复, top: point-in-time-recovery}
-- {q: show master status, top: point-in-time-recovery}
+- {q: show master status, top_any: [replication-position, point-in-time-recovery]}
 
 - {q: 表大小, top: table-size}
 - {q: data_length, top: table-size}
@@ -203,6 +203,17 @@
 - {q: auto_increment, top: auto-increment-exhaustion}
 - {q: 磁盘空间, top: data-directory-disk}
 - {q: datadir, top: data-directory-disk}
+
+- {q: gtid_executed, top: replication-position}
+- {q: 复制位点, top: replication-position}
+- {q: sql_slave_skip_counter, top: skip-replication-error}
+- {q: 跳过复制错误, top: skip-replication-error}
+- {q: stop replica, top: pause-replication}
+- {q: 暂停复制, top: pause-replication}
+- {q: purge binary logs, top: purge-binlog}
+- {q: replSetResizeOplog, top: purge-binlog}
+- {q: account lock, top: account-lock}
+- {q: 锁定账号, top: account-lock}
 
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
