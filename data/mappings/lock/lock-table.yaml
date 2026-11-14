@@ -1,0 +1,35 @@
+schema_version: 2
+id: lock-table
+category: lock
+title: {zh: 手动锁表、解锁}
+summary: {zh: 在做数据修复或核对时，临时阻止别的会话读写某张表。}
+keywords:
+  zh: [锁表, 表锁, 解锁表, 手动加锁]
+  en: [lock tables, unlock tables, table lock]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: LOCK TABLES <table> READ;
+        note: {zh: 别的会话还能读，不能写}
+      - cmd: LOCK TABLES <table> WRITE;
+        note: {zh: 别的会话读写都不行}
+      - cmd: UNLOCK TABLES;
+    notes:
+      - zh: 锁住表的会话之后只能访问它锁过的表；会话断开时锁自动释放。
+      - zh: 对 InnoDB 表来说，要锁的通常只是几行，用事务里的 SELECT ... FOR UPDATE 影响更小。
+    refs:
+      - {title: 'MySQL: LOCK TABLES and UNLOCK TABLES', url: 'https://dev.mysql.com/doc/refman/8.4/en/lock-tables.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t}
+  mongodb:
+    support: none
+    notes:
+      - zh: 没有给用户用的集合锁。要锁定整个实例的写入，用 db.fsyncLock()；要锁定几个文档，用多文档事务，事务里修改过的文档在提交前别的写入改不了。
+    alternatives:
+      - title: {zh: 锁定整个实例的写入}
+        see: global-read-lock
+    refs:
+      - {title: 'MongoDB: FAQ Concurrency', url: 'https://www.mongodb.com/docs/manual/faq/concurrency/'}
+related: [global-read-lock, lock-waits]

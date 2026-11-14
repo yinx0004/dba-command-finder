@@ -1,0 +1,36 @@
+schema_version: 2
+id: kill-user-sessions
+category: session
+title: {zh: 批量终止某个用户的会话}
+summary: {zh: 某个应用账号的连接或查询失控时，一次性终止它的全部会话，而不是一个一个地 KILL。}
+keywords:
+  zh: [批量杀会话, 杀掉某个用户的连接, 批量终止, 批量 kill]
+  en: [kill all, killallsessionsbypattern, kill user sessions]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT CONCAT('KILL ', ID, ';') FROM information_schema.PROCESSLIST WHERE USER = '<user>';
+        note: {zh: 生成 KILL 语句，确认无误后再逐条执行；只想终止语句、保留连接就改成 KILL QUERY}
+    notes:
+      - zh: 没有一条命令能终止某个用户的全部会话。如果它还会马上重连，先锁定账号（ALTER USER ... ACCOUNT LOCK）再 KILL。
+    refs:
+      - {title: 'MySQL: KILL', url: 'https://dev.mysql.com/doc/refman/8.4/en/kill.html'}
+    verify:
+      vars: {user: app_user}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ killAllSessionsByPattern: [{ users: [{ user: "<user>", db: "<authdb>" }] }] })'
+        note: {zh: 终止这个用户全部逻辑会话上的操作，包括未提交的事务}
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true } }, { $match: { "effectiveUsers.user": "<user>" } }]).forEach((op) => db.killOp(op.opid))'
+        note: {zh: 逐个 killOp 这个用户正在执行的操作}
+    notes:
+      - zh: 两种方式都只终止操作，不断开客户端连接，驱动会继续用这些连接发新请求。
+      - zh: killAllSessionsByPattern 只管带会话的操作；很老的驱动不使用会话，它们的操作要用第二种方式终止。
+    refs:
+      - {title: 'MongoDB: killAllSessionsByPattern', url: 'https://www.mongodb.com/docs/manual/reference/command/killAllSessionsByPattern/'}
+      - {title: 'MongoDB: db.killOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.killOp/'}
+    verify:
+      vars: {user: app_user, authdb: admin}
+related: [kill-session, account-lock, list-active-sessions]

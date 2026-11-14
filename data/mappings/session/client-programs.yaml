@@ -1,0 +1,42 @@
+schema_version: 2
+id: client-programs
+category: session
+title: {zh: 查看连接来自哪个程序}
+summary: {zh: 连接数暴涨或有可疑连接时，看每个连接是哪个应用、哪种驱动、哪个版本连上来的。}
+keywords:
+  zh: [哪个程序, 哪个应用, 客户端程序, 驱动版本, 连接来源]
+  en: [session_connect_attrs, program_name, appname, clientmetadata, driver]
+fields:
+  - {id: program, name: {zh: 程序名}}
+  - {id: driver, name: {zh: 驱动及版本}}
+  - {id: conn_id, name: {zh: 连接 ID}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT PROCESSLIST_ID, ATTR_NAME, ATTR_VALUE FROM performance_schema.session_connect_attrs WHERE ATTR_NAME IN ('program_name', '_client_name', '_client_version', '_os', '_pid') ORDER BY PROCESSLIST_ID;
+        note: {zh: PROCESSLIST_ID 就是 SHOW PROCESSLIST 里的 Id}
+    fields:
+      program: {name: program_name, note: {zh: 客户端自己报的程序名，应用要在连接参数里设置，否则没有这一行}}
+      driver: {name: _client_name, note: {zh: 配合 _client_version 看驱动版本}}
+      conn_id: PROCESSLIST_ID
+    notes:
+      - zh: 各驱动设置程序名的方式不同，例如 Connector/J 用连接参数 connectionAttributes=program_name:myapp。
+      - zh: 只能看到当前还连着的连接；属性总长度受 performance_schema_session_connect_attrs_size 限制，超出的部分会被截掉。
+    refs:
+      - {title: 'MySQL: Performance Schema Connection Attribute Tables', url: 'https://dev.mysql.com/doc/refman/8.4/en/performance-schema-connection-attribute-tables.html'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true, idleConnections: true } }, { $match: { clientMetadata: { $exists: true } } }, { $project: { connectionId: 1, client: 1, appName: 1, "clientMetadata.driver": 1, "clientMetadata.os.type": 1 } }])'
+        note: {zh: idleConnections 让空闲连接也显示出来}
+    fields:
+      program: {name: appName, note: {zh: 应用在连接串里用 appName 参数设置，例如 mongodb://host/?appName=myapp}}
+      driver: clientMetadata.driver
+      conn_id: connectionId
+    notes:
+      - zh: 慢查询日志里也带 appName，按应用排查慢语句时很方便。
+    refs:
+      - {title: 'MongoDB: $currentOp', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/currentOp/'}
+      - {title: 'MongoDB: Connection String appName', url: 'https://www.mongodb.com/docs/manual/reference/connection-string-options/#mongodb-urioption-urioption.appName'}
+related: [connection-usage, list-active-sessions]
