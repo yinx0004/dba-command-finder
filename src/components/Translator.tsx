@@ -51,6 +51,9 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
   const [pick, setPick] = useState<[string, string]>([dbs[0].id, dbs[1].id]);
   const [pref, setPref] = useState<Pref>({});
   const [copied, setCopied] = useState('');
+  // The task a database pick restated the input for: a command such as INFO replication belongs to several
+  // tasks, and the translation should stay on the one the reader was looking at. Typing clears it.
+  const [anchor, setAnchor] = useState('');
 
   useEffect(() => {
     setPref(readPref(options));
@@ -78,7 +81,9 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
   }, [q, typed]);
 
   const results = useMemo(() => (q.trim() ? searcher.search(q, 6) : []), [searcher, q]);
-  const best: TEntry | undefined = results[0] ? entries[results[0].id] : undefined;
+  const anchored = anchor && entries[anchor] && matchCommand(q, entries[anchor], ids) ? anchor : '';
+  const topId = anchored || results[0]?.id || '';
+  const best: TEntry | undefined = topId ? entries[topId] : undefined;
   const match = best ? matchCommand(q, best, ids) : undefined;
   // A command none of the entries has is not "close enough" to another task: say so, and list what is near.
   const top = match || !looksLikeCommand(q) ? best : undefined;
@@ -100,14 +105,33 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
     setQ(text);
     setTyped(true);
   };
+  // The same task's command in another database, for the reader's version of it; the task's title
+  // when that database cannot do it (typing a description rather than a command lets "from" follow the pick).
+  const restate = (entry: TEntry, id: string) => {
+    const side = entry.sides[id];
+    const db = dbs.find((d) => d.id === id)!;
+    const cmd = side && side.support !== 'none' ? pickForLine(side, pref[id] ?? '', db.vers).usable[0]?.cmd.cmd : undefined;
+    return cmd ?? entry.title;
+  };
   const swap = () => {
-    const next = picks?.usable[0]?.cmd.cmd;
-    if (match && next) type(next);
+    // A pasted command decides "from", so swapping also swaps the text to the other side's command.
+    if (match && top) {
+      setAnchor(topId);
+      type(restate(top, toId));
+    }
     setPick([toId, fromId]);
   };
-  // Picking the database the other side shows swaps the two.
-  const choose = (side: 0 | 1, id: string) =>
-    setPick(side === 0 ? [id, id === toId ? fromId : toId] : [id === fromId ? toId : fromId, id]);
+  // Picking the database the other side shows swaps the two. Picking a new "from" while a command is
+  // pasted restates it in that database, or the pasted command would keep deciding "from" and the pick would do nothing.
+  const choose = (side: 0 | 1, id: string) => {
+    if ((side === 0 && id === toId) || (side === 1 && id === fromId)) return swap();
+    if (side === 1) return setPick([fromId, id]);
+    if (match && top && id !== match.db) {
+      setAnchor(topId);
+      type(restate(top, id));
+    }
+    setPick([id, toId]);
+  };
   const copy = async (cmd: string) => {
     try {
       await navigator.clipboard.writeText(cmd);
@@ -137,7 +161,10 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
             id="tr-in"
             className="tr-input"
             value={q}
-            onChange={(e) => type(e.target.value)}
+            onChange={(e) => {
+              setAnchor('');
+              type(e.target.value);
+            }}
             placeholder={L.placeholder}
             spellCheck={false}
             autoCapitalize="off"
@@ -297,7 +324,14 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
       <p className="tr-tries">
         <span>{L.tries}</span>
         {tries.map((x) => (
-          <button key={x} type="button" onClick={() => type(x)}>
+          <button
+            key={x}
+            type="button"
+            onClick={() => {
+              setAnchor('');
+              type(x);
+            }}
+          >
             {x}
           </button>
         ))}
@@ -305,7 +339,10 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
       {top && results.length > 1 && (
         <div className="tr-more">
           <h3>{L.otherMatches}</h3>
-          {results.slice(1, 5).map((d) => {
+          {results
+            .filter((d) => d.id !== topId)
+            .slice(0, 4)
+            .map((d) => {
             const e = entries[d.id];
             const a = e?.sides[from.id]?.cmds[0]?.cmd;
             const b = e?.sides[to.id]?.cmds[0]?.cmd;
