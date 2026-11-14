@@ -12,7 +12,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { loadDataset } from '../src/lib/data';
 import { ENGINES } from './engines';
-import { expectation, fill, labDatabase, type CommandResult, type EntryResult, type RunResult } from './plan';
+import { expectation, fieldPaths, fill, labDatabase, outputHasPath, type CommandResult, type EntryResult, type FieldResult, type RunResult } from './plan';
 
 const RESULTS_DIR = path.resolve('lab/results');
 
@@ -58,17 +58,24 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
       const d = m.databases[db];
       if (!d || d.commands.length === 0 || (args.only && m.id !== args.only)) continue;
       const database = labDatabase(m.id);
-      const vars = d.verify?.vars ?? {};
+      // <db> is the entry's own empty database unless the entry says otherwise.
+      const vars = { db: database, ...(d.verify?.vars ?? {}) };
       const entry: EntryResult = { commands: [] };
       entries[m.id] = entry;
 
       await engine.createDatabase(database);
-      if (d.verify?.setup) {
-        const f = fill(d.verify.setup, vars);
-        const r = f.missing.length ? { ok: false, out: `unfilled placeholders: ${f.missing.join(', ')}` } : await engine.exec(f.text, database);
+      for (const [step, run] of [
+        [d.verify?.setup, (t: string) => engine.exec(t, database)],
+        [d.verify?.setup_shell, (t: string) => engine.shell(t)],
+      ] as const) {
+        if (!step || entry.setupError) continue;
+        const f = fill(step, vars);
+        const r = f.missing.length ? { ok: false, out: `unfilled placeholders: ${f.missing.join(', ')}` } : await run(f.text);
         if (!r.ok) entry.setupError = tail(r.out);
       }
 
+      // Output of the commands that worked, searched afterwards for the field names.
+      const outputs: string[] = [];
       for (const c of d.commands) {
         let res: CommandResult;
         if (c.skip) {
@@ -81,8 +88,9 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
           } else if (f.missing.length) {
             res = { cmd: c.cmd, expect, status: 'fail', detail: `unfilled placeholders <${f.missing.join('>, <')}>: add them to verify.vars, or skip the command with a reason` };
           } else {
-            const r = await engine.exec(f.text, database);
+            const r = c.shell ? await engine.shell(f.text) : await engine.exec(f.text, database);
             const pass = r.ok === (expect === 'ok');
+            if (pass && expect === 'ok') outputs.push(r.out);
             res = {
               cmd: c.cmd,
               expect,
@@ -100,6 +108,32 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
         const note = res.status === 'pass' && res.expect === 'error' ? '  (fails as expected)' : '';
         console.log(`  ${mark[res.status]} ${m.id.padEnd(22)} ${c.cmd}${note}`);
         if (res.status === 'fail') console.log(`      ${res.detail!.replace(/\n/g, '\n      ')}`);
+      }
+
+      const fieldNames = Object.entries(d.fields);
+      if (fieldNames.length) {
+        entry.fields = [];
+        const all = outputs.join('\n');
+        for (const [id, f] of fieldNames) {
+          const name = typeof f === 'string' ? f : f.name;
+          const skip = (typeof f === 'string' ? undefined : f.skip) ?? d.verify?.skip_fields;
+          const paths = fieldPaths(name);
+          let r: FieldResult;
+          if (skip) r = { id, name, status: 'skip', detail: skip.zh };
+          else if (!paths) r = { id, name, status: 'unchecked', detail: 'not a plain field name' };
+          else if (outputs.length === 0) r = { id, name, status: 'unchecked', detail: `no command produced output on ${server}` };
+          else {
+            const missing = paths.filter((p) => !outputHasPath(all, p)).map((p) => p.join('.'));
+            r = missing.length
+              ? { id, name, status: 'fail', detail: `not in the output on ${server}: ${missing.join(', ')}` }
+              : { id, name, status: 'pass' };
+          }
+          if (r.status === 'fail') failures++;
+          entry.fields.push(r);
+          if (r.status === 'fail') console.log(`  ✗ ${m.id.padEnd(22)} field ${id} = ${name}\n      ${r.detail}`);
+        }
+        const count = (st: string) => entry.fields!.filter((x) => x.status === st).length;
+        console.log(`    ${m.id.padEnd(22)} fields: ${count('pass')} found, ${count('fail')} missing, ${count('skip')} skipped, ${count('unchecked')} unchecked`);
       }
 
       if (d.verify?.teardown) await engine.exec(fill(d.verify.teardown, vars).text, database);

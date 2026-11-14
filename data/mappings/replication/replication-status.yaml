@@ -33,6 +33,8 @@ databases:
     refs:
       - title: 'MySQL: SHOW REPLICA STATUS'
         url: https://dev.mysql.com/doc/refman/8.4/en/show-replica-status.html
+    verify:
+      skip_fields: {zh: 这些字段只在配置了复制的从库上出现}
   mongodb:
     support: partial
     commands:

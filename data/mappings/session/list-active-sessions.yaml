@@ -60,6 +60,7 @@ databases:
       user:
         name: effectiveUsers
         note: {zh: 开启认证时才有}
+        skip: {zh: lab 的实例没有开认证，客户端连接上没有这个字段}
       client:
         name: client
         note: {zh: 经过 mongos 时是 mongos 的地址}

@@ -30,8 +30,12 @@ export interface Engine {
   createDatabase(name: string): Promise<ExecResult>;
   /** runs one command or script in the given database, through the database's own command-line client */
   exec(text: string, database: string): Promise<ExecResult>;
+  /** runs a command-line tool (mysqldump, mongodump, ...) in a shell inside the container, from /tmp */
+  shell(text: string): Promise<ExecResult>;
   stop(): Promise<void>;
 }
+
+const inShell = (name: string, text: string) => sh(['exec', '-w', '/tmp', name, 'bash', '-c', text], 300_000);
 
 async function startContainer(name: string, args: string[]): Promise<void> {
   await sh(['rm', '-f', name]);
@@ -72,6 +76,9 @@ export function mysql(version: string): Engine {
       await startContainer(name, [...platform, '-e', `MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}`, image]);
       // TCP only answers once the entrypoint's temporary init server has been replaced by the real one.
       await waitFor(name, async () => (await sh([...client(), '-e', 'SELECT 1'])).ok, 300_000);
+      // Lets mysqldump and friends run as the page shows them, without connection flags.
+      const cnf = await inShell(name, `printf '[client]\\nuser=root\\npassword=${MYSQL_PASSWORD}\\nhost=127.0.0.1\\n' > ~/.my.cnf`);
+      if (!cnf.ok) throw new Error(`could not write ~/.my.cnf: ${cnf.out}`);
     },
     async serverVersion() {
       const r = await sh([...client(), '-N', '-s', '-e', 'SELECT VERSION()']);
@@ -80,6 +87,7 @@ export function mysql(version: string): Engine {
     },
     createDatabase: (db) => sh([...client(), '-e', `CREATE DATABASE IF NOT EXISTS \`${db}\``]),
     exec: (text, db) => sh([...client(db), '-e', text]),
+    shell: (text) => inShell(name, text),
     stop: async () => void (await sh(['rm', '-f', name])),
   };
 }
@@ -107,6 +115,7 @@ export function mongodb(version: string): Engine {
     // Databases appear on first write; setup scripts create what they need.
     createDatabase: async () => ({ ok: true, out: '' }),
     exec: (text, db) => sh(shell(db, text)),
+    shell: (text) => inShell(name, text),
     stop: async () => void (await sh(['rm', '-f', name])),
   };
 }
