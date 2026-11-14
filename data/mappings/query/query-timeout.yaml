@@ -1,0 +1,42 @@
+schema_version: 2
+id: query-timeout
+category: query
+title: {zh: 给查询设置超时}
+summary: {zh: 限制一条查询最多跑多久，防止慢查询拖垮实例。}
+keywords:
+  zh: [查询超时, 执行超时, 限制查询时间]
+  en: [max_execution_time, maxtimems, query timeout, defaultmaxtimems]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SET SESSION max_execution_time = 1000;
+        since: 5.7.8
+        note: {zh: 单位毫秒；GLOBAL 改成全局默认}
+      - cmd: SELECT /*+ MAX_EXECUTION_TIME(1000) */ * FROM <table>;
+        since: 5.7.8
+        note: {zh: 只对这一条查询生效}
+    notes:
+      - zh: 只对 SELECT 生效，UPDATE、DELETE 等不受限制。
+    refs:
+      - {title: 'MySQL: max_execution_time', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_execution_time'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.<collection>.find({}).maxTimeMS(1000)
+        note: {zh: 单位毫秒，只对这一条查询生效}
+      - cmd: 'db.adminCommand({ setClusterParameter: { defaultMaxTimeMS: { readOperations: 1000 } } })'
+        since: '8.0'
+        note: {zh: 设置所有读操作的默认超时}
+    notes:
+      - zh: maxTimeMS 读写命令都可以设，不只是查询。
+    refs:
+      - {title: 'MongoDB: cursor.maxTimeMS()', url: 'https://www.mongodb.com/docs/manual/reference/method/cursor.maxTimeMS/'}
+      - {title: 'MongoDB: defaultMaxTimeMS', url: 'https://www.mongodb.com/docs/manual/reference/cluster-parameters/defaultMaxTimeMS/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 })'
+      vars: {collection: t}
+related: [kill-session, slow-query-log]

@@ -140,5 +140,20 @@
 - {q: invisible index, top: invisible-index}
 - {q: hideIndex, top: invisible-index}
 
+- {q: 主库还是从库, top: replica-role}
+- {q: db.hello, top: replica-role}
+- {q: isMaster, top: replica-role}
+- {q: show replicas, top: list-replicas}
+- {q: show slave hosts, top: list-replicas}
+- {q: rs.conf, top: list-replicas}
+- {q: super_read_only, top: set-read-only}
+- {q: 设为只读, top: set-read-only}
+- {q: max_execution_time, top: query-timeout}
+- {q: maxTimeMS, top: query-timeout}
+- {q: 查询超时, top: query-timeout}
+- {q: select version(), top: server-version}
+- {q: buildInfo, top: server-version}
+- {q: 什么版本, top: server-version}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
