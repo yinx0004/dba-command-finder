@@ -1,0 +1,36 @@
+schema_version: 2
+id: analyze-table
+category: maintenance
+title: {zh: 更新表的统计信息}
+summary: {zh: 执行计划选错索引时，更新统计信息让优化器重新估算。}
+keywords:
+  zh: [统计信息, 执行计划不对, 选错索引, 直方图]
+  en: [analyze table, histogram, plan cache, statistics]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ANALYZE TABLE <table>;
+      - cmd: ANALYZE TABLE <table> UPDATE HISTOGRAM ON <column>;
+        since: '8.0'
+        note: {zh: 给没有索引的列建直方图，帮助优化器估算选择性}
+    refs:
+      - {title: 'MySQL: ANALYZE TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/analyze-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t, column: a}
+  mongodb:
+    support: none
+    notes:
+      - zh: MongoDB 的优化器不依赖表级统计信息，而是让几个候选计划试跑一小段，选最快的那个并缓存起来（plan cache），所以没有收集统计信息的命令。
+      - zh: 选错计划时，通常是缓存的计划已经不合适了，清掉缓存让它重新选。
+    alternatives:
+      - title: {zh: 清空集合的计划缓存}
+        cmd: db.<collection>.getPlanCache().clear()
+      - title: {zh: 查看缓存了哪些计划}
+        cmd: db.<collection>.getPlanCache().list()
+      - title: {zh: 看优化器为什么选了这个计划}
+        see: explain
+    refs:
+      - {title: 'MongoDB: Query Plans', url: 'https://www.mongodb.com/docs/manual/core/query-plans/'}
+related: [explain, show-indexes]

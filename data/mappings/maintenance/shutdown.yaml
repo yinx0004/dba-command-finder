@@ -1,0 +1,36 @@
+schema_version: 2
+id: shutdown
+category: maintenance
+title: {zh: 关闭实例}
+summary: {zh: 干净地关闭数据库实例，例如升级或迁移之前。}
+keywords:
+  zh: [关机, 关闭数据库, 停库, 停止实例]
+  en: [shutdown, shutdownserver, mysqladmin shutdown, stop]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHUTDOWN;
+        since: 5.7.9
+        skip: {zh: 会关掉 lab 的实例}
+      - cmd: mysqladmin shutdown
+        shell: true
+        skip: {zh: 会关掉 lab 的实例}
+    notes:
+      - zh: innodb_fast_shutdown 决定关机时做多少清理：默认 1 较快；升级大版本前通常设为 0，做完整清理。
+    refs:
+      - {title: 'MySQL: SHUTDOWN', url: 'https://dev.mysql.com/doc/refman/8.4/en/shutdown.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.getSiblingDB("admin").shutdownServer()
+        skip: {zh: 会关掉 lab 的实例}
+      - cmd: 'db.adminCommand({ shutdown: 1, timeoutSecs: 60 })'
+        skip: {zh: 会关掉 lab 的实例}
+        note: {zh: 主节点最多等 60 秒让从节点追上再关}
+    notes:
+      - zh: '副本集的主节点关闭前会等可选举的从节点追上，等不到就失败；确实要关，加 force: true（可能丢掉还没复制过去的写入）。'
+      - zh: 计划内维护一般先 rs.stepDown() 把主节点切走，再关原来的主节点。
+    refs:
+      - {title: 'MongoDB: shutdown', url: 'https://www.mongodb.com/docs/manual/reference/command/shutdown/'}
+related: [rotate-logs]

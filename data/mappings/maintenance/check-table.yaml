@@ -1,0 +1,52 @@
+schema_version: 2
+id: check-table
+category: maintenance
+title: {zh: 检查表是否损坏}
+summary: {zh: 怀疑数据或索引损坏时（例如异常关机后），检查表（集合）的结构和索引是否一致。}
+keywords:
+  zh: [检查表, 表损坏, 数据损坏, 校验]
+  en: [check table, mysqlcheck, validate, corruption]
+fields:
+  - {id: result, name: {zh: 检查结果}}
+  - {id: problems, name: {zh: 问题}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CHECK TABLE <table>;
+      - cmd: CHECK TABLE <table> EXTENDED;
+        note: {zh: 更彻底，也更慢}
+      - cmd: mysqlcheck --check --all-databases
+        shell: true
+        skip: {zh: 官方 MySQL 镜像不带 mysqlcheck}
+        note: {zh: 检查整个实例}
+    fields:
+      result: Msg_text
+      problems: Msg_type
+    notes:
+      - zh: InnoDB 表检查出问题时，服务器可能为了防止错误扩散而直接关闭，生产上要谨慎执行。
+    refs:
+      - {title: 'MySQL: CHECK TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/check-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1);
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.<collection>.validate()
+      - cmd: 'db.<collection>.validate({ full: true })'
+        note: {zh: 更彻底，也更慢}
+      - cmd: 'db.<collection>.validate({ background: true })'
+        since: '4.4'
+        note: {zh: 不阻塞读写的检查方式}
+    fields:
+      result: valid
+      problems: errors
+    notes:
+      - zh: '默认的 validate 执行期间会阻塞这个集合的读写；大集合在生产上用 background: true，或者在从节点上检查。'
+    refs:
+      - {title: 'MongoDB: validate', url: 'https://www.mongodb.com/docs/manual/reference/command/validate/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 }); db.t.createIndex({ a: 1 })'
+      vars: {collection: t}
+related: [reclaim-space]
