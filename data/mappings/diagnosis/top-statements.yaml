@@ -1,0 +1,58 @@
+schema_version: 2
+id: top-statements
+category: diagnosis
+title: {zh: 找出最耗时的语句}
+summary: {zh: 把同一类语句（只是参数不同）合在一起，按总耗时排序，找出最该优化的那几条。}
+keywords:
+  zh: [最耗时的语句, 慢 SQL 排行, Top SQL, 语句统计, 指纹]
+  en: [statement_analysis, digest, top sql, querystats, queryhash]
+fields:
+  - {id: statement, name: {zh: 语句（指纹）}}
+  - {id: count, name: {zh: 执行次数}}
+  - {id: total_time, name: {zh: 总耗时}}
+  - {id: avg_time, name: {zh: 平均耗时}}
+  - {id: rows_examined, name: {zh: 扫描行数}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.statement_analysis LIMIT 10;
+        note: {zh: 已经按总耗时从高到低排好序}
+      - cmd: SELECT DIGEST_TEXT, COUNT_STAR, SUM_TIMER_WAIT, SUM_ROWS_EXAMINED FROM performance_schema.events_statements_summary_by_digest ORDER BY SUM_TIMER_WAIT DESC LIMIT 10;
+        note: {zh: 底层表；时间单位是皮秒}
+    fields:
+      statement: query
+      count: exec_count
+      total_time: total_latency
+      avg_time: avg_latency
+      rows_examined: rows_examined
+    notes:
+      - zh: performance_schema 默认就在持续统计，不需要先打开什么；实例重启后清零，用 CALL sys.ps_truncate_all_tables(FALSE) 可以手动清零重新观察。
+    refs:
+      - {title: 'MySQL: sys.statement_analysis', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-statement-analysis.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1; SELECT * FROM t WHERE a = 2;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.system.profile.aggregate([{ $group: { _id: "$queryHash", queryHash: { $first: "$queryHash" }, ns: { $first: "$ns" }, count: { $sum: 1 }, totalMs: { $sum: "$millis" }, avgMs: { $avg: "$millis" }, docsExamined: { $sum: "$docsExamined" } } }, { $sort: { totalMs: -1 } }, { $limit: 10 }])'
+        note: {zh: 从 profiler 记录里按查询形状（queryHash）汇总；要先打开 profiler}
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $queryStats: {} }])'
+        since: 6.0.7
+        note: {zh: 服务器持续统计的查询形状，类似 performance_schema 的语句摘要；不用打开 profiler}
+    fields:
+      statement: {name: queryHash, note: {zh: 查询形状的哈希，具体语句看同一组里的 command}}
+      count: count
+      total_time: totalMs
+      avg_time: avgMs
+      rows_examined: docsExamined
+    notes:
+      - zh: profiler 默认关闭，而且只记录打开之后、当前库的操作；level 2 记录全部操作开销很大，生产上一般用 level 1 加合适的 slowms。
+      - zh: $queryStats 不需要打开 profiler，lab 实测社区版 6.0、7.0 都能用；但官方把它标为 unsupported，输出格式可能随版本变化，不要在脚本里依赖具体字段。
+    refs:
+      - {title: 'MongoDB: Database Profiler', url: 'https://www.mongodb.com/docs/manual/tutorial/manage-the-database-profiler/'}
+      - {title: 'MongoDB: $queryStats', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/querystats/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.setProfilingLevel(2); db.t.find({ a: 1 }).toArray(); db.t.find({ a: 2 }).toArray()'
+      teardown: db.setProfilingLevel(0)
+related: [full-table-scans, slow-query-log, explain]

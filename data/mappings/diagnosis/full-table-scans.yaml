@@ -1,0 +1,44 @@
+schema_version: 2
+id: full-table-scans
+category: diagnosis
+title: {zh: 找出全表扫描的查询}
+summary: {zh: 找出没走索引、整张表（集合）扫过去的查询，通常是加索引最见效的地方。}
+keywords:
+  zh: [全表扫描, 没走索引, 缺索引]
+  en: [full table scan, collscan, select_scan, statements_with_full_table_scans, no index]
+fields:
+  - {id: statement, name: {zh: 语句}}
+  - {id: rows_examined, name: {zh: 扫描行数}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.statements_with_full_table_scans LIMIT 10;
+        note: {zh: 按语句汇总，带没走索引的次数和比例}
+      - cmd: SHOW GLOBAL STATUS LIKE 'Select_scan';
+        note: {zh: 自启动以来全表扫描的总次数，看趋势用}
+    fields:
+      statement: query
+      rows_examined: rows_examined
+    refs:
+      - {title: 'MySQL: sys.statements_with_full_table_scans', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-statements-with-full-table-scans.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.system.profile.find({ planSummary: "COLLSCAN" }).sort({ ts: -1 }).limit(10)'
+        note: {zh: 从 profiler 记录里找；要先打开 profiler}
+      - cmd: db.serverStatus().metrics.queryExecutor
+        note: {zh: 自启动以来扫描过的文档和索引键总数，看趋势用}
+    fields:
+      statement: command
+      rows_examined: docsExamined
+    notes:
+      - zh: '测试环境可以用 db.adminCommand({ setParameter: 1, notablescan: 1 }) 让所有全集合扫描直接报错，提前发现缺索引的查询；不要在生产上打开。'
+    refs:
+      - {title: 'MongoDB: Database Profiler Output', url: 'https://www.mongodb.com/docs/manual/reference/database-profiler/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.setProfilingLevel(2); db.t.find({ a: 1 }).toArray()'
+      teardown: db.setProfilingLevel(0)
+related: [top-statements, create-index, explain]

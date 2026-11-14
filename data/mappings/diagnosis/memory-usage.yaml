@@ -1,0 +1,38 @@
+schema_version: 2
+id: memory-usage
+category: diagnosis
+title: {zh: 查看内存占用}
+summary: {zh: 实例内存涨得厉害时，看总共用了多少、主要被什么占着。}
+keywords:
+  zh: [内存占用, 内存使用, 内存泄漏, 内存多少]
+  en: [memory, memory_global_total, resident, tcmalloc]
+fields:
+  - {id: total, name: {zh: 总共占用}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.memory_global_total;
+        note: {zh: performance_schema 统计到的总分配量}
+      - cmd: SELECT * FROM sys.memory_global_by_current_bytes LIMIT 10;
+        note: {zh: 按用途列出占用最多的内存}
+    fields:
+      total: total_allocated
+    notes:
+      - zh: 只统计打开了 instrument 的内存分配；5.7 默认大部分内存 instrument 没开，数字会明显偏小，8.0 起默认开启。
+    refs:
+      - {title: 'MySQL: sys.memory_global_by_current_bytes', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-memory-global-by-current-bytes.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.serverStatus().mem
+        note: {zh: 进程常驻内存（resident）和虚拟内存，单位 MB}
+      - cmd: db.serverStatus().tcmalloc
+        note: {zh: 内存分配器的细节，例如已分配但还没还给系统的部分}
+    fields:
+      total: {name: resident, note: {zh: 单位 MB，是操作系统看到的进程内存}}
+    notes:
+      - zh: 主要的内存消耗是 WiredTiger 缓存，看「查看缓存命中率」里的 bytes currently in the cache。
+    refs:
+      - {title: 'MongoDB: serverStatus mem', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/#mem'}
+related: [cache-hit-ratio, server-status]
