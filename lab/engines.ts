@@ -163,4 +163,38 @@ export function redis(version: string): Engine {
   };
 }
 
-export const ENGINES: Record<string, (version: string) => Engine> = { mysql, mongodb, redis };
+// Test-only password for a throwaway container that is never exposed outside Docker.
+const PG_PASSWORD = 'lab';
+
+export function postgresql(version: string): Engine {
+  const name = `dbalab-postgresql-${version}`;
+  const image = `postgres:${version}`;
+  // Stop at the first error, so the exit code says whether the command worked.
+  const psql = (database: string) => ['exec', '-i', name, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-d', database, '-f', '-'];
+  return {
+    image,
+    async start() {
+      // pg_stat_statements needs loading at start-up, as on most production servers; wal_level=logical lets
+      // the change-log entries decode WAL. PG* variables let psql, pg_dump and friends run as the page shows them.
+      await startContainer(name, [
+        '-e', `POSTGRES_PASSWORD=${PG_PASSWORD}`, '-e', `PGPASSWORD=${PG_PASSWORD}`, '-e', 'PGUSER=postgres', '-e', 'PGHOST=127.0.0.1',
+        image, '-c', 'shared_preload_libraries=pg_stat_statements', '-c', 'wal_level=logical',
+      ]);
+      // TCP only answers once the entrypoint's init server has been replaced by the real one.
+      await waitFor(name, async () => (await shIn(psql('postgres'), 'SELECT 1;\n')).ok, 120_000);
+    },
+    async serverVersion() {
+      const r = await shIn(psql('postgres'), 'SHOW server_version;\n');
+      // "18.7 (Debian 18.7-1.pgdg13+2)": PostgreSQL versions have two parts.
+      const v = /(\d+\.\d+)/.exec(r.out)?.[1];
+      if (!r.ok || !v) throw new Error(r.out);
+      return v;
+    },
+    createDatabase: (db) => shIn(psql('postgres'), `CREATE DATABASE "${db}";\n`),
+    exec: (text, db) => shIn(psql(db), text.endsWith('\n') ? text : text + '\n'),
+    shell: (text) => inShell(name, text),
+    stop: async () => void (await sh(['rm', '-fv', name])),
+  };
+}
+
+export const ENGINES: Record<string, (version: string) => Engine> = { mysql, mongodb, redis, postgresql };

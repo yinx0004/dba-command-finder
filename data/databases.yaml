@@ -21,3 +21,10 @@
     - {id: cluster, name: cluster}
     - {id: sentinel, name: Sentinel}
   roles_unverified: {zh: 需要集群模式或 Sentinel，lab 只跑单机 redis-server}
+- id: postgresql
+  name: PostgreSQL
+  lab_versions: ['15', '16', '17', '18']
+  roles:
+    - {id: primary, name: primary, lab: true}
+    - {id: standby, name: standby}
+  roles_unverified: {zh: 只能在备库（standby）上执行，lab 只跑一个主库}
