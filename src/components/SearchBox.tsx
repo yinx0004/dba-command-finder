@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Equivalence } from '../lib/pair';
-import { createSearcher, type SearchDoc, type VersionedCmd } from '../lib/search';
+import { categoryChips, createSearcher, filterByCategory, type SearchDoc, type VersionedCmd } from '../lib/search';
 import { firstUsable } from '../lib/version';
 import { fmt, onPrefChange, readPref, type Pref } from '../lib/version-pref';
 
@@ -15,6 +15,8 @@ interface Labels {
   noResultTail: string;
   noEquivalent: string;
   noneOnLine: string; // "{line} 上没有可用的命令"
+  all: string; // "全部"
+  chipsLabel: string; // accessible name of the chip row
   eq: Record<Equivalence, string>;
 }
 
@@ -26,6 +28,8 @@ interface Props {
   targetName: string;
   /** version lines the reader can choose per database, as in the version bar */
   versionOptions: Record<string, string[]>;
+  /** categories in site order, for the chips over the results */
+  categories: { id: string; name: string }[];
   tries: string[];
   /** link prefix for entries, e.g. "/dba-command-finder/zh/" */
   entryBase: string;
@@ -33,13 +37,16 @@ interface Props {
   labels: Labels;
 }
 
-function readQuery(): string {
+function readParam(name: string): string {
   try {
-    return new URLSearchParams(window.location.search).get('q') ?? '';
+    return new URLSearchParams(window.location.search).get(name) ?? '';
   } catch {
     return '';
   }
 }
+
+/** How many results to show; counts and category filtering use all of them. */
+const SHOW = 20;
 
 export default function SearchBox({
   docs,
@@ -48,6 +55,7 @@ export default function SearchBox({
   targetId,
   targetName,
   versionOptions,
+  categories,
   tries,
   entryBase,
   submitUrl,
@@ -55,6 +63,7 @@ export default function SearchBox({
 }: Props) {
   const searcher = useMemo(() => createSearcher(docs), [docs]);
   const [q, setQ] = useState('');
+  const [cat, setCat] = useState('');
   const [pref, setPref] = useState<Pref>({});
   const input = useRef<HTMLInputElement>(null);
 
@@ -71,14 +80,20 @@ export default function SearchBox({
     return firstUsable(cmds, line || undefined)?.cmd ?? fmt(labels.noneOnLine, { line });
   };
 
-  // Restore ?q= so a search can be shared as a link.
+  // Restore ?q= and ?cat= so a search can be shared as a link.
   useEffect(() => {
-    const initial = readQuery();
+    const initial = readParam('q');
     if (initial) setQ(initial);
+    setCat(readParam('cat'));
   }, []);
 
-  const results = useMemo(() => searcher.search(q), [searcher, q]);
+  const results = useMemo(() => searcher.search(q, docs.length), [searcher, q, docs.length]);
   const searching = q.trim() !== '';
+  const order = useMemo(() => categories.map((c) => c.id), [categories]);
+  const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+  const chips = useMemo(() => categoryChips(results, order), [results, order]);
+  // A chosen category with no results in this search falls back to all.
+  const filtered = useMemo(() => filterByCategory(results, cat), [results, cat]);
 
   useEffect(() => {
     if (searching) document.body.dataset.searching = '';
@@ -87,11 +102,13 @@ export default function SearchBox({
       const url = new URL(window.location.href);
       if (searching) url.searchParams.set('q', q);
       else url.searchParams.delete('q');
+      if (searching && filtered.category) url.searchParams.set('cat', filtered.category);
+      else url.searchParams.delete('cat');
       window.history.replaceState(null, '', url);
     } catch {
       /* ignore: history may be unavailable in some embeds */
     }
-  }, [q, searching]);
+  }, [q, searching, filtered.category]);
 
   return (
     <div>
@@ -139,7 +156,21 @@ export default function SearchBox({
               <p className="muted" style={{ margin: '0 0 2px', fontSize: 14 }}>
                 {labels.found.replace('{n}', String(results.length))}
               </p>
-              {results.map((d) => (
+              {chips.length > 2 && (
+                <div className="chips" role="group" aria-label={labels.chipsLabel}>
+                  {chips.map((c) => (
+                    <button
+                      key={c.id || 'all'}
+                      type="button"
+                      aria-pressed={filtered.category === c.id}
+                      onClick={() => setCat(c.id)}
+                    >
+                      {c.id ? catName.get(c.id) : labels.all} <span className="chip-count">{c.count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {filtered.shown.slice(0, SHOW).map((d) => (
                 <a key={d.slug} className="card result" href={`${entryBase}${d.slug}/`}>
                   <div className="row-title">
                     <strong>{d.title}</strong>

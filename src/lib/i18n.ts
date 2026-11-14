@@ -24,6 +24,8 @@ export const UI = {
     searchPlaceholder: '例如 show processlist、锁等待、主从延迟、db.currentOp',
     tryLabel: '试试：',
     found: '找到 {n} 条', // {n} is filled in by the search box
+    chipAll: '全部',
+    chipsLabel: '按类别筛选结果',
     noResultTitle: '没有收录这条命令',
     noResultBody: '可以换个说法试试，或者',
     submitMapping: '提交一条映射',
