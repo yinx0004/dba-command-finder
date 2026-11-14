@@ -1,0 +1,42 @@
+schema_version: 2
+id: max-packet
+category: config
+title: {zh: 单条数据或消息的大小上限}
+summary: {zh: 导入大字段、写大文档时报「包太大」或「文档太大」，查看上限是多少、能不能调。}
+keywords:
+  zh: [包太大, 大字段, 文档太大, 消息大小, 16MB]
+  en: [max_allowed_packet, maxbsonobjectsize, maxmessagesizebytes, packet too large, document too large]
+fields:
+  - {id: limit, name: {zh: 单条数据的上限}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@GLOBAL.max_allowed_packet AS max_allowed_packet, @@SESSION.max_allowed_packet AS session_max_allowed_packet;
+        note: {zh: 单位字节；8.0 起默认 64MB，5.7 是 4MB}
+      - cmd: SET GLOBAL max_allowed_packet = 268435456;
+        note: {zh: 只对之后新建的连接生效，当前会话还是旧值；最大 1GB}
+    fields:
+      limit: max_allowed_packet
+    notes:
+      - zh: 客户端也有自己的 max_allowed_packet（mysql、mysqldump 都有同名参数），导入大行时服务端和客户端都要调大。
+    refs:
+      - {title: 'MySQL: max_allowed_packet', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_allowed_packet'}
+      - {title: 'MySQL: Packet Too Large', url: 'https://dev.mysql.com/doc/refman/8.4/en/packet-too-large.html'}
+    verify:
+      teardown: SET GLOBAL max_allowed_packet = DEFAULT;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ hello: 1 })'
+        on: [mongod, mongos, configsvr]
+        note: {zh: maxBsonObjectSize 是单个文档的上限，maxMessageSizeBytes 是单条消息的上限，maxWriteBatchSize 是一批写入的最多条数}
+    fields:
+      limit: maxBsonObjectSize
+    notes:
+      - zh: 都是固定值，不能调整：单个文档最大 16MB，单条消息 48MB，一批写入最多 100000 条（驱动会自动拆批）。mongod、mongos、config server 上相同。
+      - zh: 超过 16MB 的文件用 GridFS 分块存储（mongofiles 工具或驱动的 GridFS 接口）。
+    refs:
+      - {title: 'MongoDB: Limits and Thresholds', url: 'https://www.mongodb.com/docs/manual/reference/limits/'}
+      - {title: 'MongoDB: GridFS', url: 'https://www.mongodb.com/docs/manual/core/gridfs/'}
+related: [import-data, set-variable]

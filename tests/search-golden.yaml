@@ -195,7 +195,7 @@
 - {q: 长事务, top: long-transactions}
 - {q: innodb_trx, top: long-transactions}
 - {q: 连接数满了, top: connection-usage}
-- {q: max_connections, top: connection-usage}
+- {q: max_connections, top_any: [connection-usage, max-connections]}
 - {q: 建索引进度, top: ddl-progress}
 - {q: alter table progress, top: ddl-progress}
 - {q: 冗余索引, top: redundant-indexes}
@@ -271,8 +271,17 @@
 - {q: modify column, top: modify-column}
 - {q: int 改 bigint, top: modify-column}
 
-- {q: mongos 连接数, top: connection-usage}
-- {q: maxIncomingConnections, top: connection-usage}
+- {q: mongos 连接数, top_any: [connection-usage, sharding-conn-pool]}
+- {q: maxIncomingConnections, top_any: [connection-usage, max-connections]}
+
+- {q: 修改最大连接数, top: max-connections}
+- {q: maxConns, top: max-connections}
+- {q: ShardingTaskExecutorPoolMaxSize, top: sharding-conn-pool}
+- {q: mongos 连接池, top: sharding-conn-pool}
+- {q: bind_address, top: listen-address}
+- {q: 监听地址, top: listen-address}
+- {q: max_allowed_packet, top: max-packet}
+- {q: 文档太大, top: max-packet}
 
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

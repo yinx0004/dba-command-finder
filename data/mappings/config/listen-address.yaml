@@ -1,0 +1,47 @@
+schema_version: 2
+id: listen-address
+category: config
+title: {zh: 查看监听地址和端口}
+summary: {zh: 客户端连不上、或者要确认实例对哪些网卡开放时，查看它监听的地址和端口。}
+keywords:
+  zh: [监听地址, 端口, 绑定地址, 连不上, 远程连接]
+  en: [bind_address, port, bindip, socket, mysqlx_port, admin_port]
+fields:
+  - {id: address, name: {zh: 监听地址}}
+  - {id: port, name: {zh: 端口}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@bind_address AS bind_address, @@port AS port, @@socket AS socket;
+        note: {zh: '* 表示监听所有地址；本机还可以通过 socket 文件连接'}
+      - cmd: SELECT @@mysqlx_port, @@admin_address, @@admin_port;
+        since: 8.0.14
+        note: {zh: X 协议端口（默认 33060）和管理专用端口；admin_address 为空表示没开管理端口}
+    fields:
+      address: bind_address
+      port: port
+    notes:
+      - zh: 修改要改 my.cnf 后重启。8.0.13 起 bind_address 可以写多个地址，用逗号分隔。
+    refs:
+      - {title: 'MySQL: bind_address', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_bind_address'}
+      - {title: 'MySQL: Administrative Connection Management', url: 'https://dev.mysql.com/doc/refman/8.4/en/administrative-connection-interface.html'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 }).parsed.net'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 启动时配置的 bindIp 和 port；没配置的项不显示}
+      - cmd: db.hello().me
+        on: [mongod, configsvr]
+        note: {zh: 这个副本集成员对外的地址和端口}
+    fields:
+      address: bindIp
+      port: {name: port, skip: {zh: lab 用默认端口启动，没配置时输出里没有 port}}
+    notes:
+      - zh: 没配置 port 时的默认端口：mongod 和 mongos 是 27017，带 --shardsvr 的分片成员是 27018，带 --configsvr 的 config server 是 27019。
+      - zh: 3.6 起默认只监听 localhost，要远程访问得在 net.bindIp 里加上网卡地址；官方 Docker 镜像启动时会自动加上 --bind_ip_all。修改都要改配置文件后重启。
+    refs:
+      - {title: 'MongoDB: net Options', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/#net-options'}
+      - {title: 'MongoDB: Default MongoDB Port', url: 'https://www.mongodb.com/docs/manual/reference/default-mongodb-port/'}
+related: [tls-check, config-file, current-connection]

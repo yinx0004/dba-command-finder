@@ -1,0 +1,41 @@
+schema_version: 2
+id: sharding-conn-pool
+category: config
+title: {zh: 查看和调整 mongos 到分片的连接池}
+summary: {zh: 分片集群里分片上的连接太多、或者 mongos 拿不到连接时，查看并调整 mongos 连到各分片的连接池大小。}
+keywords:
+  zh: [mongos 连接池, 分片连接池, 连接池大小, 分片连接数太多]
+  en: [shardingtaskexecutorpoolmaxsize, shardingtaskexecutorpoolminsize, connpoolstats, connection pool]
+fields:
+  - {id: min_size, name: {zh: 每台主机最少保持的连接}}
+  - {id: max_size, name: {zh: 每台主机最多的连接}}
+databases:
+  mysql:
+    support: none
+    notes:
+      - zh: MySQL 没有内置的路由进程。用 MySQL Router、ProxySQL 这类中间件时，连接池在中间件里配置，不属于数据库本身。
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.adminCommand({ getParameter: 1, ShardingTaskExecutorPoolMinSize: 1, ShardingTaskExecutorPoolMaxSize: 1, ShardingTaskExecutorPoolMaxConnecting: 1 })'
+        on: [mongos, mongod]
+        note: {zh: 默认最少 1 个、最多 32767 个（相当于不限）、同时最多新建 2 个}
+      - cmd: 'db.adminCommand({ setParameter: 1, ShardingTaskExecutorPoolMaxSize: 100 })'
+        on: [mongos, mongod]
+        note: {zh: 在线生效，重启后失效；要持久化写进配置文件的 setParameter 段}
+      - cmd: 'db.adminCommand({ connPoolStats: 1 })'
+        on: [mongos, mongod]
+        note: {zh: 每个目标主机上正在用（inUse）、空闲（available）的连接数}
+    fields:
+      min_size: ShardingTaskExecutorPoolMinSize
+      max_size: ShardingTaskExecutorPoolMaxSize
+    notes:
+      - zh: 池是按「这个进程 → 每台目标主机」分别算的。分片上的连接数大约是 mongos 数量 × 每个 mongos 的池大小，mongos 多时要限制 MaxSize，否则分片的连接数会被打满。
+      - zh: 分片成员之间、以及它们连 config server 时也用同样的连接池，这些参数在 mongod 上也能设置。
+      - zh: 每台 mongos 要分别设置，一般和 net.maxIncomingConnections 一起规划。
+    refs:
+      - {title: 'MongoDB: ShardingTaskExecutorPoolMaxSize', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.ShardingTaskExecutorPoolMaxSize'}
+      - {title: 'MongoDB: connPoolStats', url: 'https://www.mongodb.com/docs/manual/reference/command/connPoolStats/'}
+    verify:
+      teardown: 'db.adminCommand({ setParameter: 1, ShardingTaskExecutorPoolMaxSize: 32767 })'
+related: [max-connections, connection-usage]

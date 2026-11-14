@@ -1,0 +1,60 @@
+schema_version: 2
+id: max-connections
+category: config
+title: {zh: 修改最大连接数}
+summary: {zh: 连接数不够用、新连接被拒时，查看并调大连接数上限；分片集群里 mongod、mongos、config server 各自设置。}
+keywords:
+  zh: [修改最大连接数, 调大连接数, 连接数上限, 连接被拒, 连接数不够]
+  en: [max_connections, max_user_connections, maxincomingconnections, maxconns, too many connections]
+fields:
+  - {id: limit, name: {zh: 连接数上限}}
+  - {id: rejected, name: {zh: 因连接数满被拒的次数}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@max_connections AS max_connections, @@max_user_connections AS max_user_connections;
+        note: {zh: 默认 151；max_user_connections 是每个账号的上限，0 表示不限}
+      - cmd: SET GLOBAL max_connections = 2000;
+        note: {zh: 立即生效，重启后失效}
+      - cmd: SET PERSIST max_connections = 2000;
+        since: '8.0'
+        note: {zh: 同时写入 mysqld-auto.cnf，重启后仍然生效}
+      - cmd: SHOW GLOBAL STATUS LIKE 'Connection_errors_max_connections';
+        note: {zh: 因为连接数满被拒绝的次数}
+    fields:
+      limit: max_connections
+      rejected: Connection_errors_max_connections
+    notes:
+      - zh: 5.7 没有 SET PERSIST，要同时写进 my.cnf 的 max_connections，否则重启后恢复原值。
+      - zh: 实际可用的连接数还受 open_files_limit（操作系统文件句柄）限制；超级权限的账号另外保留 1 个连接，满了也能登录处理。
+    refs:
+      - {title: 'MySQL: max_connections', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_max_connections'}
+      - {title: 'MySQL: Too many connections', url: 'https://dev.mysql.com/doc/refman/8.4/en/too-many-connections.html'}
+    verify:
+      teardown: SET GLOBAL max_connections = 151; RESET PERSIST max_connections;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 }).parsed.net.maxIncomingConnections'
+        on: [mongod, mongos, configsvr]
+        note: {zh: 配置的上限；没配置时没有输出，默认 1000000}
+      - cmd: db.serverStatus().connections
+        on: [mongod, mongos, configsvr]
+        note: {zh: 实际上限 = current + available；rejected（7.0 起）是因为连接数满被拒的次数}
+    fields:
+      limit: {name: available, note: {zh: 剩余可用的连接数；实际上限 = current + available}}
+      rejected: {name: rejected, since: '7.0'}
+    notes:
+      - zh: 不能在线修改，只能改配置文件里的 net.maxIncomingConnections（或启动参数 --maxConns）后重启；副本集要逐个成员滚动重启。mongod、mongos、config server 都是同一个参数，各自在自己的配置文件里设置。
+      - zh: 应用连的是 mongos，连接数不够时通常调的是 mongos；分片成员上的连接大多来自各个 mongos 的连接池，mongos 越多，分片上的连接越多。
+      - zh: 实际上限还受操作系统文件句柄（ulimit -n）限制，取较小的那个；调大前先确认 ulimit。
+    alternatives:
+      - title: {zh: 配置文件（mongod、mongos、config server 写法相同）}
+        cmd: |-
+          net:
+            maxIncomingConnections: 20000
+    refs:
+      - {title: 'MongoDB: net.maxIncomingConnections', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/#mongodb-setting-net.maxIncomingConnections'}
+      - {title: 'MongoDB: UNIX ulimit Settings', url: 'https://www.mongodb.com/docs/manual/reference/ulimit/'}
+related: [connection-usage, sharding-conn-pool, set-variable]
