@@ -11,6 +11,9 @@
 - id: user
   name: {zh: 用户权限}
   desc: {zh: 创建用户、授权、查看权限}
+- id: backup
+  name: {zh: 备份恢复}
+  desc: {zh: 逻辑备份与恢复、导入导出、按时间点恢复}
 - id: replication
   name: {zh: 复制}
   desc: {zh: 主从状态、复制延迟}
