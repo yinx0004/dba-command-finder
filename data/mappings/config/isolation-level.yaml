@@ -1,0 +1,46 @@
+schema_version: 2
+id: isolation-level
+category: config
+title: {zh: 事务隔离级别}
+summary: {zh: 查看和修改事务的隔离级别，确认一个事务能不能看到别的事务没提交或刚提交的数据。}
+keywords:
+  zh: [隔离级别, 事务隔离, 读已提交, 可重复读, 幻读, 脏读]
+  en: [transaction_isolation, tx_isolation, read committed, repeatable read, readconcern, snapshot]
+fields:
+  - {id: level, name: {zh: 隔离级别}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@GLOBAL.transaction_isolation AS global_isolation, @@SESSION.transaction_isolation AS transaction_isolation;
+        note: {zh: 默认 REPEATABLE-READ；5.7 的旧名字 tx_isolation 在 8.0 已移除}
+      - cmd: SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+        note: {zh: 只对当前会话之后的事务生效}
+      - cmd: SET GLOBAL transaction_isolation = 'READ-COMMITTED';
+        note: {zh: 对之后新建的连接生效}
+    fields:
+      level: transaction_isolation
+    notes:
+      - zh: 支持 READ UNCOMMITTED、READ COMMITTED、REPEATABLE READ、SERIALIZABLE 四种。不少业务改成 READ COMMITTED 以减少间隙锁，改之前要确认业务不依赖可重复读。
+    refs:
+      - {title: 'MySQL: Transaction Isolation Levels', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html'}
+    verify:
+      teardown: SET GLOBAL transaction_isolation = 'REPEATABLE-READ';
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'const s = db.getMongo().startSession(); s.startTransaction({ readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } }); s.getDatabase("<db>").<collection>.insertOne({ a: 1 }); s.commitTransaction()'
+        on: [mongod, mongos]
+        note: {zh: 多文档事务的读关注用 snapshot：事务内看到的是开始时的一致快照}
+      - cmd: 'db.<collection>.find().readConcern("majority")'
+        on: [mongod, mongos]
+        note: {zh: 不在事务里的读，由读关注决定能读到什么：majority 只读已被多数节点确认、不会回滚的数据}
+    notes:
+      - zh: 没有可选的隔离级别。事务内是快照隔离，不会读到别的事务没提交的数据，也不会幻读；两个事务改同一个文档时，后来的会收到 WriteConflict 错误，需要重试整个事务，而不是像 MySQL 那样等锁。
+      - zh: 事务外默认读关注是 local，可能读到之后会被回滚的数据（主节点切换时），要避免就用 majority。
+    refs:
+      - {title: 'MongoDB: Transactions and Read Concern', url: 'https://www.mongodb.com/docs/manual/core/transactions/#transactions-and-read-concern'}
+      - {title: 'MongoDB: Read Concern', url: 'https://www.mongodb.com/docs/manual/reference/read-concern/'}
+    verify:
+      vars: {collection: t}
+related: [default-rw-concern, long-transactions, lock-waits]
