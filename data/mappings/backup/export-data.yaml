@@ -1,0 +1,40 @@
+schema_version: 2
+id: export-data
+category: backup
+title: {zh: 导出表数据为文件}
+summary: {zh: 把一张表（集合）导出成 CSV 或 JSON，给别的系统或分析用。}
+keywords:
+  zh: [导出, 导出 CSV, 导出数据]
+  en: [into outfile, mongoexport, export csv, export json]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM <table> INTO OUTFILE '/var/lib/mysql-files/<table>.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+        note: {zh: 文件写在数据库服务器上，只能写到 secure_file_priv 指定的目录}
+      - cmd: mysql -e "SELECT * FROM <table>" <db> > <table>.tsv
+        shell: true
+        note: {zh: 在客户端机器上生成制表符分隔的文件，不受 secure_file_priv 限制}
+    refs:
+      - {title: 'MySQL: SELECT ... INTO', url: 'https://dev.mysql.com/doc/refman/8.4/en/select-into.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10)); INSERT INTO t VALUES (1, 'x'), (2, 'y');
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: mongoexport --db=<db> --collection=<collection> --type=csv --fields=a,b --out=<collection>.csv
+        shell: true
+        note: {zh: 导出 CSV 时必须用 --fields 列出字段}
+      - cmd: mongoexport --db=<db> --collection=<collection> --out=<collection>.json
+        shell: true
+        note: {zh: 导出 JSON，每行一个文档}
+    notes:
+      - zh: 文件写在运行 mongoexport 的机器上，没有 secure_file_priv 这类限制。
+      - zh: JSON 用 Extended JSON 表示日期、ObjectId 等类型，CSV 会丢掉类型信息。不要用 mongoexport 做备份，备份用 mongodump。
+    refs:
+      - {title: 'MongoDB: mongoexport', url: 'https://www.mongodb.com/docs/database-tools/mongoexport/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1, b: "x" }, { a: 2, b: "y" }])'
+      vars: {collection: t}
+related: [import-data, logical-backup]

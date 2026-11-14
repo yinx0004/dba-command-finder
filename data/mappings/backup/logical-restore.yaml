@@ -1,0 +1,43 @@
+schema_version: 2
+id: logical-restore
+category: backup
+title: {zh: 从逻辑备份恢复}
+summary: {zh: 把 mysqldump / mongodump 导出的文件恢复回数据库。}
+keywords:
+  zh: [恢复, 还原, 恢复备份, 导入备份]
+  en: [restore, mongorestore, mysql import dump]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: mysql <db> < <db>.sql
+        shell: true
+        note: {zh: 恢复到指定库；备份时用了 --databases 或 --all-databases 的，文件里自带 CREATE DATABASE 和 USE，直接 mysql < 文件 即可}
+    notes:
+      - zh: 恢复是逐条执行 SQL，大文件很慢；可以先 SET GLOBAL innodb_flush_log_at_trx_commit = 2 之类加速，恢复完再改回来。
+    refs:
+      - {title: 'MySQL: Reloading SQL-Format Backups', url: 'https://dev.mysql.com/doc/refman/8.4/en/reloading-sql-format-dumps.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
+      setup_shell: mysqldump <db> > <db>.sql
+  mongodb:
+    support: partial
+    commands:
+      - cmd: mongorestore --drop --nsInclude='<db>.*' dump
+        shell: true
+        note: {zh: 从目录恢复；--drop 先删掉同名集合再恢复}
+      - cmd: mongorestore --drop --gzip --archive=<db>.archive.gz
+        shell: true
+        note: {zh: 从压缩文件恢复}
+      - cmd: mongorestore --nsFrom='<db>.*' --nsTo='<db>_copy.*' dump
+        shell: true
+        note: {zh: 恢复成另一个库名}
+    notes:
+      - zh: 不加 --drop 时，已存在的文档会因主键冲突跳过，而不是覆盖。
+      - zh: 数据导入完才重建索引；大集合可以加 --numInsertionWorkersPerCollection 加快导入。
+    refs:
+      - {title: 'MongoDB: mongorestore', url: 'https://www.mongodb.com/docs/database-tools/mongorestore/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }])'
+      setup_shell: mongodump --db=<db> --out=dump && mongodump --db=<db> --archive=<db>.archive.gz --gzip
+related: [logical-backup, point-in-time-recovery]

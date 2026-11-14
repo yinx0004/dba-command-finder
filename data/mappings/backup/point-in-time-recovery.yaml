@@ -1,0 +1,45 @@
+schema_version: 2
+id: point-in-time-recovery
+category: backup
+title: {zh: 按时间点恢复}
+summary: {zh: 在全量备份的基础上，把数据恢复到误操作之前的某一刻。}
+keywords:
+  zh: [时间点恢复, 误删恢复, 回滚到某个时间, 增量恢复]
+  en: [pitr, point in time recovery, mysqlbinlog, oplogreplay]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW MASTER STATUS;
+        deprecated_in: 8.2.0
+        removed_in: '8.4'
+        note: {zh: 做全量备份时记下当前 binlog 文件和位置（mysqldump --source-data 会自动写进备份）}
+      - cmd: SHOW BINARY LOG STATUS;
+        since: 8.2.0
+      - cmd: mysqlbinlog --start-position=<pos> --stop-datetime="2026-01-01 10:00:00" binlog.000001 | mysql
+        shell: true
+        skip: {zh: 官方 MySQL 镜像不带 mysqlbinlog}
+        note: {zh: 从备份时的位置回放到误操作之前}
+    notes:
+      - zh: 前提是开启了 binlog（8.0 起默认开启，5.7 默认关闭）并保留了足够长的 binlog。
+    refs:
+      - {title: 'MySQL: Point-in-Time Recovery', url: 'https://dev.mysql.com/doc/refman/8.4/en/point-in-time-recovery.html'}
+      - {title: 'MySQL: mysqlbinlog', url: 'https://dev.mysql.com/doc/refman/8.4/en/mysqlbinlog.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: mongodump --oplog --out=dump
+        shell: true
+        note: {zh: 全量备份，带上备份期间的 oplog}
+      - cmd: mongorestore --oplogReplay --oplogLimit=<timestamp> dump
+        shell: true
+        skip: {zh: 需要先清空实例再恢复，lab 不在共享实例上做}
+        note: {zh: '恢复全量备份并回放 oplog，停在 <timestamp>（秒数[:序号]）之前'}
+    notes:
+      - zh: mongodump --oplog 只覆盖备份进行期间的 oplog。要恢复到备份之后的任意时刻，需要持续备份 local.oplog.rs（例如定时用 mongodump 增量导出），恢复时再回放。
+      - zh: 生产环境通常用 Ops Manager / Atlas 的连续备份来做时间点恢复。
+    refs:
+      - {title: 'MongoDB: mongorestore --oplogReplay', url: 'https://www.mongodb.com/docs/database-tools/mongorestore/#std-option-mongorestore.--oplogReplay'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 })'
+related: [logical-backup, logical-restore]

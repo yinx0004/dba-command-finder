@@ -66,5 +66,21 @@
 - {q: alter user identified by, top: change-password}
 - {q: drop user, top: drop-user}
 
+- {q: mysqldump, top: logical-backup}
+- {q: mongodump, top: logical-backup}
+- {q: 备份, top: logical-backup}
+- {q: mysqlpump, top: logical-backup}
+- {q: mongorestore, top: logical-restore}
+- {q: 恢复备份, top: logical-restore}
+- {q: into outfile, top: export-data}
+- {q: 导出 csv, top: export-data}
+- {q: mongoexport, top: export-data}
+- {q: load data infile, top: import-data}
+- {q: mongoimport, top: import-data}
+- {q: 导入数据, top: import-data}
+- {q: mysqlbinlog, top: point-in-time-recovery}
+- {q: 误删恢复, top: point-in-time-recovery}
+- {q: show master status, top: point-in-time-recovery}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

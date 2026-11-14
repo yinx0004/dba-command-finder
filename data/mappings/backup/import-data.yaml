@@ -1,0 +1,46 @@
+schema_version: 2
+id: import-data
+category: backup
+title: {zh: 从文件导入数据}
+summary: {zh: 把 CSV 或 JSON 文件批量导入到一张表（集合）里。}
+keywords:
+  zh: [导入, 导入 CSV, 批量导入]
+  en: [load data infile, mongoimport, import csv, import json]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: LOAD DATA INFILE '/var/lib/mysql-files/<table>.csv' INTO TABLE <table> FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+        note: {zh: 读的是数据库服务器上的文件，只能读 secure_file_priv 指定的目录}
+    notes:
+      - zh: 要导入客户端机器上的文件，用 LOAD DATA LOCAL INFILE；8.0 起服务器默认 local_infile=OFF，需要服务器和客户端（mysql --local-infile=1）都打开。
+    refs:
+      - {title: 'MySQL: LOAD DATA', url: 'https://dev.mysql.com/doc/refman/8.4/en/load-data.html'}
+    verify:
+      # Write a CSV where the server may read it, then give LOAD DATA an empty table with the same shape.
+      setup: >-
+        CREATE TABLE src (id INT PRIMARY KEY, a VARCHAR(10)); INSERT INTO src VALUES (1, 'x'), (2, 'y');
+        SELECT * FROM src INTO OUTFILE '/var/lib/mysql-files/<table>.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+        CREATE TABLE <table> LIKE src;
+      vars: {table: t_import}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: mongoimport --db=<db> --collection=<collection> --type=csv --headerline --file=<collection>.csv
+        shell: true
+        note: {zh: CSV 第一行是字段名}
+      - cmd: mongoimport --db=<db> --collection=<collection> --file=<collection>.json
+        shell: true
+        note: {zh: JSON 每行一个文档}
+      - cmd: mongoimport --db=<db> --collection=<collection> --mode=upsert --upsertFields=a --file=<collection>.json
+        shell: true
+        note: {zh: 按指定字段覆盖已存在的文档}
+    notes:
+      - zh: 读的是运行 mongoimport 的机器上的文件。集合不存在会自动创建，但不会建索引。
+      - zh: CSV 里的值会按内容猜类型（数字、字符串）；要精确控制类型，用 --columnsHaveTypes 或改用 JSON。
+    refs:
+      - {title: 'MongoDB: mongoimport', url: 'https://www.mongodb.com/docs/database-tools/mongoimport/'}
+    verify:
+      setup_shell: printf 'a,b\n1,x\n2,y\n' > <collection>.csv && printf '{"a":1,"b":"x"}\n{"a":2,"b":"y"}\n' > <collection>.json
+      vars: {collection: t}
+related: [export-data, logical-restore]

@@ -1,0 +1,51 @@
+schema_version: 2
+id: logical-backup
+category: backup
+title: {zh: 逻辑备份}
+summary: {zh: 把一个库或整个实例导出成文件，用于迁移、留档或小库的日常备份。}
+keywords:
+  zh: [备份, 导出备份, 全量备份, 逻辑备份]
+  en: [mysqldump, mysqlpump, mongodump, backup, dump]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: mysqldump --single-transaction --routines --triggers --events <db> > <db>.sql
+        shell: true
+        note: {zh: 备份一个库；连接参数（-h -u -p）按需添加}
+      - cmd: mysqldump --single-transaction --all-databases > all.sql
+        shell: true
+        note: {zh: 备份整个实例}
+      - cmd: mysqlpump --single-transaction --databases <db> > <db>.sql
+        shell: true
+        since: 5.7.8
+        deprecated_in: 8.0.34
+        removed_in: '8.4'
+        note: {zh: 并行导出；8.4 起已移除，改用 mysqldump 或 MySQL Shell 的 dump 工具}
+    notes:
+      - zh: --single-transaction 只对 InnoDB 表保证一致性；有 MyISAM 表时需要锁表。
+    refs:
+      - {title: 'MySQL: mysqldump', url: 'https://dev.mysql.com/doc/refman/8.4/en/mysqldump.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
+  mongodb:
+    support: partial
+    commands:
+      - cmd: mongodump --db=<db> --out=dump
+        shell: true
+        note: {zh: 备份一个库，每个集合一个 .bson 文件；连接参数（--uri 或 -u -p --authenticationDatabase）按需添加}
+      - cmd: mongodump --db=<db> --archive=<db>.archive.gz --gzip
+        shell: true
+        note: {zh: 打成一个压缩文件}
+      - cmd: mongodump --oplog --out=dump
+        shell: true
+        note: {zh: 备份整个实例，并带上备份期间的 oplog，恢复后数据一致到备份结束的时刻（需要副本集）}
+    notes:
+      - zh: 没有 --single-transaction 的对应参数。只备份部分库时，各集合不是同一时刻的数据；要一致性，就用 --oplog 备份整个实例。
+      - zh: 索引只导出定义，恢复时重建，大库恢复会比较慢。数据量大时，一般改用文件系统快照或 Ops Manager / Atlas 的备份。
+      - zh: mongodump 属于 MongoDB Database Tools，单独发版，版本号和服务器不同。
+    refs:
+      - {title: 'MongoDB: mongodump', url: 'https://www.mongodb.com/docs/database-tools/mongodump/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }])'
+related: [logical-restore, global-read-lock, point-in-time-recovery]
