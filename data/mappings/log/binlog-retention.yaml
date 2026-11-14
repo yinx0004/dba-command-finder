@@ -1,0 +1,40 @@
+schema_version: 2
+id: binlog-retention
+category: log
+title: {zh: 查看 binlog / oplog 的保留范围}
+summary: {zh: 看现在保留了哪些 binlog（oplog 覆盖多长时间），判断从库或增量备份还来不来得及追上。}
+keywords:
+  zh: [binlog 保留, binlog 列表, oplog 窗口, oplog 大小, 日志保留多久]
+  en: [show binary logs, binlog_expire_logs_seconds, expire_logs_days, printreplicationinfo, oplog window]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW BINARY LOGS;
+        note: {zh: 现存的 binlog 文件和大小}
+      - cmd: SELECT @@binlog_expire_logs_seconds;
+        since: 8.0.1
+        note: {zh: 自动清理的保留时间（秒）}
+      - cmd: SELECT @@expire_logs_days;
+        deprecated_in: 8.0.1
+        removed_in: '8.4'
+        note: {zh: 旧的保留时间设置（天），8.0 起改用 binlog_expire_logs_seconds}
+    notes:
+      - zh: binlog 是一组文件，按保留时间或手动 PURGE BINARY LOGS 清理。
+    refs:
+      - {title: 'MySQL: SHOW BINARY LOGS', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-binary-logs.html'}
+      - {title: 'MySQL: binlog_expire_logs_seconds', url: 'https://dev.mysql.com/doc/refman/8.4/en/replication-options-binary-log.html#sysvar_binlog_expire_logs_seconds'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: rs.printReplicationInfo()
+        note: {zh: oplog 配置大小、已用大小、最早和最新一条的时间，以及能覆盖的时长}
+      - cmd: db.getReplicationInfo()
+        note: {zh: 同样的信息，返回对象，方便在脚本里取值}
+    notes:
+      - zh: oplog 是一个固定大小的集合（local.oplog.rs），写满后覆盖最旧的记录，能回溯多久取决于写入量，不是固定天数。
+      - zh: '调整大小用 db.adminCommand({ replSetResizeOplog: 1, size: <MB> })；4.4 起还可以用 minRetentionHours 设置最少保留时长。'
+    refs:
+      - {title: 'MongoDB: rs.printReplicationInfo()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.printReplicationInfo/'}
+      - {title: 'MongoDB: Replica Set Oplog', url: 'https://www.mongodb.com/docs/manual/core/replica-set-oplog/'}
+related: [binlog-events, replication-status, point-in-time-recovery]

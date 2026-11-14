@@ -29,6 +29,9 @@
 - id: query
   name: {zh: 查询}
   desc: {zh: 执行计划、慢查询}
+- id: log
+  name: {zh: 日志}
+  desc: {zh: 错误日志、binlog 与 oplog、记录所有语句}
 - id: lock
   name: {zh: 锁}
   desc: {zh: 锁等待、死锁、全局锁}

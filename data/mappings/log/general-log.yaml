@@ -1,0 +1,50 @@
+schema_version: 2
+id: general-log
+category: log
+title: {zh: 记录所有执行的语句}
+summary: {zh: 临时把每一条语句都记下来，排查应用到底发了什么请求。}
+keywords:
+  zh: [通用日志, 记录所有语句, 全量日志, 审计]
+  en: [general_log, general log, profiler level 2, profile all]
+fields:
+  - {id: time, name: {zh: 时间}}
+  - {id: client, name: {zh: 客户端}}
+  - {id: statement, name: {zh: 语句}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SET GLOBAL log_output = 'TABLE';
+        note: {zh: 写到表里，方便用 SQL 查；默认 FILE 写到文件}
+      - cmd: SET GLOBAL general_log = ON;
+      - cmd: SELECT * FROM mysql.general_log ORDER BY event_time DESC LIMIT 20;
+    fields:
+      time: event_time
+      client: user_host
+      statement: argument
+    notes:
+      - zh: 开销很大，只在排查时短时间打开，用完 SET GLOBAL general_log = OFF。
+    refs:
+      - {title: 'MySQL: The General Query Log', url: 'https://dev.mysql.com/doc/refman/8.4/en/query-log.html'}
+    verify:
+      teardown: SET GLOBAL general_log = OFF; SET GLOBAL log_output = 'FILE';
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.setProfilingLevel(2)
+        note: {zh: 当前库的所有操作都写进 system.profile}
+      - cmd: 'db.system.profile.find().sort({ ts: -1 }).limit(20)'
+    fields:
+      time: ts
+      client: client
+      statement: command
+    notes:
+      - zh: 按库开启，只记录当前库的操作；结果存在固定大小的 system.profile 集合里（默认 1 MB），旧记录会被覆盖。
+      - zh: 开销同样很大，用完 db.setProfilingLevel(0)。
+    refs:
+      - {title: 'MongoDB: Database Profiler', url: 'https://www.mongodb.com/docs/manual/tutorial/manage-the-database-profiler/'}
+    verify:
+      # Operations on system.profile itself are not profiled, so profile one query before looking.
+      setup: 'db.t.insertOne({ a: 1 }); db.setProfilingLevel(2); db.t.find({ a: 1 }).toArray()'
+      teardown: db.setProfilingLevel(0)
+related: [slow-query-log, error-log]

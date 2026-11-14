@@ -1,0 +1,55 @@
+schema_version: 2
+id: binlog-events
+category: log
+title: {zh: 查看 binlog / oplog 里的变更}
+summary: {zh: 看最近写了哪些变更，追查误操作是什么时候、对哪张表做的。}
+keywords:
+  zh: [binlog 内容, 查看 binlog, oplog 内容, 查看 oplog, 谁改了数据]
+  en: [show binlog events, mysqlbinlog, oplog.rs]
+fields:
+  - {id: position, name: {zh: 位置}}
+  - {id: type, name: {zh: 操作类型}}
+  - {id: target, name: {zh: 作用的库表}}
+  - {id: content, name: {zh: 变更内容}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW BINLOG EVENTS IN '<binlog>' LIMIT 20;
+        note: {zh: 文件名从 SHOW BINARY LOGS 里取；不写 IN 时看第一个文件}
+      - cmd: mysqlbinlog -v --base64-output=DECODE-ROWS <binlog>
+        shell: true
+        skip: {zh: 官方 MySQL 镜像不带 mysqlbinlog}
+        note: {zh: 在服务器上把行格式的变更解码成可读的伪 SQL}
+    fields:
+      position: Pos
+      type: Event_type
+      content: Info
+    notes:
+      - zh: 行格式（ROW，5.7.7 起默认）的 binlog 在 SHOW BINLOG EVENTS 里看不到具体改了哪些值，要用 mysqlbinlog -v 解码。
+    refs:
+      - {title: 'MySQL: SHOW BINLOG EVENTS', url: 'https://dev.mysql.com/doc/refman/8.4/en/show-binlog-events.html'}
+      - {title: 'MySQL: mysqlbinlog', url: 'https://dev.mysql.com/doc/refman/8.4/en/mysqlbinlog.html'}
+    verify:
+      vars: {binlog: binlog.000001}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.getSiblingDB("local").oplog.rs.find().sort({ $natural: -1 }).limit(20)'
+        note: {zh: 最近 20 条}
+      - cmd: 'db.getSiblingDB("local").oplog.rs.find({ ns: "<db>.<collection>" }).sort({ $natural: -1 }).limit(20)'
+        note: {zh: 只看某个集合}
+    fields:
+      position: ts
+      type: op
+      target: ns
+      content: {name: o, skip: {zh: 单个字母的字段名，检查没有意义}}
+    notes:
+      - zh: oplog 是普通集合，可以像查业务数据一样按 ns、op、时间过滤。
+      - zh: 记录的是可以重复执行的结果，例如 $inc 会记成 $set 之后的值，看不到原始命令。
+    refs:
+      - {title: 'MongoDB: Replica Set Oplog', url: 'https://www.mongodb.com/docs/manual/core/replica-set-oplog/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 }); db.t.updateOne({ a: 1 }, { $inc: { a: 1 } })'
+      vars: {collection: t}
+related: [binlog-retention, point-in-time-recovery]

@@ -92,5 +92,18 @@
 - {q: 行数, top: row-count}
 - {q: countDocuments, top: row-count}
 
+- {q: 错误日志, top: error-log}
+- {q: log_error, top: error-log}
+- {q: getLog, top: error-log}
+- {q: flush logs, top: rotate-logs}
+- {q: logRotate, top: rotate-logs}
+- {q: show binary logs, top: binlog-retention}
+- {q: oplog 窗口, top: binlog-retention}
+- {q: expire_logs_days, top: binlog-retention}
+- {q: show binlog events, top: binlog-events}
+- {q: oplog.rs, top: binlog-events}
+- {q: general_log, top: general-log}
+- {q: 记录所有语句, top: general-log}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

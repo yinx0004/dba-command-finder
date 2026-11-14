@@ -1,0 +1,42 @@
+schema_version: 2
+id: error-log
+category: log
+title: {zh: 查看错误日志}
+summary: {zh: 找到错误日志在哪，或者直接查最近的日志，排查启动失败、崩溃、连接报错。}
+keywords:
+  zh: [错误日志, 日志在哪, 最近的日志]
+  en: [error log, log_error, getlog, show log]
+fields:
+  - {id: time, name: {zh: 时间}}
+  - {id: message, name: {zh: 日志内容}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW VARIABLES LIKE 'log_error';
+        note: {zh: 错误日志文件的路径；stderr 表示输出到标准错误（容器里常见）}
+      - cmd: SELECT * FROM performance_schema.error_log ORDER BY LOGGED DESC LIMIT 20;
+        since: 8.0.22
+        note: {zh: 不用登录服务器，直接用 SQL 查最近的错误日志}
+    fields:
+      time: LOGGED
+      message: DATA
+    refs:
+      - {title: 'MySQL: The Error Log', url: 'https://dev.mysql.com/doc/refman/8.4/en/error-log.html'}
+      - {title: 'MySQL: The error_log Table', url: 'https://dev.mysql.com/doc/refman/8.4/en/performance-schema-error-log-table.html'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 }).parsed.systemLog'
+        note: {zh: 日志文件的路径；没配置时日志输出到标准输出}
+      - cmd: 'db.adminCommand({ getLog: "global" })'
+        note: {zh: 直接查内存里最近的 1024 条日志}
+    fields:
+      time: t.$date
+      message: msg
+    notes:
+      - zh: 4.4 起日志是 JSON 格式，每条一行，可以直接用 jq 过滤。
+    refs:
+      - {title: 'MongoDB: getLog', url: 'https://www.mongodb.com/docs/manual/reference/command/getLog/'}
+      - {title: 'MongoDB: Log Messages', url: 'https://www.mongodb.com/docs/manual/reference/log-messages/'}
+related: [rotate-logs, slow-query-log]
