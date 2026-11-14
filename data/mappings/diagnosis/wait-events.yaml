@@ -27,4 +27,20 @@ databases:
       - zh: 没有按等待事件分类统计的视图。最接近的是锁的排队和等待时间；WiredTiger 内部的等待（例如等缓存腾出空间）在 serverStatus().wiredTiger 的各项计数里。
     refs:
       - {title: 'MongoDB: serverStatus', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG SET latency-monitor-threshold 100
+        note:
+          zh: 单位是毫秒，超过就记录；默认 0 表示不记录
+      - cmd: LATENCY LATEST
+        note:
+          zh: 每类事件最近一次和最长一次的耗时，事件如 command、fork、aof-fsync-always、expire-cycle
+      - cmd: LATENCY DOCTOR
+        note:
+          zh: 用文字分析延迟从哪来、怎么处理
+    notes:
+      - zh: 没有等待事件的概念，命令执行时不会等锁或等 IO。LATENCY 监控记录的是让整个实例卡住的事件，例如 fork 生成快照、AOF 刷盘、集中过期。
+    verify:
+      teardown: CONFIG SET latency-monitor-threshold 0
 related: [lock-waits, cache-hit-ratio]

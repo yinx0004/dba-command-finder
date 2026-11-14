@@ -38,4 +38,19 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/method/db.killOp/
       - title: 'MongoDB: killSessions'
         url: https://www.mongodb.com/docs/manual/reference/command/killSessions/
+  redis:
+    support: partial
+    commands:
+      - cmd: CLIENT KILL ID <client_id>
+        skip: {zh: 需要另开一个连接作为终止对象}
+        note:
+          zh: 连接 ID 从 CLIENT LIST 的 id 看
+      - cmd: CLIENT KILL ADDR <ip:port>
+        skip: {zh: 需要另开一个连接作为终止对象}
+      - cmd: CLIENT KILL MAXAGE 3600
+        since: '7.4'
+        note:
+          zh: 断开所有连接超过 3600 秒的客户端
+    notes:
+      - zh: 只能断开连接，不能只停掉正在执行的命令：命令在单线程里执行，一条命令跑完之前其他连接都在等。只有 Lua 脚本和函数可以用 SCRIPT KILL、FUNCTION KILL 中止。
 related: [list-active-sessions]

@@ -39,4 +39,16 @@ databases:
     refs:
       - {title: 'MongoDB: $currentOp', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/currentOp/'}
       - {title: 'MongoDB: Connection String appName', url: 'https://www.mongodb.com/docs/manual/reference/connection-string-options/#mongodb-urioption-urioption.appName'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CLIENT LIST
+        note:
+          zh: name 是程序用 CLIENT SETNAME 起的名字；7.2 起还有 lib-name、lib-ver，是客户端库用 CLIENT SETINFO 报上来的
+    fields:
+      program: {name: name, note: {zh: 程序没调用 CLIENT SETNAME 时为空}}
+      driver: {name: lib-name / lib-ver, since: '7.2', note: {zh: 客户端库没调用 CLIENT SETINFO 时为空}}
+      conn_id: id
+    notes:
+      - zh: 连接本身不带程序名，要靠程序自己报：连接后执行 CLIENT SETNAME 起名字；7.2 起较新的客户端库还会用 CLIENT SETINFO 报上库名和版本。
 related: [connection-usage, list-active-sessions]

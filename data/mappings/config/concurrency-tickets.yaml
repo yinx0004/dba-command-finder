@@ -48,4 +48,14 @@ databases:
     refs:
       - {title: 'MongoDB: storageEngineConcurrentReadTransactions', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.storageEngineConcurrentReadTransactions'}
       - {title: 'MongoDB: serverStatus queues', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/#queues'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET io-threads
+        note:
+          zh: 处理网络读写的线程数，默认 1；只能写在配置文件里，重启生效
+    fields:
+      limit: io-threads
+    notes:
+      - zh: 命令始终在一个主线程里依次执行，没有并发执行的上限可调。io-threads 只把网络读写和协议解析分给多个线程，用来在连接很多、吞吐很高时减轻主线程负担。
 related: [live-throughput, list-active-sessions, lock-waits]

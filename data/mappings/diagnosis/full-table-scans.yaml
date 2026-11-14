@@ -41,4 +41,17 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.setProfilingLevel(2); db.t.find({ a: 1 }).toArray()'
       teardown: db.setProfilingLevel(0)
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO commandstats
+        note:
+          zh: 看 cmdstat_keys、cmdstat_smembers、cmdstat_hgetall 这类遍历整个集合的命令被调用了多少次、花了多少时间
+      - cmd: SLOWLOG GET 10
+        note:
+          zh: 慢日志里的 KEYS、HGETALL、SMEMBERS 多半就是“全表扫描”
+    fields:
+      statement: {name: INFO commandstats 里遍历类命令的 cmdstat_ 行}
+    notes:
+      - zh: 没有表，对应的是一次遍历整个键空间或整个大集合的命令。KEYS 会在遍历期间挡住所有连接，生产环境用 SCAN、HSCAN、SSCAN 分批代替。
 related: [top-statements, create-index, explain]

@@ -35,4 +35,19 @@ databases:
         url: https://www.mongodb.com/docs/manual/reference/command/setParameter/
     verify:
       vars: {name: logLevel, value: '0'}
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG SET <parameter> <value>
+        note:
+          zh: 立即生效，重启后失效
+      - cmd: CONFIG SET slowlog-max-len 256 slowlog-log-slower-than 10000
+        since: '7.0'
+        note:
+          zh: 一次改多个参数，要么都改成功、要么都不改
+    notes:
+      - zh: 有些参数只能写在配置文件里重启生效，例如 io-threads、daemonize。
+    verify:
+      vars: {parameter: slowlog-max-len, value: '256'}
+      teardown: CONFIG SET slowlog-max-len 128
 related: [show-variables, persist-parameters]

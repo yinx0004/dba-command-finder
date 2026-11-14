@@ -54,4 +54,20 @@ databases:
     refs:
       - title: 'MongoDB: serverStatus'
         url: https://www.mongodb.com/docs/manual/reference/command/serverStatus/
+  redis:
+    support: full
+    commands:
+      - cmd: INFO
+        note:
+          zh: 默认几个分区一起列出；INFO everything 列出全部
+      - cmd: INFO stats
+      - cmd: INFO commandstats
+        note:
+          zh: 按命令统计调用次数和耗时
+    fields:
+      connections: connected_clients
+      uptime: uptime_in_seconds
+      operations: total_commands_processed
+      network_bytes: total_net_input_bytes / total_net_output_bytes
+      cache: {name: keyspace_hits / keyspace_misses, note: {zh: 数据都在内存里，这里是读到和没读到键的次数}}
 related: [list-active-sessions, show-variables]

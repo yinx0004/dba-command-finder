@@ -26,4 +26,8 @@ databases:
       - zh: 只对多文档事务里的锁等待生效。默认 5 毫秒拿不到锁就以 LockTimeout 中止事务（带 TransientTransactionError 标签，驱动可以整笔重试），和 MySQL 动辄等几十秒的思路完全不同。普通的单文档写冲突由服务端自动重试，不受这个参数影响。
     refs:
       - {title: 'MongoDB: maxTransactionLockRequestTimeoutMillis', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.maxTransactionLockRequestTimeoutMillis'}
+  redis:
+    support: none
+    notes:
+      - zh: 没有锁，也就没有锁等待超时。BLPOP、XREAD BLOCK 这类阻塞命令的等待时间是命令自己的参数。
 related: [lock-waits, long-transactions]

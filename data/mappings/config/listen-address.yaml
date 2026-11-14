@@ -44,4 +44,17 @@ databases:
     refs:
       - {title: 'MongoDB: net Options', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/#net-options'}
       - {title: 'MongoDB: Default MongoDB Port', url: 'https://www.mongodb.com/docs/manual/reference/default-mongodb-port/'}
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG GET bind
+      - cmd: CONFIG GET port
+      - cmd: CONFIG GET unixsocket
+        note:
+          zh: 为空表示没开 Unix socket
+    fields:
+      address: bind
+      port: port
+    notes:
+      - zh: 没设置密码或 ACL 时，protected-mode 默认只接受本机连接。
 related: [tls-check, config-file, current-connection]

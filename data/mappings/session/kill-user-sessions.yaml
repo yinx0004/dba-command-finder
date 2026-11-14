@@ -33,4 +33,14 @@ databases:
       - {title: 'MongoDB: db.killOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.killOp/'}
     verify:
       vars: {user: app_user, authdb: admin}
+  redis:
+    support: full
+    commands:
+      - cmd: CLIENT KILL USER <user>
+        note:
+          zh: 断开这个 ACL 用户的所有连接，返回断开的个数
+    verify:
+      setup: 'ACL SETUSER app_kill on >Lab#Pass123 ~* +@all'
+      vars: {user: app_kill}
+      teardown: ACL DELUSER app_kill
 related: [kill-session, account-lock, list-active-sessions]

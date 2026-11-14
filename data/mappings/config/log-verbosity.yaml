@@ -46,4 +46,18 @@ databases:
       - {title: 'MongoDB: db.setLogLevel()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.setLogLevel/'}
     verify:
       teardown: 'db.setLogLevel(-1, "query")'
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG GET loglevel
+        note:
+          zh: debug、verbose、notice（默认）、warning，7.0 起还有 nothing
+      - cmd: CONFIG SET loglevel verbose
+      - cmd: CONFIG GET logfile
+        note:
+          zh: 为空表示日志写到标准输出
+    fields:
+      level: loglevel
+    verify:
+      teardown: CONFIG SET loglevel notice
 related: [error-log, general-log, slow-query-log]

@@ -53,4 +53,20 @@ databases:
       - {title: 'MongoDB: serverStatus connections', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/#connections'}
       - {title: 'MongoDB: net.maxIncomingConnections', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/#mongodb-setting-net.maxIncomingConnections'}
       - {title: 'MongoDB: connPoolStats', url: 'https://www.mongodb.com/docs/manual/reference/command/connPoolStats/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO clients
+        note:
+          zh: connected_clients 是当前连接数，blocked_clients 是停在 BLPOP 这类阻塞命令上的连接数
+      - cmd: CONFIG GET maxclients
+      - cmd: CLIENT LIST
+        note:
+          zh: addr 是每个连接的来源地址和端口
+    fields:
+      current: connected_clients
+      limit: maxclients
+      client: addr
+    notes:
+      - zh: 没有历史最高连接数，要看峰值得靠监控系统定期采样 connected_clients。
 related: [list-active-sessions, kill-session, server-status]

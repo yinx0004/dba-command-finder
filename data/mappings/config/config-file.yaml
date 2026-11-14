@@ -33,4 +33,15 @@ databases:
       - zh: mongod 不会去默认路径找配置文件，只读 --config 指定的那个；包管理器安装时 /etc/mongod.conf 是写在 systemd 服务定义里的。
     refs:
       - {title: 'MongoDB: Configuration File Options', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/'}
+  redis:
+    support: full
+    commands:
+      - cmd: INFO server
+        note:
+          zh: config_file 是启动时用的配置文件；为空表示没用配置文件启动
+      - cmd: CONFIG REWRITE
+        note:
+          zh: 把运行中改过的参数写回这个文件
+    fields:
+      source: config_file
 related: [show-variables, set-variable]

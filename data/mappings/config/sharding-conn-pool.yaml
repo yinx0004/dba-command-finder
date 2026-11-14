@@ -38,4 +38,8 @@ databases:
       - {title: 'MongoDB: connPoolStats', url: 'https://www.mongodb.com/docs/manual/reference/command/connPoolStats/'}
     verify:
       teardown: 'db.adminCommand({ setParameter: 1, ShardingTaskExecutorPoolMaxSize: 32767 })'
+  redis:
+    support: none
+    notes:
+      - zh: Redis Cluster 没有 mongos 这样的路由层，客户端根据槽位直接连到各个节点，节点之间通过集群总线通信，没有连接池可调。
 related: [max-connections, connection-usage]

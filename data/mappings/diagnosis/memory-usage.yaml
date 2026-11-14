@@ -5,7 +5,7 @@ title: {zh: 查看内存占用}
 summary: {zh: 实例内存涨得厉害时，看总共用了多少、主要被什么占着。}
 keywords:
   zh: [内存占用, 内存使用, 内存泄漏, 内存多少]
-  en: [memory, memory_global_total, resident, tcmalloc]
+  en: [memory, memory_global_total, resident, tcmalloc, INFO memory, MEMORY STATS, used_memory]
 fields:
   - {id: total, name: {zh: 总共占用}}
 databases:
@@ -35,4 +35,16 @@ databases:
       - zh: 主要的内存消耗是 WiredTiger 缓存，看「查看缓存命中率」里的 bytes currently in the cache。
     refs:
       - {title: 'MongoDB: serverStatus mem', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/#mem'}
+  redis:
+    support: full
+    commands:
+      - cmd: INFO memory
+        note:
+          zh: used_memory 是数据占用，used_memory_rss 是操作系统看到的进程内存，两者之比是 mem_fragmentation_ratio
+      - cmd: MEMORY STATS
+      - cmd: MEMORY DOCTOR
+        note:
+          zh: 用文字指出内存方面的问题，例如碎片太多
+    fields:
+      total: used_memory
 related: [cache-hit-ratio, server-status]

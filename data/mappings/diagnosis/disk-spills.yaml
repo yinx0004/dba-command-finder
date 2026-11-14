@@ -46,4 +46,11 @@ databases:
       # Shrink the sort memory limit so a small sort spills, and profile it.
       setup: 'db.t.insertMany(Array.from({ length: 200 }, (_, i) => ({ a: i, pad: "x".repeat(200) }))); db.adminCommand({ setParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 1024 }); db.setProfilingLevel(2); db.t.find().sort({ pad: 1, a: -1 }).toArray()'
       teardown: 'db.adminCommand({ setParameter: 1, internalQueryMaxBlockingSortMemoryUsageBytes: 104857600 }); db.setProfilingLevel(0)'
+  redis:
+    support: none
+    notes:
+      - zh: 没有临时表和排序缓冲区，命令都在内存里算完；SORT 这类命令的中间结果也只放内存。内存不够时按 maxmemory-policy 淘汰键或拒绝写入，不会溢出到磁盘。
+    alternatives:
+      - title: {zh: 看内存是否接近上限、有没有在淘汰键（evicted_keys）}
+        cmd: INFO stats
 related: [top-statements, explain]

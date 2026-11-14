@@ -37,4 +37,17 @@ databases:
       - zh: 每行直接就是每秒的量。dirty、used 两列是 WiredTiger 缓存的脏数据和使用比例，qrw、arw 是排队和正在执行的读写数，一屏就能看出是不是卡在缓存或锁上。
     refs:
       - {title: 'MongoDB: mongostat', url: 'https://www.mongodb.com/docs/database-tools/mongostat/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: redis-cli -r 2 -i 1 INFO stats | grep -E 'instantaneous_ops_per_sec|total_commands_processed'
+        shell: true
+        note:
+          zh: 每秒采一次，共两次；instantaneous_ops_per_sec 是最近一段时间的每秒命令数
+      - cmd: INFO clients
+    fields:
+      queries: instantaneous_ops_per_sec
+      connections: connected_clients
+    notes:
+      - zh: 没有按读写分开的每秒计数；要按命令看，比较两次 INFO commandstats 里各命令 calls 的差值。redis-cli --stat 会一直滚动输出每秒概况，适合在终端里盯着看。
 related: [server-status, hot-tables]

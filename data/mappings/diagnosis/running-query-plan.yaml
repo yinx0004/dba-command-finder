@@ -28,4 +28,11 @@ databases:
       - zh: planSummary 只是摘要；要看完整计划，拿 currentOp 里的 command 重新 explain 一次。
     refs:
       - {title: 'MongoDB: db.currentOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.currentOp/'}
+  redis:
+    support: none
+    notes:
+      - zh: 没有查询优化器，也就没有执行计划：每个命令怎么执行是固定的，复杂度写在命令文档里（例如 HGET 是 O(1)，SMEMBERS 是 O(N)）。
+    alternatives:
+      - title: {zh: 看正在执行的连接最近执行的命令（cmd）}
+        cmd: CLIENT LIST
 related: [list-active-sessions, explain]

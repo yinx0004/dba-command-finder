@@ -38,4 +38,24 @@ databases:
     refs:
       - {title: 'MongoDB: setDefaultRWConcern', url: 'https://www.mongodb.com/docs/manual/reference/command/setDefaultRWConcern/'}
       - {title: 'MongoDB: Implicit Default Write Concern', url: 'https://www.mongodb.com/docs/manual/reference/write-concern/#implicit-default-write-concern'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG GET min-replicas-to-write
+        note:
+          zh: 在线的从库少于这个数时，主库拒绝写入；默认 0，不检查
+      - cmd: CONFIG GET min-replicas-max-lag
+        note:
+          zh: 从库多少秒内有过响应才算在线
+      - cmd: WAIT 1 1000
+        note:
+          zh: 等到前面的写入复制到至少 1 个从库，最多等 1000 毫秒，返回确认了的从库数
+      - cmd: WAITAOF 0 0 100
+        since: '7.2'
+        note:
+          zh: 等到前面的写入刷进本机或从库的 AOF 文件
+    fields:
+      write: min-replicas-to-write
+    notes:
+      - zh: 复制是异步的，写入在主库上执行完就返回，没有全局的“写到几个节点才算成功”。要等从库确认，得在写完之后按需调用 WAIT；即使 WAIT 返回了，主库故障切换时仍可能丢掉还没复制的写入。
 related: [flush-durability, isolation-level, replication-status]

@@ -55,4 +55,24 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.setProfilingLevel(2); db.t.find({ a: 1 }).toArray(); db.t.find({ a: 2 }).toArray()'
       teardown: db.setProfilingLevel(0)
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO commandstats
+        note:
+          zh: 每个命令一行：calls 调用次数、usec 总耗时（微秒）、usec_per_call 平均耗时
+      - cmd: LATENCY HISTOGRAM
+        since: '7.0'
+        note:
+          zh: 按命令看耗时分布
+      - cmd: CONFIG RESETSTAT
+        note:
+          zh: 清零统计，重新开始计
+    fields:
+      statement: {name: cmdstat_ 后面的命令名}
+      count: calls
+      total_time: usec
+      avg_time: usec_per_call
+    notes:
+      - zh: 只能按命令名统计，不能按具体参数（哪个键）统计；要看具体哪一次慢，用 SLOWLOG GET。
 related: [full-table-scans, slow-query-log, explain]

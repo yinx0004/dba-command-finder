@@ -46,4 +46,20 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.find({ a: 1 }).toArray()'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: redis-cli --hotkeys
+        shell: true
+        note:
+          zh: 找出访问最频繁的键，要求 maxmemory-policy 是 LFU 类（allkeys-lfu 或 volatile-lfu）
+      - cmd: redis-cli --bigkeys
+        shell: true
+        note:
+          zh: 找出每种类型里最大的键；大键往往也是最忙的键
+    notes:
+      - zh: 没有表，对应的是热点键。--hotkeys、--bigkeys 都用 SCAN 遍历整个键空间，键很多时会跑一阵，但不会长时间挡住其他命令。
+    verify:
+      setup: CONFIG SET maxmemory-policy allkeys-lfu
+      teardown: CONFIG SET maxmemory-policy noeviction
 related: [live-throughput, top-statements, table-size]

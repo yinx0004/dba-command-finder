@@ -43,4 +43,11 @@ databases:
       - {title: 'MongoDB: Read Concern', url: 'https://www.mongodb.com/docs/manual/reference/read-concern/'}
     verify:
       vars: {collection: t}
+  redis:
+    support: none
+    notes:
+      - zh: 没有隔离级别：命令在单线程里一条一条执行，MULTI/EXEC 里的命令一次性执行完，中间不会插进别的命令。但事务里某条命令出错时，前面执行过的命令不会回滚。
+    alternatives:
+      - title: {zh: 用 WATCH 做乐观锁：被监视的键在 EXEC 前被改过，整个事务就不执行}
+        cmd: WATCH <key>
 related: [default-rw-concern, long-transactions, lock-waits]

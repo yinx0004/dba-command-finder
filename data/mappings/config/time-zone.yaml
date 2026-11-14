@@ -27,4 +27,12 @@ databases:
         cmd: 'db.<collection>.aggregate([{ $project: { local: { $dateToString: { date: "$createdAt", timezone: "Asia/Shanghai" } } } }])'
     refs:
       - {title: 'MongoDB: $dateToString', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateToString/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: TIME
+        note:
+          zh: 返回服务器当前的 Unix 时间：秒数和微秒数
+    notes:
+      - zh: 没有时区设置：时间都按 Unix 时间戳处理，过期时间也是绝对的 Unix 时间，显示成哪个时区由客户端决定。
 related: [charset-collation, show-variables]

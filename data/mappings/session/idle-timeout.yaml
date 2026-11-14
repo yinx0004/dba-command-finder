@@ -34,4 +34,18 @@ databases:
     refs:
       - {title: 'MongoDB: cursorTimeoutMillis', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.cursorTimeoutMillis'}
       - {title: 'MongoDB: Connection Pool Options', url: 'https://www.mongodb.com/docs/manual/reference/connection-string-options/#connection-pool-options'}
+  redis:
+    support: full
+    commands:
+      - cmd: CONFIG GET timeout
+        note:
+          zh: 单位是秒，默认 0，表示空闲连接永远不断开
+      - cmd: CONFIG SET timeout 300
+      - cmd: CONFIG GET tcp-keepalive
+        note:
+          zh: 每隔多少秒向客户端发 TCP keepalive，用来发现已经断掉的对端
+    notes:
+      - zh: timeout 不管处于订阅（Pub/Sub）状态的连接。
+    verify:
+      teardown: CONFIG SET timeout 0
 related: [connection-usage, list-active-sessions]

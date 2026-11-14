@@ -139,8 +139,9 @@ export function redis(version: string): Engine {
   return {
     image,
     async start() {
-      // A standalone server, as most deployments start; cluster and Sentinel commands are marked by role and skipped.
-      await startContainer(name, [image]);
+      // A standalone server started from a config file, as deployments are, so CONFIG REWRITE works.
+      // Cluster and Sentinel commands are marked by role and skipped.
+      await startContainer(name, [image, 'sh', '-c', 'touch /data/redis.conf && exec redis-server /data/redis.conf']);
       await waitFor(name, async () => (await sh(['exec', name, 'redis-cli', 'PING'])).out === 'PONG', 60_000);
     },
     async serverVersion() {
