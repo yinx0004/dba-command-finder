@@ -38,7 +38,7 @@ export interface Engine {
 const inShell = (name: string, text: string) => sh(['exec', '-w', '/tmp', name, 'bash', '-c', text], 300_000);
 
 async function startContainer(name: string, args: string[]): Promise<void> {
-  await sh(['rm', '-f', name]);
+  await sh(['rm', '-fv', name]);
   const r = await sh(['run', '-d', '--name', name, ...args], 600_000);
   if (!r.ok) throw new Error(`docker run failed: ${r.out}`);
 }
@@ -89,7 +89,7 @@ export function mysql(version: string): Engine {
     createDatabase: (db) => sh([...client(), '-e', `CREATE DATABASE IF NOT EXISTS \`${db}\``]),
     exec: (text, db) => sh([...client(db), '-e', text]),
     shell: (text) => inShell(name, text),
-    stop: async () => void (await sh(['rm', '-f', name])),
+    stop: async () => void (await sh(['rm', '-fv', name])),
   };
 }
 
@@ -117,7 +117,7 @@ export function mongodb(version: string): Engine {
     createDatabase: async () => ({ ok: true, out: '' }),
     exec: (text, db) => sh(shell(db, text)),
     shell: (text) => inShell(name, text),
-    stop: async () => void (await sh(['rm', '-f', name])),
+    stop: async () => void (await sh(['rm', '-fv', name])),
   };
 }
 
