@@ -1,0 +1,63 @@
+---
+// One task of the coverage matrix: its title, then per database a version strip with an ⓘ note on what
+// changes across versions, and (on category pages) the command, which follows "我的版本".
+import type { CoverageRow } from '../lib/coverage';
+import { eqLabels, UI, type Lang } from '../lib/i18n';
+import { entryHref } from '../lib/site';
+import Tips from './Tips.astro';
+
+interface Props {
+  lang: Lang;
+  row: CoverageRow;
+  /** show each side's command under its strip */
+  commands?: boolean;
+}
+const { lang, row, commands = false } = Astro.props;
+const ui = UI[lang];
+const h = ui.homePage;
+const missing = eqLabels(lang, '').missing;
+---
+<div class="cov-row">
+  <span class="cov-title">
+    <a href={entryHref(lang, row.slug)}>{row.title}</a>
+    {row.deprecated && <span class="cov-eq">{ui.deprecated}</span>}
+  </span>
+  {
+    row.cells.map((c) => (
+      <span class="cov-cell">
+        <span class="cov-line">
+          <span class="cov-db">{c.name}</span>
+          <span class="strip" role="img" aria-label={`${c.name}：${c.segs.map((s) => h.support[s]).join(' / ')}`}>
+            {c.segs.map((s) => (
+              <i class={`seg-${s}`} />
+            ))}
+          </span>
+          {c.note ? (
+            <span class="tip">
+              <button type="button" class="tip-btn" aria-label={c.note} aria-expanded="false">
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 11v5M12 7.5h.01" />
+                </svg>
+              </button>
+              <span class="tip-bubble" role="tooltip">
+                {c.note}
+              </span>
+            </span>
+          ) : (
+            <span class="tip-space" />
+          )}
+        </span>
+        {commands &&
+          (c.pick ? (
+            <code class="cov-cmd" data-pick={c.pick} data-db={c.db}>
+              {c.cmd}
+            </code>
+          ) : (
+            <span class="cov-cmd cov-nil">{c.written ? ui.noEquivalent : missing}</span>
+          ))}
+      </span>
+    ))
+  }
+</div>
+<Tips />

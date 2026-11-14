@@ -100,7 +100,7 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
   const redirects = parseList(Redirect, raw.redirects, 'data/redirects.yaml', problems);
 
   const siteParsed = Site.safeParse(raw.site ?? {});
-  const site: Site = siteParsed.success ? siteParsed.data : { pair: { source: '', target: '' }, featured: [], home_matrix: [], home_tries: [] };
+  const site: Site = siteParsed.success ? siteParsed.data : { pair: { source: '', target: '' }, featured: [], home_tries: [] };
   if (!siteParsed.success) problems.push(...issues('data/site.yaml', siteParsed.error));
   for (const db of [site.pair.source, site.pair.target]) {
     if (siteParsed.success && !dbIds.has(db)) problems.push(`data/site.yaml: pair database "${db}" is not in data/databases.yaml`);
@@ -169,11 +169,6 @@ export function checkDataset(raw: RawDataset): { dataset: Dataset; problems: str
     if (!slugs.has(r.to)) problems.push(`data/redirects.yaml: target "${r.to}" does not exist`);
   }
 
-  for (const id of site.home_matrix) {
-    const m = byId.get(id);
-    if (!m) problems.push(`data/site.yaml: home_matrix "${id}" does not exist`);
-    else if (!m.databases[site.pair.source]) problems.push(`data/site.yaml: home_matrix "${id}" has no ${site.pair.source} entry`);
-  }
   for (const id of site.featured) {
     const m = byId.get(id);
     if (!m) problems.push(`data/site.yaml: featured "${id}" does not exist`);

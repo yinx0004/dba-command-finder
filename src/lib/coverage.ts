@@ -1,7 +1,7 @@
 // Rows of the coverage matrix (home page, category pages): for each database of the pair, one strip
 // segment per lab version saying whether the task can be done there, and a sentence on what changes.
-import type { Entry } from './data';
-import { versionedCmds } from './docs';
+import type { Dataset, Entry } from './data';
+import { pairMappings, versionedCmds } from './docs';
 import { t, UI, type Lang } from './i18n';
 import { equivalence, type Equivalence } from './pair';
 import { cmdOnLine } from './proof';
@@ -84,4 +84,41 @@ export function coverageRow(m: Entry, dbs: Database[], lang: Lang): CoverageRow 
       };
     }),
   };
+}
+
+// --- Per category, for the home page: how many tasks each database does fully, partly or not at all ---
+
+export interface Tally {
+  full: number;
+  partial: number;
+  none: number;
+  /** not written up for this database yet */
+  missing: number;
+}
+
+export interface CategoryCoverage {
+  id: string;
+  name: string;
+  count: number;
+  cells: { db: string; name: string; tally: Tally }[];
+}
+
+const empty = (): Tally => ({ full: 0, partial: 0, none: 0, missing: 0 });
+
+/** Every task the site shows, counted per category and database, plus each database's totals. */
+export function categoryCoverage(ds: Dataset, dbs: Database[], lang: Lang): { rows: CategoryCoverage[]; totals: { db: string; name: string; tally: Tally }[] } {
+  const mappings = pairMappings(ds);
+  const count = (ms: Entry[], db: string) => {
+    const tally = empty();
+    for (const m of ms) tally[m.databases[db]?.support ?? 'missing']++;
+    return tally;
+  };
+  const rows = ds.categories
+    .map((c) => {
+      const ms = mappings.filter((m) => m.category === c.id);
+      return { id: c.id, name: t(c.name, lang), count: ms.length, cells: dbs.map((d) => ({ db: d.id, name: d.name, tally: count(ms, d.id) })) };
+    })
+    .filter((r) => r.count > 0);
+  const totals = dbs.map((d) => ({ db: d.id, name: d.name, tally: count(mappings, d.id) }));
+  return { rows, totals };
 }

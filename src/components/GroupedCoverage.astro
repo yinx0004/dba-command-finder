@@ -1,0 +1,93 @@
+---
+// The home page's coverage: every task the site shows, grouped by category, in a box that scrolls.
+// The column heads (with each database's totals) and the current category's name stay in view; the
+// buttons above jump to a category. On a phone the box does not scroll on its own: categories fold
+// instead, the first one open.
+import type { CoverageRow, Tally } from '../lib/coverage';
+import { UI, type Lang } from '../lib/i18n';
+import type { Database } from '../lib/schema';
+import { categoryHref } from '../lib/site';
+import CoverageRowView from './CoverageRowView.astro';
+
+interface Props {
+  lang: Lang;
+  dbs: Database[];
+  groups: { id: string; name: string; rows: CoverageRow[] }[];
+  /** per database, in the order of dbs */
+  totals: Tally[];
+}
+const { lang, dbs, groups, totals } = Astro.props;
+const h = UI[lang].homePage;
+---
+<div class="gcov" style={`--n: ${dbs.length}`}>
+  <nav class="gcov-jump" aria-label={h.jumpLabel}>
+    {
+      groups.map((g) => (
+        <button type="button" data-jump={g.id}>
+          {g.name}
+          <small>{g.rows.length}</small>
+        </button>
+      ))
+    }
+  </nav>
+  <div class="gcov-box" data-gcov-box>
+    <div class="cov-row cov-header gcov-head">
+      <span>{h.matrixTask}</span>
+      {
+        dbs.map((db, i) => (
+          <span>
+            <b>{db.name}</b>
+            <small>{db.lab_versions.join(' · ')}</small>
+            <small class="gcov-total">{h.tally(totals[i].full, totals[i].partial, totals[i].none)}</small>
+          </span>
+        ))
+      }
+    </div>
+    {
+      groups.map((g) => (
+        <details class="gcov-group" id={`cov-${g.id}`} open>
+          <summary class="gcov-group-head">
+            <span class="gcov-group-name">{g.name}</span>
+            <small>{g.rows.length}</small>
+            <a href={categoryHref(lang, g.id)}>{h.openCategory}</a>
+          </summary>
+          {g.rows.map((row) => (
+            <CoverageRowView lang={lang} row={row} />
+          ))}
+        </details>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-gcov-box]');
+  if (box) {
+    const narrow = window.matchMedia('(max-width: 720px)');
+    const groups = [...box.querySelectorAll<HTMLDetailsElement>('.gcov-group')];
+    // Wide: everything open, the box scrolls. Narrow: the page scrolls, so only the first category is open.
+    const fold = () => groups.forEach((g, i) => (g.open = !narrow.matches || i === 0));
+    fold();
+    narrow.addEventListener('change', fold);
+    // Category names stick right under the column heads, whatever height those wrap to.
+    const head = box.querySelector<HTMLElement>('.gcov-head');
+    const stick = () => box.style.setProperty('--gcov-head', `${head?.offsetHeight ?? 0}px`);
+    stick();
+    window.addEventListener('resize', stick);
+
+    for (const btn of document.querySelectorAll<HTMLButtonElement>('[data-jump]')) {
+      btn.addEventListener('click', () => {
+        const g = document.getElementById(`cov-${btn.dataset.jump}`) as HTMLDetailsElement | null;
+        if (!g) return;
+        g.open = true;
+        if (narrow.matches) {
+          g.scrollIntoView({ block: 'start' });
+        } else {
+          const head = box.querySelector<HTMLElement>('.gcov-head')?.offsetHeight ?? 0;
+          // A jump, not an animation: smooth scrolling is off under reduced motion and in some embedded browsers.
+          box.scrollTo({ top: g.offsetTop - head });
+        }
+      });
+    }
+  }
+</script>

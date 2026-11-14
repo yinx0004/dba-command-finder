@@ -3,17 +3,6 @@ pair:
   source: mysql
   target: mongodb
 
-# Tasks the home page's coverage matrix shows: picked to show version differences and gaps.
-home_matrix:
-  - list-active-sessions
-  - lock-waits
-  - replication-status
-  - binlog-retention
-  - invisible-index
-  - rename-column
-  - reclaim-space
-  - account-lock
-
 # What the home page's translator suggests trying; the first one is filled in on arrival.
 home_tries:
   - 'SHOW SLAVE STATUS\G'

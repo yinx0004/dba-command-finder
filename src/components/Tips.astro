@@ -1,0 +1,17 @@
+<script>
+  // ⓘ bubbles open on hover and focus by CSS; a tap toggles them on touch screens.
+  // One listener for the page, however many components draw bubbles.
+  document.addEventListener('click', (e) => {
+    const btn = e.target instanceof Element ? e.target.closest('.tip-btn') : null;
+    for (const tip of document.querySelectorAll('.tip.open')) {
+      if (tip !== btn?.parentElement) {
+        tip.classList.remove('open');
+        tip.querySelector('.tip-btn')?.setAttribute('aria-expanded', 'false');
+      }
+    }
+    if (btn) {
+      const open = btn.parentElement!.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(open));
+    }
+  });
+</script>

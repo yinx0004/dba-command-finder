@@ -124,7 +124,10 @@ export const UI = {
       matrixHint: '鼠标移上去看版本说明',
       matrixTask: '任务',
       support: { full: '支持', partial: '部分', none: '不支持' },
-      browse: (n: number) => `按类别浏览全部 ${n} 条`,
+      coverageNote: (n: number) => `全部 ${n} 条，按类别分组。表头是每个数据库的总数；点类别名跳过去，「看这一类」进入类别页。`,
+      tally: (full: number, partial: number, none: number) => `完全 ${full} · 部分 ${partial} · 不支持 ${none}`,
+      jumpLabel: '跳到类别',
+      openCategory: '看这一类',
       methodTitle: '命令是怎么验证的',
       method: [
         '页面上的命令一个字不改，在 Docker 里的真实数据库上执行。',
