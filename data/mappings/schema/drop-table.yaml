@@ -28,4 +28,21 @@ databases:
     verify:
       setup: 'db.t.insertOne({ a: 1 })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: UNLINK <key>
+        note:
+          zh: 删除键，大键的内存在后台释放，不会卡住实例
+      - cmd: DEL <key>
+        note:
+          zh: 同步删除；删除很大的集合时会卡住实例一阵
+    notes:
+      - zh: 没有表，删除的是单个键；要删一批键，见“分批删除大量数据”。
+    verify:
+      setup: |-
+        HSET app:user:1 name a
+        HSET app:user:2 name b
+      vars: {key: 'app:user:1'}
+      teardown: DEL app:user:1 app:user:2
 related: [rename-table]

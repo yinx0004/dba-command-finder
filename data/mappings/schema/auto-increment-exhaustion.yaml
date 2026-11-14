@@ -31,4 +31,16 @@ databases:
     alternatives:
       - title: {zh: 看一个数字型编号字段当前的最大值}
         cmd: 'db.<collection>.find({}, { <field>: 1 }).sort({ <field>: -1 }).limit(1)'
+  redis:
+    support: partial
+    commands:
+      - cmd: GET <key>
+        note:
+          zh: 用 INCR 生成 ID 的计数器现在到多少了
+    notes:
+      - zh: 没有自增列，ID 通常由 INCR 计数器生成；计数器是有符号 64 位整数，上限 9223372036854775807，超过时 INCR 报错。离上限还远时一般不用担心。
+    verify:
+      setup: SET app:seq 1000
+      vars: {key: 'app:seq'}
+      teardown: DEL app:seq
 related: [show-create-table]

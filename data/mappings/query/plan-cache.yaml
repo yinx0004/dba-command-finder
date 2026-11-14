@@ -46,4 +46,8 @@ databases:
       # Two candidate indexes, run twice, so the winning plan is cached and active.
       setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 1 }]); db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 }); db.t.find({ a: 1, b: 1 }).toArray(); db.t.find({ a: 1, b: 1 }).toArray()'
       vars: {collection: t}
+  redis:
+    support: none
+    notes:
+      - zh: 没有执行计划缓存。
 related: [explain, force-index, analyze-table]

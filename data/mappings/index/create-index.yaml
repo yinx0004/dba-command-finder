@@ -36,4 +36,22 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 2, b: 2 }])'
       vars: {collection: t, field: a, field2: b, index2: uk_b}
+  redis:
+    support: partial
+    commands:
+      - cmd: 'FT.CREATE idx:users ON HASH PREFIX 1 app:user: SCHEMA name TEXT age NUMERIC'
+        since: '8.0'
+        note:
+          zh: 给「app:user:」开头的哈希建索引，之后写入的键自动加进索引，已有的键在后台补建
+      - cmd: ZADD app:user:by_age 30 app:user:1
+        note:
+          zh: 没有查询引擎时的常见做法：用有序集合自己维护一个按年龄排序的索引
+    notes:
+      - zh: 核心命令只能按键名取值，没有二级索引；要按字段查，用查询引擎，或者自己用集合、有序集合维护索引。
+      - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    verify:
+      setup: HSET app:user:1 name alice age 30
+      teardown: |-
+        FT.DROPINDEX idx:users
+        DEL app:user:1 app:user:by_age
 related: [show-indexes, drop-index, explain]

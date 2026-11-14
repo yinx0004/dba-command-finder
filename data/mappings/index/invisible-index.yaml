@@ -37,4 +37,8 @@ databases:
     verify:
       setup: 'db.t.createIndex({ a: 1 }, { name: "idx_a" })'
       vars: {collection: t, index: idx_a}
+  redis:
+    support: none
+    notes:
+      - zh: 没有不可见索引。
 related: [drop-index, index-usage]

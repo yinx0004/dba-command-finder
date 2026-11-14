@@ -32,4 +32,11 @@ databases:
         see: show-create-table
     refs:
       - {title: 'MongoDB: Schema Validation', url: 'https://www.mongodb.com/docs/manual/core/schema-validation/'}
+  redis:
+    support: none
+    notes:
+      - zh: 没有表结构，也就不用加列。哈希里的字段是每个键自己的，直接 HSET 写入新字段就有了，其他键不受影响。
+    alternatives:
+      - title: {zh: 给一个哈希加一个字段}
+        cmd: HSET <key> <field> <value>
 related: [show-create-table]

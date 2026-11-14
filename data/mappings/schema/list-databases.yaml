@@ -27,4 +27,16 @@ databases:
     refs:
       - title: 'MongoDB: listDatabases'
         url: https://www.mongodb.com/docs/manual/reference/command/listDatabases/
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO keyspace
+        note:
+          zh: 只列有数据的库，例如 db0:keys=2,expires=0
+      - cmd: CONFIG GET databases
+    notes:
+      - zh: 库只有编号，没有名字；空的库不会出现在 INFO keyspace 里。
+    verify:
+      setup: SET app:1 a
+      teardown: DEL app:1
 related: [list-tables]

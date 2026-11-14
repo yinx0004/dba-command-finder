@@ -140,8 +140,9 @@ export function redis(version: string): Engine {
     image,
     async start() {
       // A standalone server started from a config file, as deployments are, so CONFIG REWRITE works.
+      // Through the image's own entrypoint, which in 8.0 also loads the bundled modules (the FT.* query engine).
       // Cluster and Sentinel commands are marked by role and skipped.
-      await startContainer(name, [image, 'sh', '-c', 'touch /data/redis.conf && exec redis-server /data/redis.conf']);
+      await startContainer(name, [image, 'sh', '-c', 'touch /data/redis.conf && exec docker-entrypoint.sh redis-server /data/redis.conf']);
       await waitFor(name, async () => (await sh(['exec', name, 'redis-cli', 'PING'])).out === 'PONG', 60_000);
     },
     async serverVersion() {

@@ -33,4 +33,17 @@ databases:
       - zh: 计划内维护一般先 rs.stepDown() 把主节点切走，再关原来的主节点。
     refs:
       - {title: 'MongoDB: shutdown', url: 'https://www.mongodb.com/docs/manual/reference/command/shutdown/'}
+  redis:
+    support: full
+    commands:
+      - cmd: SHUTDOWN
+        skip: {zh: 会关掉 lab 的实例}
+        note:
+          zh: 配了快照时先保存一次再退出；开着 AOF 时先刷盘
+      - cmd: SHUTDOWN NOSAVE
+        skip: {zh: 会关掉 lab 的实例}
+        note:
+          zh: 不保存直接退出，上次快照之后的写入会丢
+    notes:
+      - zh: 7.0 起，有从库时主库会先等从库追上（最多 shutdown-timeout 秒）再退出。
 related: [rotate-logs]

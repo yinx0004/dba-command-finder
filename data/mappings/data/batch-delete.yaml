@@ -31,4 +31,17 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ createdAt: new Date(Date.now() - 40 * 86400000) }, { createdAt: new Date() }])'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: redis-cli --scan --pattern 'app:old:*' | xargs -r -n 100 redis-cli UNLINK
+        shell: true
+        note:
+          zh: 用 SCAN 按模式找出键，每 100 个一批用 UNLINK 删除，不会长时间挡住其他命令
+    notes:
+      - zh: 没有按条件删除的命令，只能按键名模式找；按时间清理的数据，更好的做法是写入时就设置过期时间。
+    verify:
+      setup: |-
+        SET app:old:1 a
+        SET app:old:2 b
 related: [ttl-expiry, drop-table]

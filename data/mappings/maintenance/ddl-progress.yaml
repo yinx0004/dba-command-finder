@@ -41,4 +41,17 @@ databases:
       - {title: 'MongoDB: Index Builds on Populated Collections', url: 'https://www.mongodb.com/docs/manual/core/index-creation/'}
     verify:
       skip_fields: {zh: 需要另一个连接上有正在执行的建索引}
+  redis:
+    support: partial
+    commands:
+      - cmd: INFO persistence
+        note:
+          zh: rdb_bgsave_in_progress、aof_rewrite_in_progress 表示后台快照、AOF 重写是否在进行；启动加载数据时还有 loading_loaded_perc
+    fields:
+      done: loading_loaded_bytes
+      total: loading_total_bytes
+    notes:
+      - zh: 没有 DDL，也没有建索引的过程；会跑一阵的后台任务是快照、AOF 重写和启动时加载数据。
+    verify:
+      skip_fields: {zh: 只在启动加载数据时出现}
 related: [create-index, list-active-sessions]

@@ -51,4 +51,22 @@ databases:
       # background validation reads the last checkpoint, so force one after creating the collection
       setup: 'db.t.insertOne({ a: 1 }); db.t.createIndex({ a: 1 }); db.adminCommand({ fsync: 1 })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: redis-check-rdb /data/dump.rdb
+        shell: true
+        note:
+          zh: 检查 RDB 快照文件是否完整
+      - cmd: redis-check-aof --fix <aof_file>
+        shell: true
+        skip: {zh: 要先停掉 Redis 再修复 AOF 文件，lab 没法在运行中验证}
+        note:
+          zh: AOF 文件末尾不完整时（例如写到一半宕机），截掉坏掉的部分
+    fields:
+      result: {name: RDB looks OK 之类的检查结论}
+    notes:
+      - zh: 内存里的数据没有“损坏”一说，要检查的是磁盘上的快照和 AOF 文件。
+    verify:
+      setup_shell: redis-cli SAVE
 related: [reclaim-space]

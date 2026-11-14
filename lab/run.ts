@@ -67,14 +67,18 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
       entries[m.id] = entry;
 
       await engine.createDatabase(database);
-      for (const [step, run] of [
+      // Where every command of the entry must fail (the feature is not in this version yet, or any more),
+      // its setup may fail too: it usually uses the same feature, e.g. creating the index a command drops.
+      const runnable = d.commands.filter((c) => !labSkip(c, dbDef));
+      const setupOptional = runnable.length > 0 && runnable.every((c) => expectation(c, server) === 'error');
+      for (const [step, exec] of [
         [d.verify?.setup, (t: string) => engine.exec(t, database)],
         [d.verify?.setup_shell, (t: string) => engine.shell(t)],
       ] as const) {
         if (!step || entry.setupError) continue;
         const f = fill(step, vars);
-        const r = f.missing.length ? { ok: false, out: `unfilled placeholders: ${f.missing.join(', ')}` } : await run(f.text);
-        if (!r.ok) entry.setupError = tail(r.out);
+        const r = f.missing.length ? { ok: false, out: `unfilled placeholders: ${f.missing.join(', ')}` } : await exec(f.text);
+        if (!r.ok && !(setupOptional && !f.missing.length)) entry.setupError = tail(r.out);
       }
 
       // Output of the commands that worked, searched afterwards for the field names.

@@ -57,4 +57,29 @@ databases:
     verify:
       setup: 'db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 }, { unique: true })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: FT._LIST
+        since: '8.0'
+        note:
+          zh: 列出所有索引的名字
+      - cmd: FT.INFO <index>
+        since: '8.0'
+        note:
+          zh: 索引的定义：索引哪种类型的键、哪些前缀、每个字段的类型，以及文档数和占用内存
+    fields:
+      index_name: index_name
+      key_columns: attributes
+      index_type: {name: type, note: {zh: TEXT、NUMERIC、TAG、VECTOR 等}}
+    notes:
+      - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    verify:
+      setup: |-
+        HSET app:user:1 name alice age 30
+        FT.CREATE idx:users ON HASH PREFIX 1 app:user: SCHEMA name TEXT age NUMERIC
+      vars: {index: 'idx:users'}
+      teardown: |-
+        FT.DROPINDEX idx:users
+        DEL app:user:1
 related: [list-tables, explain]

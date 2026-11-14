@@ -34,4 +34,18 @@ databases:
     verify:
       setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]); db.t.createIndex({ a: 1 })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: FLUSHDB ASYNC
+        note:
+          zh: 清空当前库的所有键，内存在后台释放
+      - cmd: redis-cli --scan --pattern 'app:*' | xargs -r -n 100 redis-cli UNLINK
+        shell: true
+        note:
+          zh: 只清掉某个前缀的键
+    notes:
+      - zh: 没有表，清空的是整个库（FLUSHDB）或整个实例（FLUSHALL）；只想清一类数据，按键名前缀删。
+    verify:
+      setup: SET app:1 a
 related: [batch-delete, drop-table, copy-table]

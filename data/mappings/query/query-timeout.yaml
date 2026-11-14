@@ -41,4 +41,18 @@ databases:
     verify:
       setup: 'db.t.insertOne({ a: 1 })'
       vars: {collection: t}
+  redis:
+    support: partial
+    commands:
+      - cmd: CONFIG SET busy-reply-threshold 5000
+        since: '7.0'
+        note:
+          zh: Lua 脚本或函数跑超过 5000 毫秒后，其他连接会收到 BUSY 错误，这时可以用 SCRIPT KILL 中止它
+      - cmd: CONFIG SET lua-time-limit 5000
+        note:
+          zh: 7.0 之前的名字，7.0 起还能用
+    notes:
+      - zh: 普通命令没有超时，执行时也中止不了，只能在客户端设置读超时；BUSY 只针对脚本和函数，而且脚本不会被自动中止。
+    verify:
+      teardown: CONFIG SET lua-time-limit 5000
 related: [kill-session, slow-query-log]

@@ -29,4 +29,19 @@ databases:
     verify:
       setup: 'db.t.insertOne({ a: 1 })'
       vars: {collection: t, new_collection: t_new}
+  redis:
+    support: partial
+    commands:
+      - cmd: RENAME <key> <new_key>
+        note:
+          zh: 新键已存在时会被覆盖
+      - cmd: RENAMENX <new_key> <key>
+        note:
+          zh: 目标键已存在时不改名，返回 0；这里把名字改回去
+    notes:
+      - zh: 没有表，改的是单个键的名字。在 Redis Cluster 里，两个键必须在同一个槽位（用 {} 哈希标签）才能 RENAME。
+    verify:
+      setup: HSET app:user:1 name a
+      vars: {key: 'app:user:1', new_key: 'app:member:1'}
+      teardown: DEL app:user:1 app:member:1
 related: [drop-table]

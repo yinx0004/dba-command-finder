@@ -30,4 +30,20 @@ databases:
     verify:
       setup: 'db.t.createIndex({ a: 1 }, { name: "idx_a" }); db.t.createIndex({ b: 1 }, { name: "idx_b" })'
       vars: {collection: t, index: idx_a, index2: idx_b}
+  redis:
+    support: partial
+    commands:
+      - cmd: FT.DROPINDEX <index>
+        since: '8.0'
+        note:
+          zh: 只删索引，数据保留；加 DD 连同被索引的键一起删
+    notes:
+      - zh: 自己用集合维护的索引，删掉那个键就行。
+      - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    verify:
+      setup: |-
+        HSET app:user:1 name alice age 30
+        FT.CREATE idx:users ON HASH PREFIX 1 app:user: SCHEMA name TEXT age NUMERIC
+      vars: {index: 'idx:users'}
+      teardown: DEL app:user:1
 related: [index-usage, invisible-index]
