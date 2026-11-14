@@ -1,0 +1,53 @@
+schema_version: 2
+id: table-size
+category: storage
+title: {zh: 查看表的大小}
+summary: {zh: 看一张表（集合）的数据、索引各占多少空间，找出最大的表，或判断有没有可回收的空间。}
+keywords:
+  zh: [表大小, 占用空间, 磁盘占用, 大表]
+  en: [table size, data_length, collstats, storagesize, table status]
+fields:
+  - {id: rows, name: {zh: 行数（文档数）}}
+  - {id: data, name: {zh: 数据占用}}
+  - {id: index, name: {zh: 索引占用}}
+  - {id: free, name: {zh: 可回收的空闲空间}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT TABLE_NAME, TABLE_ROWS, DATA_LENGTH, INDEX_LENGTH, DATA_FREE FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' ORDER BY DATA_LENGTH + INDEX_LENGTH DESC;
+        note: {zh: 单位是字节；按总大小排序，最大的表在前}
+      - cmd: SHOW TABLE STATUS LIKE '<table>';
+    fields:
+      rows: {name: TABLE_ROWS, note: {zh: InnoDB 上是估算值}}
+      data: DATA_LENGTH
+      index: INDEX_LENGTH
+      free: DATA_FREE
+    notes:
+      - zh: 8.0 起 information_schema.TABLES 的统计值默认缓存 24 小时（information_schema_stats_expiry），要看最新值先执行 ANALYZE TABLE，或把这个变量设为 0。
+    refs:
+      - {title: 'MySQL: The INFORMATION_SCHEMA TABLES Table', url: 'https://dev.mysql.com/doc/refman/8.4/en/information-schema-tables-table.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.<collection>.stats()
+        note: {zh: '要按 MB 显示：db.<collection>.stats({ scale: 1024 * 1024 })'}
+      - cmd: 'db.<collection>.aggregate([{ $collStats: { storageStats: {} } }])'
+        note: {zh: 聚合写法，结果在 storageStats 里}
+    fields:
+      rows: count
+      data: {name: storageSize, note: {zh: 压缩后的磁盘占用；size 是未压缩的数据大小}}
+      index: totalIndexSize
+      free: freeStorageSize
+    notes:
+      - zh: WiredTiger 默认压缩数据，size（未压缩）通常明显大于 storageSize（磁盘实际占用），比较时要用 storageSize。
+    refs:
+      - {title: 'MongoDB: db.collection.stats()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.stats/'}
+      - {title: 'MongoDB: $collStats', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/collStats/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 })'
+      vars: {collection: t}
+related: [database-size, row-count]

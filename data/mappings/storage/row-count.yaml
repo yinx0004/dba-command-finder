@@ -1,0 +1,38 @@
+schema_version: 2
+id: row-count
+category: storage
+title: {zh: 统计表的行数}
+summary: {zh: 数一张表（集合）有多少行，精确数或者快速估算。}
+keywords:
+  zh: [行数, 记录数, 多少条, 统计数量]
+  en: [count, countdocuments, estimateddocumentcount, row count]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT COUNT(*) FROM <table>;
+        note: {zh: 精确，但大表要扫描整个（最小的）索引，比较慢}
+      - cmd: SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' AND TABLE_NAME = '<table>';
+        note: {zh: 快，但 InnoDB 上是估算值，误差可能很大}
+    refs:
+      - {title: 'MySQL: COUNT()', url: 'https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_count'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1), (2), (3);
+      vars: {table: t}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.<collection>.countDocuments({})
+        note: {zh: 精确，可以带过滤条件；大集合同样要扫描}
+      - cmd: db.<collection>.estimatedDocumentCount()
+        note: {zh: 读集合元数据，很快，但不能带条件}
+    notes:
+      - zh: estimatedDocumentCount 在异常关机后可能不准，在分片集群上可能把孤儿文档也算进去；要准确就用 countDocuments。
+      - zh: 旧的 db.collection.count() 已经弃用，不要再用。
+    refs:
+      - {title: 'MongoDB: db.collection.countDocuments()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.countDocuments/'}
+      - {title: 'MongoDB: db.collection.estimatedDocumentCount()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.estimatedDocumentCount/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }])'
+      vars: {collection: t}
+related: [table-size]

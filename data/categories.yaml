@@ -20,6 +20,9 @@
 - id: schema
   name: {zh: 库表结构}
   desc: {zh: 库、表与集合}
+- id: storage
+  name: {zh: 存储容量}
+  desc: {zh: 表大小、库大小、行数}
 - id: index
   name: {zh: 索引}
   desc: {zh: 索引列表与使用情况}
