@@ -1,13 +1,12 @@
 ---
 import Base from '../../../layouts/Base.astro';
-import EqBadge from '../../../components/EqBadge.astro';
 import AvailTable from '../../../components/AvailTable.astro';
 import CommandPanel from '../../../components/CommandPanel.astro';
 import NonePanel from '../../../components/NonePanel.astro';
 import { loadDataset } from '../../../lib/data';
-import { pairMappings } from '../../../lib/docs';
+import { pairMappings, siteDbs } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
-import { equivalence, fieldRows } from '../../../lib/pair';
+import { equivalence } from '../../../lib/pair';
 import { fieldCheck } from '../../../lib/proof';
 import { labSkip } from '../../../lib/roles';
 import { categoryHref, editUrl, entryHref, langHome, lastUpdated, newIssueUrl } from '../../../lib/site';
@@ -25,8 +24,6 @@ const { source, target } = ds.site.pair;
 const dbName = new Map(ds.databases.map((d) => [d.id, d.name]));
 const S = dbName.get(source)!;
 const T = dbName.get(target)!;
-const srcDb = ds.databases.find((d) => d.id === source);
-const tgtDb = ds.databases.find((d) => d.id === target);
 const m = ds.mappings.find((x) => x.category === Astro.params.category && x.id === Astro.params.id)!;
 const byId = new Map(ds.mappings.map((x) => [x.id, x]));
 const cat = ds.categories.find((c) => c.id === m.category)!;
@@ -36,25 +33,23 @@ const replacement = m.replaced_by ? byId.get(m.replaced_by) : undefined;
 
 const src = m.databases[source];
 const tgt = m.databases[target];
+// Only for the page title, which keeps the pair's wording so indexed pages do not change.
 const eq = equivalence(src, tgt);
-const fields = fieldRows(m, source, target);
-// A side that cannot do the task explains why in its own panel, not in the notes list.
-const notes = [
-  ...(eq === 'none' ? [] : (tgt?.notes ?? []).map((n) => ({ db: T, text: n }))),
-  ...(eq === 'only' ? [] : src.notes.map((n) => ({ db: S, text: n }))),
-];
-const alternatives = tgt?.alternatives ?? [];
-const refs = [...src.refs, ...(tgt?.refs ?? [])];
 
-// Lab results: "MySQL 5.7 · 8.0 ／ MongoDB 6.0 · 7.0", or unverified when the lab has not run.
-const srcV = entryVerification(m.id, source);
-const tgtV = entryVerification(m.id, target);
-const verifiedParts = [
-  [S, srcV],
-  [T, tgtV],
-]
-  .filter(([, v]) => v && (v as NonNullable<typeof srcV>).versions.length)
-  .map(([name, v]) => `${name} ${(v as NonNullable<typeof srcV>).versions.join(' · ')}`);
+// Every database the site shows, each with its side of this entry (undefined when not written up).
+const sides = siteDbs(ds).map(({ def, role }) => ({ def, role, id: def.id, name: def.name, d: m.databases[def.id] }));
+const doing = sides.filter((x) => x.d && x.d.support !== 'none');
+
+// A side that cannot do the task explains why in its own panel, not in the notes list.
+const notes = doing.flatMap((x) => x.d!.notes.map((n) => ({ db: x.name, text: n })));
+const alternatives = sides.filter((x) => x.d?.support === 'none' && x.d.alternatives.length).map((x) => ({ name: x.name, alts: x.d!.alternatives }));
+const refs = sides.flatMap((x) => x.d?.refs ?? []);
+
+// Lab results: "MySQL 5.7 · 8.0 ／ MongoDB 6.0 · 7.0 ／ Redis …", or unverified when the lab has not run.
+const verifiedParts = sides
+  .map((x) => [x.name, entryVerification(m.id, x.id)] as const)
+  .filter(([, v]) => v && v.versions.length)
+  .map(([name, v]) => `${name} ${v!.versions.join(' · ')}`);
 const verification = loadVerification();
 const p = ui.proof;
 // How the lab checked each side's name for a field. A reason shared by every field of a side
@@ -68,22 +63,24 @@ const fieldMark = (db: string, d: typeof src | undefined, id: string) => {
   if (c.state === 'skipped' && c.reason !== sideSkip(d)) return { ok: false, label: p.fieldSkipped, title: t(c.reason, lang) };
   return undefined;
 };
-const skippedAll = (
-  [
-    [S, src],
-    [T, tgt],
-  ] as const
-)
-  .filter(([, d]) => d && sideSkip(d) && Object.keys(d.fields).length)
-  .map(([name, d]) => p.fieldsSkippedAll(name, t(sideSkip(d)!, lang).replace(/[。.]$/, '')));
+const skippedAll = sides
+  .filter((x) => x.d && sideSkip(x.d) && Object.keys(x.d.fields).length)
+  .map((x) => p.fieldsSkippedAll(x.name, t(sideSkip(x.d)!, lang).replace(/[。.]$/, '')));
+// Field-by-field: each database's name for each of the task's fields, and their notes.
+type FieldName = NonNullable<typeof src>['fields'][string];
+const nameOf = (f: FieldName | undefined): { name?: string; note?: (typeof m.fields)[number]['name'] } =>
+  !f ? {} : typeof f === 'string' ? { name: f } : { name: f.name, note: f.note };
+const fields = m.fields
+  .map((f) => {
+    const cells = sides.map((x) => ({ side: x, ...nameOf(x.d?.fields[f.id]) }));
+    const withNotes = cells.filter((c) => c.note);
+    const note = withNotes.map((c) => (withNotes.length > 1 ? `${c.side.name}：${t(c.note, lang)}` : t(c.note, lang))).join('；');
+    return { id: f.id, title: f.name ? t(f.name, lang) : f.id, cells, note };
+  })
+  .filter((r) => r.cells.some((c) => c.name));
 // "各版本能不能用" for each side that has commands.
-const availSides = (
-  [
-    ['source', source, S, srcDb, eq === 'only' ? [] : src.commands],
-    ['target', target, T, tgtDb, eq === 'none' ? [] : (tgt?.commands ?? [])],
-  ] as const
-).filter(([, , , def, cmds]) => def && def.lab_versions.length && cmds.length);
-const anySkipped = ([[src, srcDb], [tgt, tgtDb]] as const).some(([d, def]) => d?.commands.some((c) => labSkip(c, def)));
+const availSides = doing.filter((x) => x.def.lab_versions.length && x.d!.commands.length);
+const anySkipped = sides.some((x) => x.d?.commands.some((c) => labSkip(c, x.def)));
 const verifiedLabel = verifiedParts.length ? ui.verifiedOn(verifiedParts.join(' ／ ')) : ui.unverified;
 
 // Titles read better without statement terminators: "SHOW SLAVE STATUS", not "SHOW SLAVE STATUS\G".
@@ -126,7 +123,6 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
       <h1>{title}</h1>
       <p class="lede">{t(m.summary, lang)}</p>
       <div class="meta">
-        <EqBadge lang={lang} eq={eq} target={T} large />
         <span class:list={{ 'verified-label': verifiedParts.length > 0 }}>
           {verifiedParts.length > 0 && <span class="lab-dot" aria-hidden="true" />}
           {verifiedLabel}
@@ -136,30 +132,25 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
       </div>
     </section>
 
-    <section class="panels">
+    <section class="panels" style={`--n: ${sides.length}`}>
       {
-        eq === 'only' ? (
-          <NonePanel lang={lang} role="source" dbName={S} notes={src.notes} />
-        ) : (
-          <CommandPanel lang={lang} role="source" db={source} dbName={S} database={srcDb} support={src.support} commands={src.commands} entryId={m.id} verification={verification} />
-        )
-      }
-      {
-        eq === 'none' ? (
-          <NonePanel lang={lang} role="target" dbName={T} notes={tgt!.notes} />
-        ) : eq === 'missing' ? (
-          <div class="card panel panel-missing">
-            <div class="panel-head">
-              <span class="dot dot-target" />
-              <span class="side side-target" style="font-size: 13px">{T}</span>
+        sides.map((x) =>
+          !x.d ? (
+            <div class="card panel panel-missing">
+              <div class="panel-head">
+                <span class={`dot dot-${x.role}`} />
+                <span class={`side side-${x.role}`}>{x.name}</span>
+              </div>
+              <div class="none-body">
+                <p>{ui.notWritten}</p>
+                <a href={editUrl(m.file)}>{ui.editOnGitHub}</a>
+              </div>
             </div>
-            <div class="none-body">
-              <p>{ui.notWritten}</p>
-              <a href={editUrl(m.file)}>{ui.editOnGitHub}</a>
-            </div>
-          </div>
-        ) : (
-          <CommandPanel lang={lang} role="target" db={target} dbName={T} database={tgtDb} support={tgt!.support} commands={tgt!.commands} entryId={m.id} verification={verification} />
+          ) : x.d.support === 'none' ? (
+            <NonePanel lang={lang} role={x.role} dbName={x.name} notes={x.d.notes} />
+          ) : (
+            <CommandPanel lang={lang} role={x.role} db={x.id} dbName={x.name} database={x.def} support={x.d.support} commands={x.d.commands} entryId={m.id} verification={verification} />
+          ),
         )
       }
     </section>
@@ -169,8 +160,8 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
         <section class="section">
           <h2>{p.availTitle}</h2>
           <div class="avail-list">
-            {availSides.map(([role, db, name, def, cmds]) => (
-              <AvailTable lang={lang} role={role} db={db} dbName={name} database={def!} commands={[...cmds]} entryId={m.id} verification={verification} />
+            {availSides.map((x) => (
+              <AvailTable lang={lang} role={x.role} db={x.id} dbName={x.name} database={x.def} commands={x.d!.commands} entryId={m.id} verification={verification} />
             ))}
           </div>
           <p class="section-foot">{p.availFoot}</p>
@@ -187,25 +178,23 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
               <thead>
                 <tr>
                   <th scope="col">{ui.fieldName}</th>
-                  <th scope="col" style="color: var(--source)">{S}</th>
-                  <th scope="col" style="color: var(--target)">{T}</th>
+                  {sides.map((x) => (
+                    <th scope="col" class={`side-${x.role}`}>
+                      {x.name}
+                    </th>
+                  ))}
                   <th scope="col">{ui.fieldNote}</th>
                 </tr>
               </thead>
               <tbody>
                 {fields.map((f) => (
                   <tr>
-                    <td>{f.name ? t(f.name, lang) : f.id}</td>
-                    {(
-                      [
-                        [source, src, f.source],
-                        [target, tgt, f.target],
-                      ] as const
-                    ).map(([db, d, name]) => {
-                      const mark = name ? fieldMark(db, d, f.id) : undefined;
+                    <td>{f.title}</td>
+                    {f.cells.map((c) => {
+                      const mark = c.name ? fieldMark(c.side.id, c.side.d, f.id) : undefined;
                       return (
                         <td class="mono">
-                          {name ?? '—'}
+                          {c.name ?? '—'}
                           {mark && (
                             <span class:list={[mark.ok ? 'field-ok' : 'field-mark']} title={mark.title} aria-label={mark.title}>
                               {mark.label}
@@ -214,7 +203,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
                         </td>
                       );
                     })}
-                    <td style="color: var(--ink-2)">{t(f.note, lang)}</td>
+                    <td style="color: var(--ink-2)">{f.note}</td>
                   </tr>
                 ))}
               </tbody>
@@ -236,7 +225,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
               <li>
                 <Fragment set:html={noteIcon} />
                 <span>
-                  {notes.some((x) => x.db !== T) && <span class="tag" style="margin-right: 8px">{n.db}</span>}
+                  <span class="tag" style="margin-right: 8px">{n.db}</span>
                   {t(n.text, lang)}
                 </span>
               </li>
@@ -247,12 +236,12 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
     }
 
     {
-      alternatives.length > 0 && (
+      alternatives.map((group) => (
         <section class="section">
-          <h2 style="margin-bottom: 6px">{ui.alternatives(T)}</h2>
+          <h2 style="margin-bottom: 6px">{ui.alternatives(group.name)}</h2>
           <p class="muted" style="margin: 0 0 14px; font-size: 14px">{ui.alternativesSub}</p>
           <div class="alts">
-            {alternatives.map((a) => {
+            {group.alts.map((a) => {
               const see = a.see ? byId.get(a.see) : undefined;
               return (
                 <div class="card alt">
@@ -265,7 +254,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
             })}
           </div>
         </section>
-      )
+      ))
     }
 
     {

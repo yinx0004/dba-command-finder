@@ -2,12 +2,25 @@ import type { Dataset, Entry } from './data';
 import { t, tList, type Lang } from './i18n';
 import { equivalence } from './pair';
 import { roleNames } from './roles';
-import type { DatabaseEntry } from './schema';
+import type { Database, DatabaseEntry } from './schema';
 import { normalize, type SearchDoc, type VersionedCmd } from './search';
 
 /** One side's commands with their version ranges, for picking the one a reader's version can use. */
 export function versionedCmds(d: DatabaseEntry | undefined): VersionedCmd[] {
   return (d?.commands ?? []).map((c) => ({ cmd: c.cmd, since: c.since, removed_in: c.removed_in }));
+}
+
+/** Which color a database is drawn in: the pair's source blue, its target green, any other in a third color. */
+export type Role = 'source' | 'target' | 'third';
+
+/** The databases the site shows: the pair first, then the others the lab runs, in data/databases.yaml order. */
+export function siteDbs(ds: Dataset): { def: Database; role: Role }[] {
+  const { source, target } = ds.site.pair;
+  const order = [source, target, ...ds.databases.map((d) => d.id).filter((id) => id !== source && id !== target)];
+  return order
+    .map((id) => ds.databases.find((d) => d.id === id)!)
+    .filter((d) => d.lab_versions.length)
+    .map((def, i) => ({ def, role: i === 0 ? 'source' : i === 1 ? 'target' : 'third' }));
 }
 
 /** Mappings the site's pair can show: those written up for the source database. */

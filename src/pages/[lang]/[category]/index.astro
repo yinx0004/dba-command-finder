@@ -3,7 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import CoverageTable from '../../../components/CoverageTable.astro';
 import { coverageRow } from '../../../lib/coverage';
 import { loadDataset } from '../../../lib/data';
-import { pairMappings } from '../../../lib/docs';
+import { pairMappings, siteDbs } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
 import { categoryHref, langHome, newIssueUrl } from '../../../lib/site';
 
@@ -18,9 +18,8 @@ export function getStaticPaths() {
 const lang = Astro.params.lang as Lang;
 const ui = UI[lang];
 const ds = loadDataset();
-const { source, target } = ds.site.pair;
-const pairDbs = [source, target].map((id) => ds.databases.find((d) => d.id === id)!);
-const [S, T] = pairDbs.map((d) => d.name);
+const pairDbs = siteDbs(ds).map((s) => s.def);
+const names = pairDbs.map((d) => d.name);
 const mappings = pairMappings(ds);
 const counts = new Map<string, number>();
 for (const m of mappings) counts.set(m.category, (counts.get(m.category) ?? 0) + 1);
@@ -32,7 +31,7 @@ const rows = mappings
   .map((m) => coverageRow(m, pairDbs, lang));
 const name = t(cat.name, lang);
 ---
-<Base lang={lang} title={`${name}：${ui.tagline(S, T)} | ${ui.siteName}`} description={`${name}相关的 ${S} 运维命令在 ${T} 中的对应写法：${t(cat.desc, lang)}`}>
+<Base lang={lang} title={`${name}：${ui.taglineAll(names)} | ${ui.siteName}`} description={ui.categoryDesc(name, names, t(cat.desc, lang))}>
   <div class="wrap cat-layout">
     <nav class="cat-nav" aria-label={ui.homePage.navIndex}>
       <span class="label">{ui.homePage.navIndex}</span>

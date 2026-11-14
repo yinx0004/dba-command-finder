@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Verification } from '../lab/plan';
 import { loadDataset } from '../src/lib/data';
+import { siteDbs } from '../src/lib/docs';
 import { translateEntries } from '../src/lib/translate';
 import { looksLikeCommand, matchCommand, pickForLine, sideEq } from '../src/lib/translate-match';
 
@@ -105,5 +106,18 @@ describe('telling commands from task descriptions', () => {
   });
   it('reads words as a task', () => {
     for (const q of ['锁等待', 'replication lag', '修改最大连接数', 'slave', 'mysql 慢查询', 'lock wait']) expect(looksLikeCommand(q)).toBe(false);
+  });
+});
+
+describe('the databases the site shows', () => {
+  it('puts the pair first, then the others the lab runs, each with its color', () => {
+    expect(siteDbs(ds).map((x) => `${x.def.id}:${x.role}`)).toEqual(['mysql:source', 'mongodb:target', 'redis:third']);
+  });
+
+  it('gives the translator every database, fields included', () => {
+    const all = translateEntries(ds, null, 'zh', siteDbs(ds).map((x) => x.def.id));
+    expect(Object.keys(all['list-active-sessions'].sides)).toEqual(['mysql', 'mongodb', 'redis']);
+    const id = all['list-active-sessions'].fields.find((f) => f.names.redis === 'id');
+    expect(id?.names).toMatchObject({ redis: 'id' });
   });
 });

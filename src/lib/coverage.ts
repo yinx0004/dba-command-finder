@@ -50,6 +50,8 @@ export interface CoverageCell {
   pick: string;
   /** the first command, shown until the reader's version picks one */
   cmd: string;
+  /** whether the entry has this database written up at all */
+  written: boolean;
 }
 
 export interface CoverageRow {
@@ -78,6 +80,7 @@ export function coverageRow(m: Entry, dbs: Database[], lang: Lang): CoverageRow 
         note: stripNote(d, db.lab_versions, lang),
         pick: has ? JSON.stringify(versionedCmds(d)) : '',
         cmd: has ? d.commands[0].cmd : '',
+        written: !!d,
       };
     }),
   };
