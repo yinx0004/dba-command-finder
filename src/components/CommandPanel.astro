@@ -7,11 +7,13 @@ interface Props {
   lang: Lang;
   /** source is drawn blue, target green, whichever databases they are */
   role: 'source' | 'target';
+  /** database id, for the version filter */
+  db: string;
   dbName: string;
   commands: Command[];
   verification?: EntryVerification;
 }
-const { lang, role, dbName, commands, verification } = Astro.props;
+const { lang, role, db, dbName, commands, verification } = Astro.props;
 const ui = UI[lang];
 
 function versionLabel(c: Command): string {
@@ -28,7 +30,7 @@ function versionLabel(c: Command): string {
   </div>
   {
     commands.map((c) => (
-      <div class="cmd">
+      <div class="cmd" data-ver data-ver-db={db} data-since={c.since} data-removed={c.removed_in}>
         <div class="cmd-line">
           <code>{c.cmd}</code>
           <button type="button" class="copy" data-copy={c.cmd}>
@@ -36,12 +38,26 @@ function versionLabel(c: Command): string {
           </button>
         </div>
         <div class="cmd-meta">
+          <span class="ver-note badge badge-approx" hidden />
           <span class="tag">{versionLabel(c)}</span>
           {c.deprecated_in && <span class="badge badge-approx">{ui.deprecatedIn(c.deprecated_in)}</span>}
           {(() => {
             const v = verification?.commands[c.cmd];
             if (c.skip) return <span class="badge badge-missing">{ui.notRunByLab(t(c.skip, lang))}</span>;
-            if (v?.verified.length) return <span class="badge badge-exact">✓ {v.verified.join(' · ')}</span>;
+            if (v?.verified.length)
+              return (
+                <span class="badge badge-exact">
+                  ✓{' '}
+                  {v.verified.map((ver, i) => (
+                    <>
+                      {i > 0 && ' · '}
+                      <span data-verified data-db={db} data-v={ver}>
+                        {ver}
+                      </span>
+                    </>
+                  ))}
+                </span>
+              );
             return null;
           })()}
           {c.note && <span>{t(c.note, lang)}</span>}

@@ -98,7 +98,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
     </section>
 
     <section class="panels">
-      <CommandPanel lang={lang} role="source" dbName={S} commands={src.commands} verification={srcV} />
+      <CommandPanel lang={lang} role="source" db={source} dbName={S} commands={src.commands} verification={srcV} />
       {
         eq === 'none' ? (
           <div class="card panel panel-none">
@@ -129,7 +129,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
             </div>
           </div>
         ) : (
-          <CommandPanel lang={lang} role="target" dbName={T} commands={tgt!.commands} verification={tgtV} />
+          <CommandPanel lang={lang} role="target" db={target} dbName={T} commands={tgt!.commands} verification={tgtV} />
         )
       }
     </section>

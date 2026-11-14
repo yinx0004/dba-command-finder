@@ -39,6 +39,16 @@ export const UI = {
     since: (v: string) => `${v}+`,
     until: (v: string) => `< ${v}`,
     deprecatedIn: (v: string) => `${v} 起已过时`,
+    // Version filter. {line} is the reader's version line, {v} a version from the data; filled in the browser.
+    ver: {
+      mine: '我的版本',
+      all: '全部版本',
+      needsPatch: '需要 {v} 及以上',
+      removedPatch: '{v} 起移除，之前的 {line} 版本可用',
+      notYet: '{line} 上不可用（{v} 起才有）',
+      removed: '{line} 上不可用（{v} 起移除）',
+      noneOnLine: '{line} 上没有可用的命令',
+    },
     copy: '复制',
     copied: '已复制',
     fields: '输出字段对照',

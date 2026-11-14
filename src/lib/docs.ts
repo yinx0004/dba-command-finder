@@ -1,7 +1,13 @@
 import type { Dataset, Entry } from './data';
 import { t, tList, type Lang } from './i18n';
 import { equivalence } from './pair';
-import { normalize, type SearchDoc } from './search';
+import type { DatabaseEntry } from './schema';
+import { normalize, type SearchDoc, type VersionedCmd } from './search';
+
+/** One side's commands with their version ranges, for picking the one a reader's version can use. */
+export function versionedCmds(d: DatabaseEntry | undefined): VersionedCmd[] {
+  return (d?.commands ?? []).map((c) => ({ cmd: c.cmd, since: c.since, removed_in: c.removed_in }));
+}
 
 /** Mappings the site's pair can show: those written up for the source database. */
 export function pairMappings(ds: Dataset): Entry[] {
@@ -26,6 +32,8 @@ export function toSearchDocs(ds: Dataset, lang: Lang): SearchDoc[] {
       deprecated: m.status === 'deprecated',
       source: s.commands[0]?.cmd ?? '',
       target: tg?.commands[0]?.cmd ?? '',
+      sourceCmds: versionedCmds(s),
+      targetCmds: versionedCmds(tg),
       n_cmds: Object.values(m.databases).flatMap((d) => d.commands.map((c) => normalize(c.cmd))),
       n_title: normalize(t(m.title, lang)),
       n_keywords: keywords.map(normalize),

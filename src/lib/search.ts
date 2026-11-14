@@ -3,6 +3,12 @@
 import Fuse, { type IFuseOptions } from 'fuse.js';
 import type { Equivalence } from './pair';
 
+export interface VersionedCmd {
+  cmd: string;
+  since?: string;
+  removed_in?: string;
+}
+
 /** One mapping, flattened for search and for rendering a result row of the site's database pair. */
 export interface SearchDoc {
   id: string;
@@ -13,6 +19,8 @@ export interface SearchDoc {
   deprecated: boolean;
   source: string; // first source command, as shown
   target: string; // first target command, as shown ('' when none or not written up)
+  sourceCmds: VersionedCmd[]; // every command per side, so the reader's version can pick one
+  targetCmds: VersionedCmd[];
   // normalized fields used for matching; commands of every database, so any of them finds the task
   n_cmds: string[];
   n_title: string;

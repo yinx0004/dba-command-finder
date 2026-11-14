@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import SearchBox from '../../components/SearchBox.tsx';
 import { loadDataset } from '../../lib/data';
-import { pairMappings, toSearchDocs } from '../../lib/docs';
+import { pairMappings, toSearchDocs, versionedCmds } from '../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../lib/i18n';
 import { categoryHref, entryHref, href, newIssueUrl } from '../../lib/site';
 
@@ -18,6 +18,9 @@ const dbName = new Map(ds.databases.map((d) => [d.id, d.name]));
 const S = dbName.get(source)!;
 const T = dbName.get(target)!;
 const docs = toSearchDocs(ds, lang);
+const versionOptions = Object.fromEntries(
+  ds.databases.filter((d) => d.id === source || d.id === target).map((d) => [d.id, d.lab_versions]),
+);
 const mappings = pairMappings(ds);
 const byId = new Map(mappings.map((m) => [m.id, m]));
 const featured = ds.site.featured.map((id) => byId.get(id)!).filter(Boolean);
@@ -39,8 +42,11 @@ const targetCmd = (m: (typeof mappings)[number]) => {
     <SearchBox
       client:load
       docs={docs}
+      sourceId={source}
       sourceName={S}
+      targetId={target}
       targetName={T}
+      versionOptions={versionOptions}
       tries={['show processlist', '锁等待', 'slave', 'db.currentOp', '死锁']}
       entryBase={href(`${lang}/`)}
       submitUrl={newIssueUrl()}
@@ -54,6 +60,7 @@ const targetCmd = (m: (typeof mappings)[number]) => {
         submitMapping: ui.submitMapping,
         noResultTail: ui.noResultTail,
         noEquivalent: ui.noEquivalent,
+        noneOnLine: ui.ver.noneOnLine,
         eq: ui.eq,
       }}
     />
@@ -82,7 +89,17 @@ const targetCmd = (m: (typeof mappings)[number]) => {
               <a class="pop" href={entryHref(lang, m.slug)}>
                 <strong>{t(m.title, lang)}</strong>
                 <code>
-                  {m.databases[source].commands[0]?.cmd} → {targetCmd(m)}
+                  <span data-pick={JSON.stringify(versionedCmds(m.databases[source]))} data-db={source}>
+                    {m.databases[source].commands[0]?.cmd}
+                  </span>{' '}
+                  →{' '}
+                  {m.databases[target]?.commands.length ? (
+                    <span data-pick={JSON.stringify(versionedCmds(m.databases[target]))} data-db={target}>
+                      {targetCmd(m)}
+                    </span>
+                  ) : (
+                    targetCmd(m)
+                  )}
                 </code>
               </a>
             ))

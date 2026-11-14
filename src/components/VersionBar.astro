@@ -1,0 +1,100 @@
+---
+// "我的版本" bar. Choices come from lab_versions in data/databases.yaml, so the filter only offers
+// versions the lab verifies. The script below adjusts any page that marks its commands with
+// data-ver (intent pages), data-verified (verified-version tags) or data-pick (one-line summaries).
+import { loadDataset } from '../lib/data';
+import { UI, type Lang } from '../lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = UI[lang];
+const ds = loadDataset();
+const ids = [ds.site.pair.source, ds.site.pair.target];
+const dbs = ids.map((id) => ds.databases.find((d) => d.id === id)!).filter((d) => d.lab_versions.length);
+const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
+---
+<div class="version-bar" data-options={JSON.stringify(options)} data-labels={JSON.stringify(ui.ver)}>
+  <div class="wrap">
+    <span class="version-bar-title">{ui.ver.mine}</span>
+    {
+      dbs.map((d, i) => (
+        <>
+          {i > 0 && <span aria-hidden="true">→</span>}
+          <label class="version-select">
+            <span>{d.name}</span>
+            <select data-db={d.id}>
+              <option value="">{ui.ver.all}</option>
+              {d.lab_versions.map((v) => (
+                <option value={v}>{v}</option>
+              ))}
+            </select>
+          </label>
+        </>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  import { firstUsable, onLine, type VersionRange } from '../lib/version';
+  import { fmt, onPrefChange, readPref, writePref, type Pref } from '../lib/version-pref';
+
+  const bar = document.querySelector<HTMLElement>('.version-bar');
+  if (bar) {
+    const options = JSON.parse(bar.dataset.options ?? '{}') as Record<string, string[]>;
+    const L = JSON.parse(bar.dataset.labels ?? '{}') as Record<string, string>;
+    const selects = [...bar.querySelectorAll<HTMLSelectElement>('select[data-db]')];
+
+    const apply = (pref: Pref) => {
+      for (const s of selects) s.value = pref[s.dataset.db!] ?? '';
+
+      // Command blocks on intent pages: dim what this version can't use, and say why.
+      for (const el of document.querySelectorAll<HTMLElement>('[data-ver]')) {
+        const line = pref[el.dataset.verDb!];
+        const note = el.querySelector<HTMLElement>('.ver-note');
+        const st = line ? onLine({ since: el.dataset.since, removed_in: el.dataset.removed }, line) : { state: 'available' as const };
+        el.classList.toggle('ver-unavailable', st.state === 'unavailable');
+        if (!note) continue;
+        const text =
+          st.state === 'since-patch'
+            ? fmt(L.needsPatch, { v: st.version, line })
+            : st.state === 'removed-patch'
+              ? fmt(L.removedPatch, { v: st.version, line })
+              : st.state === 'unavailable'
+                ? fmt(st.reason === 'removed' ? L.removed : L.notYet, { v: st.version, line })
+                : '';
+        note.textContent = text;
+        note.hidden = !text;
+      }
+
+      // "✓ 5.7 · 8.0": highlight the reader's own version.
+      for (const el of document.querySelectorAll<HTMLElement>('[data-verified]')) {
+        el.classList.toggle('ver-mine', !!pref[el.dataset.db!] && el.dataset.v === pref[el.dataset.db!]);
+      }
+
+      // One-line summaries (category pages, home): show the first command this version can use.
+      for (const el of document.querySelectorAll<HTMLElement>('[data-pick]')) {
+        const cmds = JSON.parse(el.dataset.pick!) as (VersionRange & { cmd: string })[];
+        const line = pref[el.dataset.db!];
+        const pick = firstUsable(cmds, line || undefined);
+        el.textContent = pick ? pick.cmd : fmt(L.noneOnLine, { line });
+        el.classList.toggle('ver-none', !pick);
+      }
+    };
+
+    for (const s of selects) {
+      s.addEventListener('change', () => {
+        const pref = readPref(options);
+        pref[s.dataset.db!] = s.value;
+        writePref(pref);
+      });
+    }
+    onPrefChange(apply);
+
+    const initial = readPref(options);
+    // A version from a shared link sticks, like a choice made here.
+    writePref(initial);
+  }
+</script>
