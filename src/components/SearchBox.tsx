@@ -150,7 +150,7 @@ export default function SearchBox({
               <div className="pair">
                 <div>
                   <span className="side side-source">{sourceName}</span>
-                  <span>{shown(d.sourceCmds, sourceId, d.source)}</span>
+                  <span>{shown(d.sourceCmds, sourceId, d.equivalence === 'only' ? labels.noEquivalent : d.source)}</span>
                 </div>
                 <div>
                   <span className="side side-target">{targetName}</span>

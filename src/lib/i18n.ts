@@ -1,3 +1,4 @@
+import type { Equivalence } from './pair';
 import type { Text } from './schema';
 
 export const LANGS = ['zh'] as const; // add 'en' when the English pages are ready
@@ -35,7 +36,9 @@ export const UI = {
     count: (n: number) => `${n} 条`,
     home: '首页',
     contribute: '贡献',
-    eq: { exact: '完全等价', approx: '近似', none: '无等价', missing: '未收录' },
+    // only: filled with the target's name by eqLabels
+    eq: { exact: '完全等价', approx: '近似', none: '无等价', only: '独有', missing: '未收录' },
+    onlyIn: (db: string) => `${db} 独有`,
     noEquivalent: '没有对应命令',
     allVersions: '全部版本',
     since: (v: string) => `${v}+`,
@@ -111,3 +114,8 @@ export const UI = {
     },
   },
 } as const;
+
+/** Badge text for each equivalence; "only" names the database that has the feature. */
+export function eqLabels(lang: Lang, target: string): Record<Equivalence, string> {
+  return { ...UI[lang].eq, only: UI[lang].onlyIn(target) };
+}

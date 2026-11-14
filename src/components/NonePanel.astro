@@ -1,0 +1,30 @@
+---
+// The panel for a database that cannot do the task: why, from its notes.
+import { t, UI, type Lang } from '../lib/i18n';
+import type { Text } from '../lib/schema';
+
+interface Props {
+  lang: Lang;
+  /** source is drawn blue, target green */
+  role: 'source' | 'target';
+  dbName: string;
+  notes: Text[];
+}
+const { lang, role, dbName, notes } = Astro.props;
+---
+<div class="card panel panel-none">
+  <div class="panel-head">
+    <span class={`dot dot-${role}`} />
+    <span class={`side side-${role}`} style="font-size: 13px">{dbName}</span>
+  </div>
+  <div class="none-body">
+    <div class="none-title">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M5.6 5.6l12.8 12.8" />
+      </svg>
+      {UI[lang].noEquivalent}
+    </div>
+    {notes.map((n) => <p>{t(n, lang)}</p>)}
+  </div>
+</div>

@@ -18,6 +18,8 @@ describe('equivalence', () => {
     expect(equivalence(db('partial'), db('full'))).toBe('approx');
     expect(equivalence(db('full'), db('none'))).toBe('none');
     expect(equivalence(db('full'), undefined)).toBe('missing');
+    expect(equivalence(db('none'), db('full'))).toBe('only');
+    expect(equivalence(db('none'), db('partial'))).toBe('only');
   });
 });
 

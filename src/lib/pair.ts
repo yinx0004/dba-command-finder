@@ -5,13 +5,15 @@ import type { DatabaseEntry, Mapping, Text } from './schema';
  * exact    both databases fully support the task
  * approx   the target can do it, with differences
  * none     the target cannot do it
+ * only     only the target can do it; the source has no such thing (e.g. a mongos setting)
  * missing  the target has not been written up for this task yet
  */
-export type Equivalence = 'exact' | 'approx' | 'none' | 'missing';
+export type Equivalence = 'exact' | 'approx' | 'none' | 'only' | 'missing';
 
 export function equivalence(source: DatabaseEntry | undefined, target: DatabaseEntry | undefined): Equivalence {
   if (!target) return 'missing';
   if (target.support === 'none') return 'none';
+  if (source?.support === 'none') return 'only';
   if (source?.support === 'full' && target.support === 'full') return 'exact';
   return 'approx';
 }

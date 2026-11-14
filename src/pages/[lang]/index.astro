@@ -4,7 +4,7 @@ import SearchBox from '../../components/SearchBox.tsx';
 import { loadDataset } from '../../lib/data';
 import { pairMappings, toSearchDocs } from '../../lib/docs';
 import { homeStats, labExcerpt } from '../../lib/home';
-import { LANGS, t, UI, type Lang } from '../../lib/i18n';
+import { eqLabels, LANGS, t, UI, type Lang } from '../../lib/i18n';
 import { categoryHref, GITHUB, href, newIssueUrl } from '../../lib/site';
 import { loadVerification } from '../../lib/verification';
 
@@ -87,7 +87,7 @@ const verifiedVersions = pairDbs.map((d) => `${d.name.toUpperCase()} ${d.lab_ver
             noneOnLine: ui.ver.noneOnLine,
             all: ui.chipAll,
             chipsLabel: ui.chipsLabel,
-            eq: ui.eq,
+            eq: eqLabels(lang, T),
           }}
         />
       </div>

@@ -65,6 +65,14 @@ describe('checkDataset', () => {
     expect(one(db({ support: 'none' }))).toMatch(/must explain why/);
     expect(one(db({ support: 'full' }))).toMatch(/needs at least one command/);
     expect(one(db({ support: 'partial', commands: [{ cmd: 'y' }] }))).toMatch(/must say what differs/);
+    const noneBoth = mapping({
+      databases: { mysql: { support: 'none', notes: [{ zh: 'x' }] }, mongodb: { support: 'none', notes: [{ zh: 'y' }] } },
+    });
+    expect(one(noneBoth)).toMatch(/at least one database must be able to do the task/);
+    const onlyTarget = mapping({
+      databases: { mysql: { support: 'none', notes: [{ zh: 'x' }] }, mongodb: { support: 'full', commands: [{ cmd: 'y' }] } },
+    });
+    expect(one(onlyTarget)).toBe('');
   });
 
   it('checks databases against the registry and fields against the task', () => {

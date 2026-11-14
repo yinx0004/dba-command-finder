@@ -2,6 +2,7 @@
 import Base from '../../../layouts/Base.astro';
 import EqBadge from '../../../components/EqBadge.astro';
 import CommandPanel from '../../../components/CommandPanel.astro';
+import NonePanel from '../../../components/NonePanel.astro';
 import { loadDataset } from '../../../lib/data';
 import { pairMappings } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
@@ -35,9 +36,10 @@ const src = m.databases[source];
 const tgt = m.databases[target];
 const eq = equivalence(src, tgt);
 const fields = fieldRows(m, source, target);
+// A side that cannot do the task explains why in its own panel, not in the notes list.
 const notes = [
   ...(eq === 'none' ? [] : (tgt?.notes ?? []).map((n) => ({ db: T, text: n }))),
-  ...src.notes.map((n) => ({ db: S, text: n })),
+  ...(eq === 'only' ? [] : src.notes.map((n) => ({ db: S, text: n }))),
 ];
 const alternatives = tgt?.alternatives ?? [];
 const refs = [...src.refs, ...(tgt?.refs ?? [])];
@@ -59,8 +61,11 @@ const verifiedLabel = verifiedParts.length ? ui.verifiedOn(verifiedParts.join(' 
 // Titles read better without statement terminators: "SHOW SLAVE STATUS", not "SHOW SLAVE STATUS\G".
 const bare = (cmd: string) => cmd.replace(/\s*(\\G|;)\s*$/, '');
 const srcCmd = bare(src.commands[0]?.cmd ?? '');
+const tgtCmd = bare(tgt?.commands[0]?.cmd ?? '');
 const seoTitle =
-  eq === 'none'
+  eq === 'only'
+    ? `${title}：${T} 的 ${tgtCmd}（${S} 没有对应命令） | ${ui.siteName}`
+    : eq === 'none'
     ? `${title}：${srcCmd} 在 ${T} 中没有对应命令 | ${ui.siteName}`
     : eq === 'missing'
       ? `${title}：${srcCmd} | ${ui.siteName}`
@@ -93,7 +98,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
       <h1>{title}</h1>
       <p class="lede">{t(m.summary, lang)}</p>
       <div class="meta">
-        <EqBadge lang={lang} eq={eq} large />
+        <EqBadge lang={lang} eq={eq} target={T} large />
         <span class:list={{ 'verified-label': verifiedParts.length > 0 }}>{verifiedLabel}</span>
         {anySkipped && <span>（{ui.someSkipped}）</span>}
         {updated && <span>· 更新于 {updated}</span>}
@@ -101,25 +106,16 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
     </section>
 
     <section class="panels">
-      <CommandPanel lang={lang} role="source" db={source} dbName={S} database={srcDb} commands={src.commands} verification={srcV} />
+      {
+        eq === 'only' ? (
+          <NonePanel lang={lang} role="source" dbName={S} notes={src.notes} />
+        ) : (
+          <CommandPanel lang={lang} role="source" db={source} dbName={S} database={srcDb} commands={src.commands} verification={srcV} />
+        )
+      }
       {
         eq === 'none' ? (
-          <div class="card panel panel-none">
-            <div class="panel-head">
-              <span class="dot dot-target" />
-              <span class="side side-target" style="font-size: 13px">{T}</span>
-            </div>
-            <div class="none-body">
-              <div class="none-title">
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M5.6 5.6l12.8 12.8" />
-                </svg>
-                {ui.noEquivalent}
-              </div>
-              {tgt!.notes.map((n) => <p>{t(n, lang)}</p>)}
-            </div>
-          </div>
+          <NonePanel lang={lang} role="target" dbName={T} notes={tgt!.notes} />
         ) : eq === 'missing' ? (
           <div class="card panel panel-missing">
             <div class="panel-head">
