@@ -15,6 +15,7 @@ export interface SearchDoc {
   slug: string; // category/id
   title: string;
   category: string; // display name
+  categoryId: string;
   equivalence: Equivalence;
   deprecated: boolean;
   source: string; // first source command, as shown
@@ -108,4 +109,27 @@ export function createSearcher(docs: SearchDoc[]): Searcher {
         .map((x) => x.doc);
     },
   };
+}
+
+// --- Category chips over search results ---
+
+export interface Chip {
+  id: string; // category id, '' for all
+  count: number;
+}
+
+/** "全部" plus every category that has results, in the site's category order. */
+export function categoryChips(results: Pick<SearchDoc, 'categoryId'>[], order: string[]): Chip[] {
+  const counts = new Map<string, number>();
+  for (const r of results) counts.set(r.categoryId, (counts.get(r.categoryId) ?? 0) + 1);
+  return [{ id: '', count: results.length }, ...order.filter((id) => counts.has(id)).map((id) => ({ id, count: counts.get(id)! }))];
+}
+
+/**
+ * Applies a chosen category. When the results no longer contain it (the query changed),
+ * the choice falls back to all, so a search never shows an empty list while there are matches.
+ */
+export function filterByCategory<T extends Pick<SearchDoc, 'categoryId'>>(results: T[], category: string): { category: string; shown: T[] } {
+  if (!category || !results.some((r) => r.categoryId === category)) return { category: '', shown: results };
+  return { category, shown: results.filter((r) => r.categoryId === category) };
 }

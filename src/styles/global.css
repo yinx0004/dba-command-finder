@@ -208,3 +208,11 @@ td.mono { overflow-wrap: anywhere; }
 .cmd.ver-unavailable .ver-note { color: var(--none-fg); background: var(--none-bg); }
 [data-verified].ver-mine { text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
 .ver-none { color: var(--muted); font-style: italic; }
+
+/* category chips over search results */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 6px; }
+.chips button { font: inherit; font-size: 13px; padding: 4px 12px; min-height: 32px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 999px; cursor: pointer; }
+.chips button:hover { border-color: var(--link); }
+.chips button[aria-pressed='true'] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chips .chip-count { color: var(--muted); margin-left: 2px; }
+.chips button[aria-pressed='true'] .chip-count { color: inherit; opacity: 0.75; }

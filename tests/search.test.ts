@@ -3,7 +3,7 @@ import { load } from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import { loadDataset } from '../src/lib/data';
 import { toSearchDocs } from '../src/lib/docs';
-import { createSearcher, normalize, queryTokens } from '../src/lib/search';
+import { categoryChips, createSearcher, filterByCategory, normalize, queryTokens } from '../src/lib/search';
 
 describe('normalize', () => {
   it('drops terminators, optional words and case', () => {
@@ -40,5 +40,25 @@ describe('search golden cases', () => {
     if (c.empty) expect(got).toEqual([]);
     else if (c.top) expect(got[0], `results: ${got.join(', ')}`).toBe(c.top);
     else expect(c.top_any, `results: ${got.join(', ')}`).toContain(got[0]);
+  });
+});
+
+describe('category chips', () => {
+  const r = (categoryId: string) => ({ categoryId });
+  const results = [r('lock'), r('session'), r('lock'), r('log')];
+
+  it('lists all plus the categories present, in site order', () => {
+    expect(categoryChips(results, ['session', 'log', 'replication', 'lock'])).toEqual([
+      { id: '', count: 4 },
+      { id: 'session', count: 1 },
+      { id: 'log', count: 1 },
+      { id: 'lock', count: 2 },
+    ]);
+  });
+
+  it('filters by a category, falling back to all when it has no results', () => {
+    expect(filterByCategory(results, 'lock')).toEqual({ category: 'lock', shown: [r('lock'), r('lock')] });
+    expect(filterByCategory(results, 'replication')).toEqual({ category: '', shown: results });
+    expect(filterByCategory(results, '')).toEqual({ category: '', shown: results });
   });
 });

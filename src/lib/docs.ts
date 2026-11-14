@@ -28,6 +28,7 @@ export function toSearchDocs(ds: Dataset, lang: Lang): SearchDoc[] {
       slug: m.slug,
       title: t(m.title, lang),
       category,
+      categoryId: m.category,
       equivalence: equivalence(s, tg),
       deprecated: m.status === 'deprecated',
       source: s.commands[0]?.cmd ?? '',

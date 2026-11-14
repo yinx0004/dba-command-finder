@@ -47,6 +47,7 @@ const targetCmd = (m: (typeof mappings)[number]) => {
       targetId={target}
       targetName={T}
       versionOptions={versionOptions}
+      categories={categories.map((c) => ({ id: c.id, name: t(c.name, lang) }))}
       tries={['show processlist', '锁等待', 'slave', 'db.currentOp', '死锁']}
       entryBase={href(`${lang}/`)}
       submitUrl={newIssueUrl()}
@@ -61,6 +62,8 @@ const targetCmd = (m: (typeof mappings)[number]) => {
         noResultTail: ui.noResultTail,
         noEquivalent: ui.noEquivalent,
         noneOnLine: ui.ver.noneOnLine,
+        all: ui.chipAll,
+        chipsLabel: ui.chipsLabel,
         eq: ui.eq,
       }}
     />
