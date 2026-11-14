@@ -1,0 +1,39 @@
+schema_version: 2
+id: create-index
+category: index
+title: {zh: 创建索引}
+summary: {zh: 给慢查询用到的列（字段）加索引。}
+keywords:
+  zh: [建索引, 加索引, 创建索引, 唯一索引]
+  en: [create index, add index, createindex, unique index]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE INDEX <index> ON <table> (<column>);
+      - cmd: ALTER TABLE <table> ADD UNIQUE INDEX <index2> (<column2>), ALGORITHM=INPLACE, LOCK=NONE;
+        note: {zh: 显式要求在线建索引；做不到时直接报错，而不是悄悄锁表}
+    notes:
+      - zh: InnoDB 建二级索引是在线 DDL，期间可以读写，只在开始和结束时短暂加锁。
+    refs:
+      - {title: 'MySQL: CREATE INDEX', url: 'https://dev.mysql.com/doc/refman/8.4/en/create-index.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT);
+      vars: {table: t, index: idx_a, column: a, index2: uk_b, column2: b}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.<collection>.createIndex({ <field>: 1 })'
+        note: {zh: 1 升序，-1 降序}
+      - cmd: 'db.<collection>.createIndex({ <field2>: 1 }, { unique: true, name: "<index2>" })'
+        note: {zh: 唯一索引，并指定索引名}
+    notes:
+      - zh: 4.2 起建索引只在开始和结束时短暂加排他锁，其余时间不阻塞读写，以前的 background 选项已不再需要。
+      - zh: 副本集上各成员会同时建索引（4.4 起），主节点等大多数成员建完才算完成。
+    refs:
+      - {title: 'MongoDB: db.collection.createIndex()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.createIndex/'}
+      - {title: 'MongoDB: Index Builds on Populated Collections', url: 'https://www.mongodb.com/docs/manual/core/index-creation/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 2, b: 2 }])'
+      vars: {collection: t, field: a, field2: b, index2: uk_b}
+related: [show-indexes, drop-index, explain]

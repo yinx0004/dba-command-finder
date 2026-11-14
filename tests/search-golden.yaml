@@ -129,5 +129,16 @@
 - {q: add column, top: add-column}
 - {q: 加字段, top: add-column}
 
+- {q: create index, top: create-index}
+- {q: 建索引, top: create-index}
+- {q: createIndex, top: create-index}
+- {q: drop index, top: drop-index}
+- {q: 删索引, top: drop-index}
+- {q: 无用索引, top: index-usage}
+- {q: indexStats, top: index-usage}
+- {q: schema_unused_indexes, top: index-usage}
+- {q: invisible index, top: invisible-index}
+- {q: hideIndex, top: invisible-index}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
