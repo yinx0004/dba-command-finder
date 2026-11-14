@@ -37,4 +37,14 @@ databases:
     support: none
     notes:
       - zh: 复制不会因为某条命令出错而停下：从库按顺序重放主库的命令，不检查也不跳过；复制断开时重连续传，续不上就全量同步。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: ALTER SUBSCRIPTION <subscription> SKIP (lsn = '<lsn>');
+        since: '15'
+        skip: {zh: 需要一个出错停下的逻辑复制订阅，lab 没有}
+        note:
+          zh: 逻辑复制的订阅端遇到冲突停下时，跳过出错的那个事务；lsn 从订阅端日志里看
+    notes:
+      - zh: 物理复制（流复制）是按字节回放 WAL，不会因为某条语句出错而停下，也就没有可跳过的错误。
 related: [replication-status, pause-replication]

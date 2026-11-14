@@ -43,4 +43,19 @@ databases:
       setup: SET app:seq 1000
       vars: {key: 'app:seq'}
       teardown: DEL app:seq
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT schemaname, sequencename, last_value, max_value, round(100.0 * last_value / max_value, 2) AS ratio FROM pg_sequences;
+        note:
+          zh: serial 和 identity 列背后都是序列；int 列的序列上限是 2147483647
+    fields:
+      ratio: ratio
+      max: max_value
+    notes:
+      - zh: 快用完时把列和序列改成 bigint：ALTER TABLE ... ALTER COLUMN id TYPE bigint 会重写表，大表要找维护窗口。
+    verify:
+      setup: |-
+        CREATE TABLE t (id serial PRIMARY KEY);
+        INSERT INTO t DEFAULT VALUES;
 related: [show-create-table]

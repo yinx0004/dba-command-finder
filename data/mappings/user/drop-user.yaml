@@ -39,4 +39,19 @@ databases:
     verify:
       setup: 'ACL SETUSER app_drop on >Lab#Pass123 ~* +@all'
       vars: {user: app_drop}
+  postgresql:
+    support: full
+    commands:
+      - cmd: REASSIGN OWNED BY <user> TO postgres;
+        note:
+          zh: 先把它拥有的对象转给别的角色
+      - cmd: DROP OWNED BY <user>;
+        note:
+          zh: 去掉授给它的权限
+      - cmd: DROP ROLE <user>;
+    notes:
+      - zh: 角色还拥有对象或被授过权限时 DROP ROLE 会失败；前两步要在每个库里各执行一次。
+    verify:
+      setup: CREATE ROLE app_drop LOGIN PASSWORD 'Lab#Pass123';
+      vars: {user: app_drop}
 related: [list-users, kill-session]

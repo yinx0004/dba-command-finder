@@ -37,4 +37,20 @@ databases:
     support: none
     notes:
       - zh: 没有能自动比较的索引定义，找不出冗余索引。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT a.indexrelid::regclass AS redundant, b.indexrelid::regclass AS dominant FROM pg_index a JOIN pg_index b ON a.indrelid = b.indrelid AND a.indexrelid <> b.indexrelid AND b.indkey::text LIKE a.indkey::text || ' %';
+        note:
+          zh: 找出列是另一个索引前缀的索引，例如 (a) 和 (a, id)
+    fields:
+      redundant: redundant
+      dominant: dominant
+    notes:
+      - zh: 没有现成的视图，要自己比较；唯一索引和用作约束的索引，即使是前缀也可能要保留。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        CREATE INDEX idx_a ON t (a);
+        CREATE INDEX idx_a_id ON t (a, id);
 related: [index-usage, drop-index]

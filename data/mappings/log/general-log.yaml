@@ -60,4 +60,21 @@ databases:
       statement: {name: MONITOR 每行后面的命令和参数}
     notes:
       - zh: MONITOR 只在连接期间输出，不落盘，而且会明显拖慢实例，只适合短时间排查；没有能一直开着的语句日志。
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER SYSTEM SET log_statement = 'all';
+        note:
+          zh: none、ddl、mod、all 四档
+      - cmd: SELECT pg_reload_conf();
+    fields:
+      time: {name: log_line_prefix 里的 %m}
+      client: {name: log_line_prefix 里的 %h}
+      statement: {name: 日志里 statement 后面的语句}
+    notes:
+      - zh: 记录所有语句会产生大量日志；排查慢语句更常用 log_min_duration_statement。
+    verify:
+      teardown: |-
+        ALTER SYSTEM RESET log_statement;
+        SELECT pg_reload_conf();
 related: [slow-query-log, error-log]

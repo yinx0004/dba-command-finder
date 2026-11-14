@@ -48,4 +48,18 @@ databases:
       - zh: 没有表，清空的是整个库（FLUSHDB）或整个实例（FLUSHALL）；只想清一类数据，按键名前缀删。
     verify:
       setup: SET app:1 a
+  postgresql:
+    support: full
+    commands:
+      - cmd: TRUNCATE <table>;
+      - cmd: TRUNCATE <table> RESTART IDENTITY;
+        note:
+          zh: 同时把自增序列重置
+    notes:
+      - zh: TRUNCATE 可以在事务里回滚；有外键引用时要加 CASCADE，把引用它的表一起清空。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [batch-delete, drop-table, copy-table]

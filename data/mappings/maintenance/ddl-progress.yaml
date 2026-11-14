@@ -54,4 +54,16 @@ databases:
       - zh: 没有 DDL，也没有建索引的过程；会跑一阵的后台任务是快照、AOF 重写和启动时加载数据。
     verify:
       skip_fields: {zh: 只在启动加载数据时出现}
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pid, phase, blocks_done, blocks_total, tuples_done, tuples_total FROM pg_stat_progress_create_index;
+        note:
+          zh: 建索引的进度
+      - cmd: SELECT pid, phase, heap_blks_scanned, heap_blks_total FROM pg_stat_progress_vacuum;
+        note:
+          zh: VACUUM 的进度；还有 pg_stat_progress_cluster、pg_stat_progress_copy 等
+    fields:
+      done: blocks_done
+      total: blocks_total
 related: [create-index, list-active-sessions]

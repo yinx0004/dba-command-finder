@@ -76,4 +76,24 @@ databases:
     notes:
       - zh: 慢日志只记命令本身的执行时间，不含排队和网络往返；记录保存在内存里，条数由 slowlog-max-len 决定，重启就没了。
       - zh: 没有扫描行数、返回行数这类统计。
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER SYSTEM SET log_min_duration_statement = '1s';
+        note:
+          zh: 超过 1 秒的语句写进服务器日志，连同耗时
+      - cmd: SELECT pg_reload_conf();
+      - cmd: SELECT query, calls, mean_exec_time FROM pg_stat_statements WHERE mean_exec_time > 1000 ORDER BY mean_exec_time DESC;
+        note:
+          zh: 不用翻日志，直接看平均超过 1 秒的语句
+    fields:
+      elapsed: mean_exec_time
+      statement: query
+    notes:
+      - zh: auto_explain 可以把慢语句的执行计划也一起记下来。
+    verify:
+      setup: CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+      teardown: |-
+        ALTER SYSTEM RESET log_min_duration_statement;
+        SELECT pg_reload_conf();
 related: [explain, list-active-sessions]

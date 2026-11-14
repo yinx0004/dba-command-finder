@@ -69,4 +69,22 @@ databases:
       - zh: 内存里的数据没有“损坏”一说，要检查的是磁盘上的快照和 AOF 文件。
     verify:
       setup_shell: redis-cli SAVE
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT bt_index_check('<index>');
+        note:
+          zh: 检查 B-tree 索引是否损坏，要先 CREATE EXTENSION amcheck；没问题时不返回内容
+      - cmd: pg_amcheck -d <db>
+        shell: true
+        note:
+          zh: 检查整个库的表和索引，有问题才输出
+    fields:
+      result: {name: 没有输出就是没发现问题}
+    verify:
+      setup: |-
+        CREATE EXTENSION IF NOT EXISTS amcheck;
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {index: t_pkey}
 related: [reclaim-space]

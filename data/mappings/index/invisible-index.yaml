@@ -41,4 +41,11 @@ databases:
     support: none
     notes:
       - zh: 没有不可见索引。
+  postgresql:
+    support: none
+    notes:
+      - zh: 没有不可见索引。DDL 可以放在事务里，所以可以在事务里先删掉索引，看执行计划有什么变化，再回滚。
+    alternatives:
+      - title: {zh: 在事务里试着去掉索引，看计划后回滚（期间锁住这张表）}
+        cmd: BEGIN; DROP INDEX <index>; EXPLAIN SELECT * FROM <table> WHERE a = 1; ROLLBACK;
 related: [drop-index, index-usage]

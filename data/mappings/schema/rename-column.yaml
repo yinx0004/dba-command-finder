@@ -39,4 +39,15 @@ databases:
     support: none
     notes:
       - zh: 没有列，也没有重命名哈希字段的命令；只能按键遍历，读出旧字段、写入新字段、再删掉旧字段。
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> RENAME COLUMN <column> TO <new_column>;
+        note:
+          zh: 只改元数据，瞬间完成；引用它的视图会自动跟着改
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t, column: a, new_column: b}
 related: [add-column, modify-column, show-create-table]

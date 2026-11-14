@@ -50,4 +50,20 @@ databases:
       connections: connected_clients
     notes:
       - zh: 没有按读写分开的每秒计数；要按命令看，比较两次 INFO commandstats 里各命令 calls 的差值。redis-cli --stat 会一直滚动输出每秒概况，适合在终端里盯着看。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT sum(xact_commit + xact_rollback) AS xact_commit, sum(tup_inserted) AS tup_inserted, sum(numbackends) AS numbackends FROM pg_stat_database;
+        note:
+          zh: 都是累计值，隔一秒采两次相减就是每秒的量
+      - cmd: for i in 1 2; do psql -At -c 'SELECT sum(xact_commit + xact_rollback) FROM pg_stat_database'; sleep 1; done
+        shell: true
+        note:
+          zh: 采两次，后一次减前一次就是这一秒的事务数
+    fields:
+      queries: xact_commit
+      inserts: tup_inserted
+      connections: numbackends
+    notes:
+      - zh: 在 psql 里可以用 \watch 1 每秒重跑一次查询。
 related: [server-status, hot-tables]

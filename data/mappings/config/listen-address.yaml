@@ -57,4 +57,15 @@ databases:
       port: port
     notes:
       - zh: 没设置密码或 ACL 时，protected-mode 默认只接受本机连接。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW listen_addresses;
+      - cmd: SHOW port;
+      - cmd: SHOW unix_socket_directories;
+    fields:
+      address: listen_addresses
+      port: port
+    notes:
+      - zh: 改 listen_addresses 要重启；能不能连进来还要看 pg_hba.conf。
 related: [tls-check, config-file, current-connection]

@@ -46,4 +46,13 @@ databases:
         SET app:1 a
         SET app:2 b
       teardown: DEL app:1 app:2
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT schemaname, tablename FROM pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema');
+      - cmd: \dt
+        note:
+          zh: psql 的快捷命令，只列当前 search_path 里的表；\dt *.* 列所有模式
+    verify:
+      setup: CREATE TABLE t (id int);
 related: [list-databases, show-indexes]

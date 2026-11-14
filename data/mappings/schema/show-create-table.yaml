@@ -53,4 +53,19 @@ databases:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1'}
       teardown: DEL app:user:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: \d+ <table>
+        note:
+          zh: psql 的快捷命令：列、类型、默认值、索引、约束和存储信息
+      - cmd: pg_dump -s -t <table> -d <db>
+        shell: true
+        note:
+          zh: 导出建表语句；没有 SHOW CREATE TABLE
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [list-tables, show-indexes, add-column]

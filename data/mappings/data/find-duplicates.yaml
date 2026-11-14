@@ -48,4 +48,18 @@ databases:
     support: none
     notes:
       - zh: 没有按值分组统计的命令。需要去重的数据，一般直接存进集合（SADD），集合本身不会有重复的成员。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT <column>, count(*) AS cnt FROM <table> GROUP BY <column> HAVING count(*) > 1;
+      - cmd: DELETE FROM <table> t1 USING <table> t2 WHERE t1.<column> = t2.<column> AND t1.id > t2.id;
+        note:
+          zh: 每组只留 id 最小的一行
+    fields:
+      count: cnt
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t, column: a}
 related: [create-index, batch-delete]

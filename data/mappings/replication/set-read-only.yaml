@@ -46,4 +46,17 @@ databases:
         since: '6.2'
     notes:
       - zh: 主库没有只读开关。要长期禁止写入，用 ACL 去掉写权限（-@write）；临时停住写入用 CLIENT PAUSE，到时间自动恢复。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: ALTER SYSTEM SET default_transaction_read_only = on;
+      - cmd: SELECT pg_reload_conf();
+        note:
+          zh: 之后新开的事务默认只读
+    notes:
+      - zh: 这只是默认值，用户可以自己 SET 回可写，挡不住有意的写入；真正只读的是备库。
+    verify:
+      teardown: |-
+        ALTER SYSTEM RESET default_transaction_read_only;
+        SELECT pg_reload_conf();
 related: [global-read-lock, replica-role]

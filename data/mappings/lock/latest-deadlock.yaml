@@ -36,4 +36,15 @@ databases:
     support: none
     notes:
       - zh: 没有锁，也就没有死锁：命令在单线程里依次执行，MULTI/EXEC 也是一次性执行完。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT datname, deadlocks FROM pg_stat_database WHERE datname IS NOT NULL;
+        note:
+          zh: 每个库累计发生过多少次死锁
+      - cmd: SHOW log_lock_waits;
+        note:
+          zh: 打开后，等锁超过 deadlock_timeout 会写日志，方便排查
+    notes:
+      - zh: 死锁的详情（双方的语句和锁）写在服务器日志里，没有视图可以查。
 related: [lock-waits]

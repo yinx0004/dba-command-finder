@@ -39,4 +39,18 @@ databases:
     alternatives:
       - title: {zh: 给一个哈希加一个字段}
         cmd: HSET <key> <field> <value>
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> ADD COLUMN <column> int;
+      - cmd: ALTER TABLE <table> ADD COLUMN <column2> int NOT NULL DEFAULT 0;
+        note:
+          zh: 默认值是常量时只改元数据，不重写表，大表也是瞬间完成
+    notes:
+      - zh: 加列要短暂拿 ACCESS EXCLUSIVE 锁；如果前面有长事务挡着，后面所有查询都会排队，先 SET lock_timeout 更稳妥。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t, column: b, column2: c}
 related: [show-create-table]

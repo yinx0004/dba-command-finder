@@ -35,4 +35,13 @@ databases:
     alternatives:
       - title: {zh: 看正在执行的连接最近执行的命令（cmd）}
         cmd: CLIENT LIST
+  postgresql:
+    support: partial
+    commands:
+      - cmd: LOAD 'auto_explain';
+      - cmd: SET auto_explain.log_min_duration = '1s';
+        note:
+          zh: 之后这个连接里超过 1 秒的语句，执行计划会写进服务器日志
+    notes:
+      - zh: 看不到别的连接正在执行的语句用的计划；auto_explain 只能事后从日志里看，要对所有连接生效，把它加进 session_preload_libraries。
 related: [list-active-sessions, explain]

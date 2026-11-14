@@ -47,4 +47,20 @@ databases:
           zh: 用文字指出内存方面的问题，例如碎片太多
     fields:
       total: used_memory
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SHOW shared_buffers;
+        note:
+          zh: 共享缓存，启动时一次分配
+      - cmd: SELECT pg_size_pretty(sum(allocated_size)) AS total FROM pg_shmem_allocations;
+        note:
+          zh: 共享内存一共分出去多少
+      - cmd: SELECT name, pg_size_pretty(total_bytes) AS total_bytes FROM pg_backend_memory_contexts ORDER BY total_bytes DESC LIMIT 5;
+        note:
+          zh: 当前这个连接自己用了多少内存
+    fields:
+      total: total
+    notes:
+      - zh: 每个连接是一个独立进程，排序、哈希另外按 work_mem 申请内存；没有一个视图能看全实例所有进程的内存。
 related: [cache-hit-ratio, server-status]

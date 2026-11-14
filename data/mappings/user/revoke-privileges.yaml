@@ -56,4 +56,21 @@ databases:
       setup: 'ACL SETUSER app_revoke on >Lab#Pass123 ~* +@all'
       vars: {user: app_revoke}
       teardown: ACL DELUSER app_revoke
+  postgresql:
+    support: full
+    commands:
+      - cmd: REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM <user>;
+      - cmd: REVOKE pg_read_all_data FROM <user>;
+        note:
+          zh: 收回内置角色
+    notes:
+      - zh: 授给 PUBLIC 的权限所有人都有，单独 REVOKE 某个用户收不掉。
+    verify:
+      setup: |-
+        CREATE ROLE app_revoke LOGIN PASSWORD 'Lab#Pass123';
+        GRANT pg_read_all_data TO app_revoke;
+      vars: {user: app_revoke}
+      teardown: |-
+        DROP OWNED BY app_revoke;
+        DROP ROLE app_revoke;
 related: [grant-privileges, show-grants, account-lock]

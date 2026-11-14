@@ -63,4 +63,17 @@ databases:
           zh: 从远程把快照下载到本地文件
     notes:
       - zh: 备份就是 RDB 快照，二进制、整个实例一份，不能只备份某个库或某些键。fork 时内存会按写入量额外增长，大实例要预留内存。
+  postgresql:
+    support: full
+    commands:
+      - cmd: pg_dump -Fc -d <db> -f /tmp/<db>.dump
+        shell: true
+        note:
+          zh: 自定义格式，压缩、可以只恢复部分对象；导出时用一个快照，不锁表
+      - cmd: pg_dumpall --globals-only -f /tmp/globals.sql
+        shell: true
+        note:
+          zh: 用户、角色和表空间不属于任何库，要单独导出
+    verify:
+      setup: CREATE TABLE t (id int PRIMARY KEY);
 related: [logical-restore, global-read-lock, point-in-time-recovery]

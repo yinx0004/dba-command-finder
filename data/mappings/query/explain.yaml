@@ -81,4 +81,23 @@ databases:
       teardown: |-
         FT.DROPINDEX idx:users
         DEL app:user:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: EXPLAIN SELECT * FROM <table> WHERE a = 1;
+      - cmd: EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM <table> WHERE a = 1;
+        note:
+          zh: 真正执行一遍，给出每一步实际的行数和耗时；对写语句要放在事务里再回滚
+    fields:
+      full_scan: {name: Seq Scan}
+      index_used: {name: Index Scan / Bitmap Index Scan}
+      rows_examined: rows
+      elapsed: {name: actual time}
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+        CREATE INDEX idx_a ON t (a);
+        ANALYZE t;
+      vars: {table: t}
 related: [show-indexes, slow-query-log]

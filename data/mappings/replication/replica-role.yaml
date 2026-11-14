@@ -42,4 +42,10 @@ databases:
       - cmd: INFO replication
         note:
           zh: role 一行；从库上还有 master_host、master_link_status
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_is_in_recovery();
+        note:
+          zh: true 是备库，false 是主库
 related: [replication-status, list-replicas, set-read-only]

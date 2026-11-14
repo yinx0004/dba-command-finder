@@ -54,4 +54,18 @@ databases:
       - zh: 没有导入 CSV 的命令，要先把数据转成命令（或 Redis 协议格式）再用 --pipe 灌进去。
     verify:
       setup_shell: printf 'SET app:1 a\nSET app:2 b\n' > /tmp/data.txt
+  postgresql:
+    support: full
+    commands:
+      - cmd: COPY <table> FROM '/tmp/<table>_import.csv' WITH (FORMAT csv, HEADER);
+        note:
+          zh: 读服务器上的文件
+      - cmd: psql -d <db> -c "\copy <table> FROM '/tmp/<table>_import.csv' WITH (FORMAT csv, HEADER)"
+        shell: true
+        note:
+          zh: 读执行 psql 那台机器上的文件
+    verify:
+      setup: CREATE TABLE t (id int, a int);
+      setup_shell: printf 'id,a\n1,10\n2,20\n' > /tmp/t_import.csv
+      vars: {table: t}
 related: [export-data, logical-restore]

@@ -52,4 +52,19 @@ databases:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1', new_key: 'app:user:1:copy'}
       teardown: DEL app:user:1 app:user:1:copy
+  postgresql:
+    support: full
+    commands:
+      - cmd: CREATE TABLE <new_table> (LIKE <table> INCLUDING ALL);
+        note:
+          zh: 只复制结构，INCLUDING ALL 连同默认值、约束和索引
+      - cmd: INSERT INTO <new_table> SELECT * FROM <table>;
+      - cmd: CREATE TABLE <new_table2> AS TABLE <table>;
+        note:
+          zh: 结构和数据一起复制，但不带索引和约束
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t, new_table: t_copy, new_table2: t_copy2}
 related: [show-create-table, export-data, rename-table]

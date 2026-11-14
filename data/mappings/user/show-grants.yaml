@@ -56,4 +56,30 @@ databases:
       setup: 'ACL SETUSER app_show on >Lab#Pass123 ~* +@all'
       vars: {user: app_show}
       teardown: ACL DELUSER app_show
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT grantee, table_schema, table_name, privilege_type FROM information_schema.role_table_grants WHERE grantee = '<user>';
+        note:
+          zh: 表上的权限
+      - cmd: SELECT r.rolname FROM pg_auth_members m JOIN pg_roles r ON r.oid = m.roleid WHERE m.member = '<user>'::regrole;
+        note:
+          zh: 它是哪些角色的成员，会继承这些角色的权限
+      - cmd: \du <user>
+        note:
+          zh: psql 的快捷命令
+    fields:
+      roles: rolname
+      privileges: privilege_type
+    verify:
+      setup: |-
+        CREATE ROLE app_show LOGIN;
+        CREATE TABLE t (id int);
+        GRANT SELECT ON t TO app_show;
+        GRANT pg_read_all_stats TO app_show;
+      vars: {user: app_show}
+      teardown: |-
+        DROP OWNED BY app_show;
+        DROP TABLE t;
+        DROP ROLE app_show;
 related: [grant-privileges, list-users]

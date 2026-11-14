@@ -68,4 +68,16 @@ databases:
       log_flush: appendfsync
     notes:
       - zh: 默认只开 RDB 快照、不开 AOF，宕机可能丢几分钟的数据；对数据安全有要求时打开 AOF 并用 everysec。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW synchronous_commit;
+        note:
+          zh: on 每次提交都等 WAL 刷盘；off 最多丢最近几百毫秒的提交，但不会损坏数据
+      - cmd: SHOW fsync;
+        note:
+          zh: 必须是 on，关掉宕机后可能损坏数据
+      - cmd: SHOW wal_sync_method;
+    fields:
+      log_flush: synchronous_commit
 related: [default-rw-concern, binlog-retention]

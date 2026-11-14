@@ -44,4 +44,17 @@ databases:
       setup: |-
         SET app:old:1 a
         SET app:old:2 b
+  postgresql:
+    support: full
+    commands:
+      - cmd: DELETE FROM <table> WHERE ctid IN (SELECT ctid FROM <table> WHERE created_at < now() - interval '30 days' LIMIT 1000);
+        note:
+          zh: DELETE 没有 LIMIT，用子查询每次删 1000 行，重复执行到没有可删的为止
+    notes:
+      - zh: 每批之间提交，并留出时间让 VACUUM 回收空间；按时间清理的数据，用分区表直接删掉旧分区最快。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, created_at timestamptz);
+        INSERT INTO t SELECT g, now() - g * interval '1 day' FROM generate_series(1, 100) g;
+      vars: {table: t}
 related: [ttl-expiry, drop-table]

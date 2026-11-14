@@ -59,4 +59,18 @@ databases:
     support: none
     notes:
       - zh: 没有排序缓冲区和临时表，SORT 这类命令的中间结果都放在内存里，不单独设上限；整个实例的内存上限只有 maxmemory。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW work_mem;
+        note:
+          zh: 每个排序或哈希操作能用的内存，一条复杂查询可能同时用好几份
+      - cmd: SHOW maintenance_work_mem;
+        note:
+          zh: 建索引、VACUUM 用的内存
+      - cmd: SHOW temp_buffers;
+      - cmd: SET work_mem = '64MB';
+    fields:
+      sort: work_mem
+      tmp: temp_buffers
 related: [disk-spills, memory-usage, set-variable]

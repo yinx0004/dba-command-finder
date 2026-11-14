@@ -49,4 +49,16 @@ databases:
     fields:
       user: user
       auth: {name: nopass 或以井号开头的密码哈希, note: {zh: nopass 表示不需要密码}}
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT rolname, rolcanlogin, rolsuper, rolvaliduntil FROM pg_roles ORDER BY rolname;
+      - cmd: SELECT rolname, left(rolpassword, 13) AS auth FROM pg_authid WHERE rolpassword IS NOT NULL;
+        note:
+          zh: 密码按哪种方式存的，SCRAM-SHA-256 开头是 scram，md5 开头是旧的 md5
+    fields:
+      user: rolname
+      auth: auth
+    notes:
+      - zh: pg_roles 里也有不能登录的角色（rolcanlogin 为 false），它们只是用来分组授权的。
 related: [create-user, drop-user]

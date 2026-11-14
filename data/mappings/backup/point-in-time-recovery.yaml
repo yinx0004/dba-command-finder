@@ -63,4 +63,19 @@ databases:
       teardown: |-
         CONFIG SET aof-timestamp-enabled no
         CONFIG SET appendonly no
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW archive_mode;
+        note:
+          zh: 要按时间点恢复，先得持续归档 WAL（archive_mode = on 加 archive_command）
+      - cmd: pg_basebackup -D /tmp/base -X stream
+        shell: true
+        note:
+          zh: 做一份基础备份，作为恢复的起点
+      - cmd: echo "recovery_target_time = '<time>'" >> /tmp/base/postgresql.auto.conf && touch /tmp/base/recovery.signal
+        shell: true
+        skip: {zh: 要用这份备份另外启动一个实例并回放归档，lab 没法在运行中验证}
+        note:
+          zh: 恢复时写上目标时间，用基础备份启动，回放归档的 WAL 到这个时间点停下
 related: [logical-backup, logical-restore]

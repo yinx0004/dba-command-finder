@@ -53,4 +53,17 @@ databases:
           zh: 断开所有连接超过 3600 秒的客户端
     notes:
       - zh: 只能断开连接，不能只停掉正在执行的命令：命令在单线程里执行，一条命令跑完之前其他连接都在等。只有 Lua 脚本和函数可以用 SCRIPT KILL、FUNCTION KILL 中止。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_cancel_backend(<pid>);
+        note:
+          zh: 只取消正在执行的语句，连接保留，相当于 KILL QUERY
+      - cmd: SELECT pg_terminate_backend(<pid>);
+        note:
+          zh: 断开整个连接，没提交的事务回滚
+    notes:
+      - zh: pid 从 pg_stat_activity 看。pid 不存在时只给一条警告并返回 false，不报错。
+    verify:
+      vars: {pid: '999999'}
 related: [list-active-sessions]

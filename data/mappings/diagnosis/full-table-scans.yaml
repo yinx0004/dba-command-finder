@@ -54,4 +54,14 @@ databases:
       statement: {name: INFO commandstats 里遍历类命令的 cmdstat_ 行}
     notes:
       - zh: 没有表，对应的是一次遍历整个键空间或整个大集合的命令。KEYS 会在遍历期间挡住所有连接，生产环境用 SCAN、HSCAN、SSCAN 分批代替。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT relname, seq_scan, seq_tup_read, idx_scan FROM pg_stat_user_tables ORDER BY seq_tup_read DESC LIMIT 10;
+        note:
+          zh: 按表统计顺序扫描的次数和读过的行数
+    fields:
+      rows_examined: seq_tup_read
+    notes:
+      - zh: 只能看到哪张表被全表扫描得多，看不到是哪条语句；要定位语句，用 pg_stat_statements 找出耗时的再 EXPLAIN。
 related: [top-statements, create-index, explain]

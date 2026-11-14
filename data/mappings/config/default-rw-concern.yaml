@@ -58,4 +58,17 @@ databases:
       write: min-replicas-to-write
     notes:
       - zh: 复制是异步的，写入在主库上执行完就返回，没有全局的“写到几个节点才算成功”。要等从库确认，得在写完之后按需调用 WAIT；即使 WAIT 返回了，主库故障切换时仍可能丢掉还没复制的写入。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SHOW synchronous_commit;
+        note:
+          zh: on 表示等 WAL 刷盘（配了同步备库时还要等备库）才返回
+      - cmd: SHOW synchronous_standby_names;
+        note:
+          zh: 为空表示复制是异步的；写成 ANY 1 (s1, s2) 表示至少等一个备库确认
+    fields:
+      write: synchronous_commit
+    notes:
+      - zh: synchronous_commit 可以按会话、甚至按事务改，例如不重要的写入 SET LOCAL synchronous_commit = off。没有对应读关注的设置。
 related: [flush-durability, isolation-level, replication-status]

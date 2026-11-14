@@ -37,4 +37,18 @@ databases:
     support: none
     notes:
       - zh: 没有查询优化器，也就没有统计信息要更新。
+  postgresql:
+    support: full
+    commands:
+      - cmd: ANALYZE <table>;
+      - cmd: VACUUM (ANALYZE) <table>;
+        note:
+          zh: 同时清理死行
+    notes:
+      - zh: autovacuum 会自动做 ANALYZE；大批量导入后手动做一次，优化器才能马上用上新的统计信息。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [explain, show-indexes]

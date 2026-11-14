@@ -53,4 +53,19 @@ databases:
     alternatives:
       - title: {zh: 看内存是否接近上限、有没有在淘汰键（evicted_keys）}
         cmd: INFO stats
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT datname, temp_files, temp_bytes FROM pg_stat_database WHERE datname IS NOT NULL;
+        note:
+          zh: 排序、哈希超出 work_mem 时写的临时文件个数和字节数
+      - cmd: SHOW work_mem;
+      - cmd: SHOW log_temp_files;
+        note:
+          zh: 设成 0 会把每个临时文件记进日志，能看到是哪条语句
+    fields:
+      disk_temp: temp_files
+      sort_spill: temp_bytes
+    notes:
+      - zh: 具体某条语句有没有落盘，看 EXPLAIN ANALYZE 里的 Sort Method 是不是 external merge。
 related: [top-statements, explain]

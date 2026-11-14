@@ -48,4 +48,16 @@ databases:
       - cmd: CONFIG GET loglevel
     notes:
       - zh: 没有用命令读日志内容的办法，直接看日志文件。日志不分错误日志和普通日志，用 loglevel 控制详细程度。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SHOW log_destination;
+      - cmd: SHOW logging_collector;
+        note:
+          zh: on 时写到 log_directory 下的文件；off 时写到标准错误，在容器里用 docker logs 看
+      - cmd: SELECT pg_current_logfile();
+        note:
+          zh: 当前日志文件的路径；没开 logging_collector 时为空
+    notes:
+      - zh: 日志不分错误日志和普通日志，用 log_min_messages 控制详细程度；超级用户可以用 pg_read_file(pg_current_logfile()) 在 SQL 里读日志。
 related: [rotate-logs, slow-query-log]

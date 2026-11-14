@@ -36,4 +36,16 @@ databases:
     support: none
     notes:
       - zh: 没有视图。
+  postgresql:
+    support: full
+    commands:
+      - cmd: CREATE VIEW <view> AS SELECT id, a FROM <table> WHERE a > 0;
+      - cmd: CREATE MATERIALIZED VIEW <view>_mv AS SELECT a, count(*) FROM <table> GROUP BY a;
+        note:
+          zh: 物化视图把结果存下来，REFRESH MATERIALIZED VIEW 才更新
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t, view: v}
 related: [show-create-table, list-tables]

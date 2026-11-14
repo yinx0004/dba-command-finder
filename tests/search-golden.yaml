@@ -342,3 +342,23 @@
 - {q: SCAN, top_any: [list-tables, full-table-scans]}
 - {q: CLUSTER KEYSLOT, top: partitioning}
 - {q: COPY, top: copy-table}
+
+# PostgreSQL
+- {q: pg_stat_activity, top: list-active-sessions}
+- {q: pg_terminate_backend, top: kill-session}
+- {q: pg_cancel_backend, top: kill-session}
+- {q: pg_stat_statements, top: top-statements}
+- {q: pg_stat_replication, top_any: [list-replicas, replication-status]}
+- {q: pg_is_in_recovery, top: replica-role}
+- {q: pg_dump, top: logical-backup}
+- {q: pg_restore, top: logical-restore}
+- {q: pg_basebackup, top: point-in-time-recovery}
+- {q: VACUUM FULL, top: reclaim-space}
+- {q: pg_blocking_pids, top: lock-waits}
+- {q: statement_timeout, top: query-timeout}
+- {q: CREATE INDEX CONCURRENTLY, top: create-index}
+- {q: pg_hba, top: restrict-user-host}
+- {q: shared_buffers, top: resize-cache}
+- {q: pg_wal_replay_pause, top: pause-replication}
+- {q: pg_current_wal_lsn, top: replication-position}
+- {q: pg_wait_events, top: wait-events}

@@ -59,4 +59,22 @@ databases:
     alternatives:
       - title: {zh: 实时看实例收到的每条命令（会明显拖慢实例，只能短时间用）}
         cmd: MONITOR
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT lsn, xid, data FROM pg_logical_slot_peek_changes('<slot>', NULL, NULL);
+        note:
+          zh: 用 test_decoding 把 WAL 解码成可读的变更，看了不消费；用 get 代替 peek 会消费掉
+    fields:
+      position: lsn
+      content: data
+    notes:
+      - zh: 要先有逻辑复制槽（wal_level = logical），只能看到建槽之后的变更；没建槽时，只能用 pg_waldump 读 WAL 文件。
+    verify:
+      setup: |-
+        SELECT pg_create_logical_replication_slot('lab_decode', 'test_decoding');
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t VALUES (1, 10);
+      vars: {slot: lab_decode}
+      teardown: SELECT pg_drop_replication_slot('lab_decode');
 related: [binlog-retention, point-in-time-recovery]

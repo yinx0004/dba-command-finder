@@ -46,4 +46,14 @@ databases:
           zh: 不保存直接退出，上次快照之后的写入会丢
     notes:
       - zh: 7.0 起，有从库时主库会先等从库追上（最多 shutdown-timeout 秒）再退出。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: pg_ctl stop -D "$PGDATA" -m fast
+        shell: true
+        skip: {zh: 会关掉 lab 的实例}
+        note:
+          zh: fast 断开所有连接、回滚没提交的事务后正常关闭；smart 等所有连接自己断开；immediate 直接退出，下次启动要做恢复
+    notes:
+      - zh: 没有关闭实例的 SQL 命令，要在服务器上用 pg_ctl 或 systemctl。
 related: [rotate-logs]

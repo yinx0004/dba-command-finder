@@ -55,4 +55,17 @@ databases:
       - zh: 普通命令没有超时，执行时也中止不了，只能在客户端设置读超时；BUSY 只针对脚本和函数，而且脚本不会被自动中止。
     verify:
       teardown: CONFIG SET lua-time-limit 5000
+  postgresql:
+    support: full
+    commands:
+      - cmd: SET statement_timeout = '1s';
+        note:
+          zh: 当前连接里超过 1 秒的语句被取消
+      - cmd: ALTER ROLE <user> SET statement_timeout = '30s';
+        note:
+          zh: 给某个用户之后的连接都设上
+    verify:
+      setup: CREATE ROLE app_timeout LOGIN;
+      vars: {user: app_timeout}
+      teardown: DROP ROLE app_timeout;
 related: [kill-session, slow-query-log]

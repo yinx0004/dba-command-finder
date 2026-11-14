@@ -59,4 +59,12 @@ databases:
       conn_id: id
       user: user
       client: addr
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_backend_pid() AS pid, current_user, session_user, inet_client_addr() AS client_addr, current_database();
+    fields:
+      conn_id: pid
+      user: current_user
+      client: client_addr
 related: [list-active-sessions, show-grants, server-version]
