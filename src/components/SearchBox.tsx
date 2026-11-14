@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Equivalence } from '../lib/pair';
-import { createSearcher, type SearchDoc } from '../lib/search';
+import { createSearcher, type SearchDoc, type VersionedCmd } from '../lib/search';
+import { firstUsable } from '../lib/version';
+import { fmt, onPrefChange, readPref, type Pref } from '../lib/version-pref';
 
 interface Labels {
   searchLabel: string;
@@ -12,13 +14,18 @@ interface Labels {
   submitMapping: string;
   noResultTail: string;
   noEquivalent: string;
+  noneOnLine: string; // "{line} 上没有可用的命令"
   eq: Record<Equivalence, string>;
 }
 
 interface Props {
   docs: SearchDoc[];
+  sourceId: string;
   sourceName: string;
+  targetId: string;
   targetName: string;
+  /** version lines the reader can choose per database, as in the version bar */
+  versionOptions: Record<string, string[]>;
   tries: string[];
   /** link prefix for entries, e.g. "/dba-command-finder/zh/" */
   entryBase: string;
@@ -34,10 +41,35 @@ function readQuery(): string {
   }
 }
 
-export default function SearchBox({ docs, sourceName, targetName, tries, entryBase, submitUrl, labels }: Props) {
+export default function SearchBox({
+  docs,
+  sourceId,
+  sourceName,
+  targetId,
+  targetName,
+  versionOptions,
+  tries,
+  entryBase,
+  submitUrl,
+  labels,
+}: Props) {
   const searcher = useMemo(() => createSearcher(docs), [docs]);
   const [q, setQ] = useState('');
+  const [pref, setPref] = useState<Pref>({});
   const input = useRef<HTMLInputElement>(null);
+
+  // Follow the reader's version choice from the version bar.
+  useEffect(() => {
+    setPref(readPref(versionOptions));
+    return onPrefChange(setPref);
+  }, [versionOptions]);
+
+  /** The command to show on a result row: the first one the reader's version can use. */
+  const shown = (cmds: VersionedCmd[], db: string, fallback: string) => {
+    if (cmds.length === 0) return fallback;
+    const line = pref[db];
+    return firstUsable(cmds, line || undefined)?.cmd ?? fmt(labels.noneOnLine, { line });
+  };
 
   // Restore ?q= so a search can be shared as a link.
   useEffect(() => {
@@ -117,11 +149,13 @@ export default function SearchBox({ docs, sourceName, targetName, tries, entryBa
                   <div className="pair">
                     <div>
                       <span className="side side-source">{sourceName}</span>
-                      <span>{d.source}</span>
+                      <span>{shown(d.sourceCmds, sourceId, d.source)}</span>
                     </div>
                     <div>
                       <span className="side side-target">{targetName}</span>
-                      <span>{d.target || (d.equivalence === 'none' ? labels.noEquivalent : labels.eq.missing)}</span>
+                      <span>
+                        {shown(d.targetCmds, targetId, d.equivalence === 'none' ? labels.noEquivalent : labels.eq.missing)}
+                      </span>
                     </div>
                   </div>
                 </a>

@@ -2,7 +2,7 @@
 import Base from '../../../layouts/Base.astro';
 import EqBadge from '../../../components/EqBadge.astro';
 import { loadDataset } from '../../../lib/data';
-import { pairMappings } from '../../../lib/docs';
+import { pairMappings, versionedCmds } from '../../../lib/docs';
 import { LANGS, t, UI, type Lang } from '../../../lib/i18n';
 import { equivalence } from '../../../lib/pair';
 import { categoryHref, entryHref, langHome, newIssueUrl } from '../../../lib/site';
@@ -65,7 +65,14 @@ const T = dbName.get(target)!;
                   {m.status === 'deprecated' && <span class="tag">{ui.deprecated}</span>}
                 </div>
                 <div class="row-cmds">
-                  {s.commands[0]?.cmd} → {tg?.commands[0]?.cmd ?? (eq === 'none' ? ui.noEquivalent : ui.eq.missing)}
+                  <span data-pick={JSON.stringify(versionedCmds(s))} data-db={source}>{s.commands[0]?.cmd}</span> →{' '}
+                  {tg?.commands.length ? (
+                    <span data-pick={JSON.stringify(versionedCmds(tg))} data-db={target}>{tg.commands[0].cmd}</span>
+                  ) : eq === 'none' ? (
+                    ui.noEquivalent
+                  ) : (
+                    ui.eq.missing
+                  )}
                 </div>
               </a>
             );

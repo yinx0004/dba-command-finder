@@ -195,3 +195,16 @@ td.mono { overflow-wrap: anywhere; }
 .panel-missing { border-style: dashed; }
 .verified-label { color: var(--exact-fg); font-weight: 500; }
 .field-ok { color: var(--exact-fg); margin-left: 6px; font-family: var(--sans); font-size: 12px; cursor: help; }
+
+/* version filter */
+.version-bar { background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+.version-bar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 8px; padding-bottom: 8px; }
+.version-bar-title { font-weight: 600; color: var(--ink-2); }
+.version-select { display: inline-flex; align-items: center; gap: 6px; }
+.version-select select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; padding: 4px 8px; min-height: 32px; }
+.cmd.ver-unavailable code { opacity: 0.45; }
+.cmd.ver-unavailable .copy { opacity: 0.6; }
+.ver-note[hidden] { display: none; }
+.cmd.ver-unavailable .ver-note { color: var(--none-fg); background: var(--none-bg); }
+[data-verified].ver-mine { text-decoration: underline; text-underline-offset: 3px; font-weight: 700; }
+.ver-none { color: var(--muted); font-style: italic; }
