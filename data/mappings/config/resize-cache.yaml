@@ -1,0 +1,37 @@
+schema_version: 2
+id: resize-cache
+category: config
+title: {zh: 在线调整缓存大小}
+summary: {zh: 机器加了内存，或者缓存命中率太低时，不重启实例直接把缓存调大。}
+keywords:
+  zh: [调整缓存, 缓冲池大小, 加大内存, 在线调整]
+  en: [innodb_buffer_pool_size, cache_size, wiredtigerengineruntimeconfig, cachesizegb]
+fields:
+  - {id: size, name: {zh: 当前缓存上限}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SET GLOBAL innodb_buffer_pool_size = 268435456;
+        since: 5.7.5
+        note: {zh: 单位字节；会按 chunk 大小取整}
+      - cmd: SHOW STATUS LIKE 'Innodb_buffer_pool_resize_status';
+        since: 5.7.5
+        note: {zh: 调整进度}
+    fields:
+      size: {name: innodb_buffer_pool_size, skip: {zh: 这两条命令的输出里不带这个名字，用 SELECT @@innodb_buffer_pool_size 确认}}
+    notes:
+      - zh: 新值会按 innodb_buffer_pool_chunk_size × innodb_buffer_pool_instances 的整数倍取整；缩小时会短暂阻塞。用 SET PERSIST（8.0 起）可以让重启后也生效。
+    refs:
+      - {title: 'MySQL: Configuring InnoDB Buffer Pool Size', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool-resize.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ setParameter: 1, wiredTigerEngineRuntimeConfig: "cache_size=1G" })'
+      - cmd: 'db.serverStatus().wiredTiger.cache["maximum bytes configured"]'
+        note: {zh: 确认当前上限（字节）}
+    notes:
+      - zh: 只对当前进程生效，重启后恢复为配置文件里的 storage.wiredTiger.engineConfig.cacheSizeGB，记得同时改配置文件。
+    refs:
+      - {title: 'MongoDB: WiredTiger Memory Use', url: 'https://www.mongodb.com/docs/manual/core/wiredtiger/#memory-use'}
+related: [cache-hit-ratio, set-variable]

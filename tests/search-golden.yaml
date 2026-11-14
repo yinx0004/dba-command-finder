@@ -225,5 +225,18 @@
 - {q: create view, top: create-view}
 - {q: 视图, top: create-view}
 
+- {q: innodb_buffer_pool_size, top: resize-cache}
+- {q: 调整缓存, top: resize-cache}
+- {q: innodb_lock_wait_timeout, top: lock-wait-timeout}
+- {q: 锁等待超时, top: lock-wait-timeout}
+- {q: 排序规则, top: charset-collation}
+- {q: 乱码, top: charset-collation}
+- {q: 时区, top: time-zone}
+- {q: 差 8 小时, top: time-zone}
+- {q: my.cnf, top: config-file}
+- {q: 配置文件, top: config-file}
+- {q: tls, top: tls-check}
+- {q: 加密连接, top: tls-check}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

@@ -1,0 +1,29 @@
+schema_version: 2
+id: lock-wait-timeout
+category: config
+title: {zh: 查看和设置锁等待超时}
+summary: {zh: 等锁等多久就放弃报错；太长会让请求堆积，太短会让事务频繁失败。}
+keywords:
+  zh: [锁等待超时, 锁超时, 等锁多久, Lock wait timeout exceeded]
+  en: [innodb_lock_wait_timeout, lock_wait_timeout, maxtransactionlockrequesttimeoutmillis, locktimeout]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT @@innodb_lock_wait_timeout, @@lock_wait_timeout;
+        note: {zh: 前者是行锁（默认 50 秒），后者是元数据锁（默认 31536000 秒，即一年）}
+      - cmd: SET GLOBAL innodb_lock_wait_timeout = 10;
+        note: {zh: 只影响之后新建的连接；当前会话用 SET SESSION}
+    refs:
+      - {title: 'MySQL: innodb_lock_wait_timeout', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-parameters.html#sysvar_innodb_lock_wait_timeout'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getParameter: 1, maxTransactionLockRequestTimeoutMillis: 1 })'
+        note: {zh: 默认只有 5 毫秒}
+      - cmd: 'db.adminCommand({ setParameter: 1, maxTransactionLockRequestTimeoutMillis: 100 })'
+    notes:
+      - zh: 只对多文档事务里的锁等待生效。默认 5 毫秒拿不到锁就以 LockTimeout 中止事务（带 TransientTransactionError 标签，驱动可以整笔重试），和 MySQL 动辄等几十秒的思路完全不同。普通的单文档写冲突由服务端自动重试，不受这个参数影响。
+    refs:
+      - {title: 'MongoDB: maxTransactionLockRequestTimeoutMillis', url: 'https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.maxTransactionLockRequestTimeoutMillis'}
+related: [lock-waits, long-transactions]

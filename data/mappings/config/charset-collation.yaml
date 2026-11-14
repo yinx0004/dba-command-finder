@@ -1,0 +1,42 @@
+schema_version: 2
+id: charset-collation
+category: config
+title: {zh: 查看字符集和排序规则}
+summary: {zh: 出现乱码、排序不对、大小写匹配不一致时，先看字符集和排序规则。}
+keywords:
+  zh: [字符集, 排序规则, 乱码, 大小写敏感, utf8mb4]
+  en: [character_set, collation, utf8mb4, case insensitive]
+fields:
+  - {id: collation, name: {zh: 排序规则}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW VARIABLES WHERE Variable_name LIKE 'character_set%' OR Variable_name LIKE 'collation%';
+        note: {zh: 服务器、库、连接各自的字符集和排序规则}
+      - cmd: SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>';
+        note: {zh: 每张表的排序规则}
+    fields:
+      collation: TABLE_COLLATION
+    refs:
+      - {title: 'MySQL: Character Sets and Collations', url: 'https://dev.mysql.com/doc/refman/8.4/en/charset.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, name VARCHAR(20)) DEFAULT CHARSET = utf8mb4;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.getCollectionInfos({ name: "<collection>" })'
+        note: {zh: options.collation 是集合的默认排序规则；没有就是按二进制比较}
+      - cmd: 'db.<collection>.find().collation({ locale: "zh", strength: 1 })'
+        note: {zh: 单次查询指定排序规则；strength 1 表示不区分大小写和重音}
+    fields:
+      collation: collation
+    notes:
+      - zh: 字符串一律是 UTF-8，没有字符集要设置。排序规则可以设在集合、索引或单次查询上；默认按二进制比较，所以大小写敏感，中文也不会按拼音排序。
+      - zh: 查询要用上索引，查询的 collation 必须和索引的一致。
+    refs:
+      - {title: 'MongoDB: Collation', url: 'https://www.mongodb.com/docs/manual/reference/collation/'}
+    verify:
+      setup: 'db.createCollection("t", { collation: { locale: "zh" } }); db.t.insertOne({ name: "张三" })'
+      vars: {collection: t}
+related: [show-create-table, time-zone]

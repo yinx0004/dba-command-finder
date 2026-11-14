@@ -1,0 +1,36 @@
+schema_version: 2
+id: config-file
+category: config
+title: {zh: 查看配置文件在哪}
+summary: {zh: 要改配置时，先找到实例实际读的是哪个配置文件、某个参数是从哪设置的。}
+keywords:
+  zh: [配置文件, my.cnf, mongod.conf, 配置在哪]
+  en: [my.cnf, mongod.conf, config file, variables_info, getcmdlineopts]
+fields:
+  - {id: source, name: {zh: 参数来源}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: mysqld --verbose --help 2>/dev/null | grep -A1 'Default options'
+        shell: true
+        note: {zh: mysqld 按顺序读取的配置文件路径}
+      - cmd: SELECT VARIABLE_NAME, VARIABLE_SOURCE, VARIABLE_PATH FROM performance_schema.variables_info WHERE VARIABLE_SOURCE <> 'COMPILED';
+        since: '8.0'
+        note: {zh: 每个被改过的参数来自哪个文件、命令行还是 SET PERSIST}
+    fields:
+      source: VARIABLE_SOURCE
+    refs:
+      - {title: 'MySQL: Using Option Files', url: 'https://dev.mysql.com/doc/refman/8.4/en/option-files.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 })'
+        note: {zh: argv 是启动命令行，parsed.config 是配置文件路径}
+    fields:
+      source: {name: argv, note: {zh: 启动时的完整命令行，配置文件路径在 --config / -f 之后}}
+    notes:
+      - zh: mongod 不会去默认路径找配置文件，只读 --config 指定的那个；包管理器安装时 /etc/mongod.conf 是写在 systemd 服务定义里的。
+    refs:
+      - {title: 'MongoDB: Configuration File Options', url: 'https://www.mongodb.com/docs/manual/reference/configuration-options/'}
+related: [show-variables, set-variable]
