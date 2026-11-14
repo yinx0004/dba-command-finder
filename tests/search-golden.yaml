@@ -271,5 +271,8 @@
 - {q: modify column, top: modify-column}
 - {q: int 改 bigint, top: modify-column}
 
+- {q: mongos 连接数, top: connection-usage}
+- {q: maxIncomingConnections, top: connection-usage}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}

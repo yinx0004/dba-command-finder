@@ -1,6 +1,7 @@
 // Facts for the home page, all computed from the data and the lab's results, never written by hand.
 import type { Dataset } from './data';
 import type { Verification } from '../../lab/plan';
+import { labSkip } from './roles';
 import { availableIn, compareVersions } from './version';
 
 export interface HomeStats {
@@ -17,10 +18,11 @@ export interface HomeStats {
 export function homeStats(ds: Dataset): HomeStats {
   let labCommands = 0;
   let versionBound = 0;
+  const dbs = new Map(ds.databases.map((d) => [d.id, d]));
   for (const m of ds.mappings) {
-    for (const d of Object.values(m.databases)) {
+    for (const [db, d] of Object.entries(m.databases)) {
       for (const c of d.commands) {
-        if (!c.skip) labCommands++;
+        if (!labSkip(c, dbs.get(db))) labCommands++;
         if (c.since || c.deprecated_in || c.removed_in) versionBound++;
       }
     }
@@ -71,9 +73,10 @@ export function labExcerpt(ds: Dataset, v: Verification | null): LabExcerpt | nu
   // All as expected: every entry that runs something on a database counts every version of it as clean.
   const runsByDb = new Map<string, string[]>();
   for (const r of v.runs) runsByDb.set(r.db, [...(runsByDb.get(r.db) ?? []), r.version]);
+  const dbDefs = new Map(ds.databases.map((d) => [d.id, d]));
   const allAsExpected = ds.mappings.every((m) =>
     Object.entries(m.databases).every(([db, d]) => {
-      if (!d.commands.some((c) => !c.skip)) return true;
+      if (!d.commands.some((c) => !labSkip(c, dbDefs.get(db)))) return true;
       const ran = runsByDb.get(db) ?? [];
       const clean = v.entries[m.id]?.[db]?.versions ?? [];
       return ran.every((ver) => clean.includes(ver));

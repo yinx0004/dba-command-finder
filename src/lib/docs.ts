@@ -1,6 +1,7 @@
 import type { Dataset, Entry } from './data';
 import { t, tList, type Lang } from './i18n';
 import { equivalence } from './pair';
+import { roleNames } from './roles';
 import type { DatabaseEntry } from './schema';
 import { normalize, type SearchDoc, type VersionedCmd } from './search';
 
@@ -20,7 +21,12 @@ export function toSearchDocs(ds: Dataset, lang: Lang): SearchDoc[] {
   const catName = new Map(ds.categories.map((c) => [c.id, t(c.name, lang)]));
   return pairMappings(ds).map((m) => {
     const category = catName.get(m.category) ?? m.category;
-    const keywords = [...tList(m.keywords, lang), ...(lang === 'zh' ? (m.keywords.en ?? []) : m.keywords.zh)];
+    // Role names ("mongos", "config server") make "mongos 连接数" find entries written per role.
+    const roles = Object.entries(m.databases).flatMap(([db, d]) => {
+      const def = ds.databases.find((x) => x.id === db);
+      return d.commands.flatMap((c) => roleNames(c, def));
+    });
+    const keywords = [...tList(m.keywords, lang), ...(lang === 'zh' ? (m.keywords.en ?? []) : m.keywords.zh), ...new Set(roles)];
     const s = m.databases[source];
     const tg = m.databases[target];
     return {

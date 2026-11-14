@@ -52,6 +52,17 @@ data/
 
 不要删掉旧版本的命令，用户可能还在用旧版本。
 
+### 在哪个进程上执行
+
+有的数据库不止一种进程，例如 MongoDB 的 mongod、mongos 和 config server。这些角色登记在 [data/databases.yaml](data/databases.yaml) 的 `roles` 里，命令用 `on` 写明能在哪些角色上执行，页面会在命令旁显示角色标签：
+
+```yaml
+- cmd: db.serverStatus().connections
+  on: [mongod, mongos, configsvr]
+```
+
+不写 `on` 就和以前一样，不显示标签。各角色写法相同的命令只写一条，列出所有角色；写法不同时分成几条，各自标上角色。
+
 ### 版本筛选
 
 页面顶部的「我的版本」可以选 MySQL 和 MongoDB 的版本线，选项就是 `data/databases.yaml` 里的 `lab_versions`。选了之后：
@@ -111,6 +122,7 @@ mysql:
 
 - **命令行工具**（`mysqldump`、`mongodump`、`mongoexport`……）：给命令加 `shell: true`，lab 会在容器里用 bash 执行。MySQL 容器里已经写好 `~/.my.cnf`，所以命令不用带 `-u`、`-p`。需要先准备文件时（例如恢复前先有一份备份），用 `verify.setup_shell`。
 - **没法自动执行的命令**（例如 `KILL` 需要另一个连接）：给命令加 `skip: {zh: 原因}`，页面上会显示「未自动验证」和原因。
+- **只能在 mongos 或 config server 上执行的命令**：lab 只有副本集（`roles` 里标了 `lab: true` 的角色）。`on` 里没有 mongod 的命令会被自动跳过，页面上显示 `roles_unverified` 写的原因，不用再写 `skip`。
 - **没法检查的字段**：单个字段在字段名后面加 `skip: {zh: 原因}`；整条记录的字段都查不了（例如只有从库上才有的字段），用 `verify.skip_fields`。某个字段从某个版本起才出现在输出里时，给它加 `since`，更早的版本上就不检查它。
 
 字段检查只确认字段名出现在输出里，不确认它出现在哪一行。例如 `effectiveUsers` 只出现在内部线程上，客户端连接上没有，这种情况要靠 `skip` 写明。

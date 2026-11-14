@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { loadDataset } from '../src/lib/data';
+import { labSkip } from '../src/lib/roles';
 import { compareVersions } from '../src/lib/version';
 import { ENGINES } from './engines';
 import { expectation, fieldPaths, fill, labDatabase, outputHasPath, type CommandResult, type EntryResult, type FieldResult, type RunResult } from './plan';
@@ -55,6 +56,7 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
     const server = await engine.serverVersion();
     console.log(`  server ${server}`);
     const entries: Record<string, EntryResult> = {};
+    const dbDef = ds.databases.find((x) => x.id === db);
     for (const m of ds.mappings) {
       const d = m.databases[db];
       if (!d || d.commands.length === 0 || (args.only && m.id !== args.only)) continue;
@@ -79,8 +81,9 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
       const outputs: string[] = [];
       for (const c of d.commands) {
         let res: CommandResult;
-        if (c.skip) {
-          res = { cmd: c.cmd, status: 'skip', detail: c.skip.zh };
+        const skip = labSkip(c, dbDef);
+        if (skip) {
+          res = { cmd: c.cmd, status: 'skip', detail: skip.zh };
         } else {
           const expect = expectation(c, server);
           const f = fill(c.cmd, vars);
@@ -128,7 +131,7 @@ async function runOne(db: string, version: string): Promise<{ result: RunResult;
           else {
             const missing = paths.filter((p) => !outputHasPath(all, p)).map((p) => p.join('.'));
             // On a version where some commands don't exist yet (or anymore), the field may come from one of those.
-            const partial = d.commands.some((c) => !c.skip && expectation(c, server) === 'error');
+            const partial = d.commands.some((c) => !labSkip(c, dbDef) && expectation(c, server) === 'error');
             r = !missing.length
               ? { id, name, status: 'pass' }
               : partial
