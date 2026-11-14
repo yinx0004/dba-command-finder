@@ -1,0 +1,43 @@
+schema_version: 2
+id: cache-hit-ratio
+category: diagnosis
+title: {zh: 查看缓存命中率}
+summary: {zh: 看读请求有多少直接从内存里拿到，判断缓存（buffer pool / WiredTiger cache）够不够大。}
+keywords:
+  zh: [缓存命中率, 命中率, 缓冲池, 内存够不够]
+  en: [buffer pool, hit ratio, wiredtiger cache, innodb_buffer_pool]
+fields:
+  - {id: requests, name: {zh: 读请求次数}}
+  - {id: misses, name: {zh: 没命中、要读盘的次数}}
+  - {id: used, name: {zh: 缓存里的数据量}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool_%';
+        note: {zh: 命中率 = 1 - Innodb_buffer_pool_reads / Innodb_buffer_pool_read_requests}
+      - cmd: SELECT @@innodb_buffer_pool_size;
+        note: {zh: 缓存配置的大小}
+    fields:
+      requests: Innodb_buffer_pool_read_requests
+      misses: Innodb_buffer_pool_reads
+      used: Innodb_buffer_pool_bytes_data
+    refs:
+      - {title: 'MySQL: InnoDB Buffer Pool', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.serverStatus().wiredTiger.cache
+        note: {zh: 缓存的所有计数}
+      - cmd: 'const c = db.serverStatus().wiredTiger.cache; 1 - c["pages read into cache"] / c["pages requested from the cache"]'
+        note: {zh: 直接算出命中率}
+    fields:
+      requests: pages requested from the cache
+      misses: pages read into cache
+      used: bytes currently in the cache
+    notes:
+      - zh: WiredTiger 缓存默认是（内存 - 1 GB）的一半，剩下的内存给操作系统缓存压缩后的数据文件，所以 WiredTiger 没命中不一定真的读了磁盘。
+      - zh: 另外要看「tracked dirty bytes in the cache」：脏数据占比太高会让写入变慢。
+    refs:
+      - {title: 'MongoDB: WiredTiger Storage Engine', url: 'https://www.mongodb.com/docs/manual/core/wiredtiger/'}
+related: [memory-usage, server-status]

@@ -1,0 +1,30 @@
+schema_version: 2
+id: wait-events
+category: diagnosis
+title: {zh: 查看实例在等什么}
+summary: {zh: 实例变慢但 CPU 不高时，看时间主要花在等锁、等 IO 还是等别的。}
+keywords:
+  zh: [等待事件, 在等什么, 等待, 排队]
+  en: [wait events, waits_global_by_latency, globallock, currentqueue]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.waits_global_by_latency LIMIT 10;
+        note: {zh: 按累计等待时间排序的等待事件}
+      - cmd: SELECT * FROM sys.wait_classes_global_by_latency;
+        note: {zh: 按大类（IO、锁、同步）汇总}
+    refs:
+      - {title: 'MySQL: sys.waits_global_by_latency', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-waits-global-by-latency.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.serverStatus().globalLock
+        note: {zh: 正在排队等锁的读写请求数（currentQueue）}
+      - cmd: db.serverStatus().locks
+        note: {zh: 各级锁的获取次数、等待次数和等待时间}
+    notes:
+      - zh: 没有按等待事件分类统计的视图。最接近的是锁的排队和等待时间；WiredTiger 内部的等待（例如等缓存腾出空间）在 serverStatus().wiredTiger 的各项计数里。
+    refs:
+      - {title: 'MongoDB: serverStatus', url: 'https://www.mongodb.com/docs/manual/reference/command/serverStatus/'}
+related: [lock-waits, cache-hit-ratio]

@@ -170,5 +170,17 @@
 - {q: 只读设置, top: set-read-only}
 - {q: 列表用户, top: list-users}
 
+- {q: 最耗时的语句, top: top-statements}
+- {q: statement_analysis, top: top-statements}
+- {q: top sql, top: top-statements}
+- {q: 全表扫描, top: full-table-scans}
+- {q: COLLSCAN, top: full-table-scans}
+- {q: 等待事件, top: wait-events}
+- {q: 在等什么, top: wait-events}
+- {q: 缓存命中率, top: cache-hit-ratio}
+- {q: buffer pool, top: cache-hit-ratio}
+- {q: 内存占用, top: memory-usage}
+- {q: tcmalloc, top: memory-usage}
+
 - {q: xyzzy, empty: true}
 - {q: '   ', empty: true}
