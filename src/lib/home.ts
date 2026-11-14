@@ -36,10 +36,18 @@ export function homeStats(ds: Dataset): HomeStats {
 }
 
 export interface LabStatus {
-  date: string; // YYYY-MM-DD of the lab run
+  date: string; // YYYY-MM-DD of the lab run, in Beijing time
   versions: number;
   /** every command behaved as expected on every version the lab ran */
   allAsExpected: boolean;
+}
+
+/**
+ * The calendar date of an ISO timestamp in Beijing time (UTC+8, no daylight saving), which is what the
+ * site's readers go by; the UTC date is a day behind for anything before 08:00 there.
+ */
+export function beijingDate(iso: string): string {
+  return new Date(Date.parse(iso) + 8 * 3600 * 1000).toISOString().slice(0, 10);
 }
 
 /** When the lab last ran and whether everything behaved as expected; null without lab results. */
@@ -57,5 +65,5 @@ export function labStatus(ds: Dataset, v: Verification | null): LabStatus | null
       return ran.every((ver) => clean.includes(ver));
     }),
   );
-  return { date: v.generatedAt.slice(0, 10), versions: v.runs.length, allAsExpected };
+  return { date: beijingDate(v.generatedAt), versions: v.runs.length, allAsExpected };
 }

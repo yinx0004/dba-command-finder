@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadDataset } from '../src/lib/data';
-import { homeStats, labStatus } from '../src/lib/home';
+import { beijingDate, homeStats, labStatus } from '../src/lib/home';
 import { ciRunUrl, GITHUB } from '../src/lib/site';
 
 const ds = loadDataset();
@@ -32,5 +32,20 @@ describe('CI run link', () => {
   it('points at the run that built the site, else the list of runs', () => {
     expect(ciRunUrl('123')).toBe(`${GITHUB}/actions/runs/123`);
     expect(ciRunUrl('')).toBe(`${GITHUB}/actions`);
+  });
+});
+
+describe('the lab date', () => {
+  it('is the calendar date in Beijing time', () => {
+    expect(beijingDate('2026-11-14T05:30:00.000Z')).toBe('2026-11-14');
+    // 18:43 UTC is already 02:43 the next day in Beijing.
+    expect(beijingDate('2026-11-14T18:43:00.000Z')).toBe('2026-11-15');
+    expect(beijingDate('2026-12-31T16:00:00.000Z')).toBe('2027-01-01');
+    expect(beijingDate('2026-12-31T15:59:59.000Z')).toBe('2026-12-31');
+  });
+
+  it('is what the lab status reports', () => {
+    const s = labStatus(ds, { generatedAt: '2026-11-14T18:43:00.000Z', runs: [{ db: 'mysql', version: '8.4', server: '8.4.11' }], entries: {} });
+    expect(s!.date).toBe('2026-11-15');
   });
 });

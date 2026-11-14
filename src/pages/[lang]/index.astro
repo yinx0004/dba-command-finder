@@ -99,7 +99,7 @@ const ledger = runTotals(ds, v);
           <div class="home-ledger">
             <div class="home-ledger-head">
               <h3>{h.ledgerTitle}</h3>
-              {lab && <span>{lab.date}</span>}
+              {lab && <span>{h.ledgerDate(lab.date)}</span>}
             </div>
             <div class="table-box">
               <table>
