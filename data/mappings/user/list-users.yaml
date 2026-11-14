@@ -1,0 +1,40 @@
+schema_version: 2
+id: list-users
+category: user
+title: {zh: 列出所有用户}
+summary: {zh: 看实例上有哪些账号，清理不用的账号或做权限审计时用。}
+keywords:
+  zh: [用户列表, 有哪些用户, 账号列表]
+  en: [mysql.user, getusers, system.users, list users]
+fields:
+  - {id: user, name: {zh: 用户名}}
+  - {id: auth, name: {zh: 认证方式}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT user, host, plugin, account_locked FROM mysql.user;
+    fields:
+      user: user
+      auth: plugin
+    refs:
+      - {title: 'MySQL: Grant Tables', url: 'https://dev.mysql.com/doc/refman/8.4/en/grant-tables.html'}
+    verify:
+      setup: CREATE USER 'app_list'@'%' IDENTIFIED BY 'Lab#Pass123';
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.getUsers()
+        note: {zh: 只列出当前库（认证库）的用户}
+      - cmd: 'db.getSiblingDB("admin").system.users.find({}, { user: 1, db: 1, roles: 1 })'
+        note: {zh: 列出所有库的用户}
+    fields:
+      user: user
+      auth: mechanisms
+    notes:
+      - zh: 用户按认证库划分，db.getUsers() 只看当前库；所有库的用户都存在 admin.system.users 里。
+    refs:
+      - {title: 'MongoDB: db.getUsers()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.getUsers/'}
+    verify:
+      setup: 'db.createUser({ user: "app_list", pwd: "Lab#Pass123", roles: [] })'
+related: [create-user, drop-user]

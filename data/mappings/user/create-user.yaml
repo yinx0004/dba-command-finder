@@ -1,0 +1,36 @@
+schema_version: 2
+id: create-user
+category: user
+title: {zh: 创建用户}
+summary: {zh: 给应用或同事新建一个数据库账号。}
+keywords:
+  zh: [建用户, 新建账号, 创建账号]
+  en: [create user, createuser, add user]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE USER '<user>'@'<host>' IDENTIFIED BY '<password>';
+        note: {zh: "'%' 表示允许从任意主机连接"}
+      - cmd: CREATE USER IF NOT EXISTS '<user>'@'<host>' IDENTIFIED BY '<password>';
+        note: {zh: 用户已存在时只给警告，不报错}
+    notes:
+      - zh: 8.0 起默认的认证插件是 caching_sha2_password，很老的客户端可能连不上，可以加 IDENTIFIED WITH mysql_native_password BY ...
+    refs:
+      - {title: 'MySQL: CREATE USER', url: 'https://dev.mysql.com/doc/refman/8.4/en/create-user.html'}
+    verify:
+      vars: {user: app_create, host: '%', password: 'Lab#Pass123'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.createUser({ user: "<user>", pwd: "<password>", roles: [{ role: "readWrite", db: "<db>" }] })'
+        note: {zh: 交互使用时把 pwd 写成 passwordPrompt()，密码不会留在历史记录里}
+    notes:
+      - zh: 用户属于执行命令时所在的库（认证库），由「用户名 + 认证库」唯一确定，连接时要用 authSource 指定这个库。通常统一在 admin 库里创建。
+      - zh: '没有 MySQL user@host 那样按来源主机区分的账号；要限制来源 IP，在 createUser 里加 authenticationRestrictions: [{ clientSource: ["10.0.0.0/8"] }]。'
+      - zh: 创建时可以直接用 roles 授权；MySQL 要再执行 GRANT。
+    refs:
+      - {title: 'MongoDB: db.createUser()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.createUser/'}
+    verify:
+      vars: {user: app_create, password: 'Lab#Pass123'}
+related: [grant-privileges, list-users]

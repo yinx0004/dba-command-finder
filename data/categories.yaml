@@ -8,6 +8,9 @@
 - id: config
   name: {zh: 参数配置}
   desc: {zh: 查看与修改运行参数}
+- id: user
+  name: {zh: 用户权限}
+  desc: {zh: 创建用户、授权、查看权限}
 - id: replication
   name: {zh: 复制}
   desc: {zh: 主从状态、复制延迟}
