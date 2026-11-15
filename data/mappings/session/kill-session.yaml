@@ -53,6 +53,8 @@ databases:
           zh: 断开所有连接超过 3600 秒的客户端
     notes:
       - zh: 只能断开连接，不能只停掉正在执行的命令：命令在单线程里执行，一条命令跑完之前其他连接都在等。只有 Lua 脚本和函数可以用 SCRIPT KILL、FUNCTION KILL 中止。
+    refs:
+      - {title: 'Redis: CLIENT KILL', url: 'https://redis.io/docs/latest/commands/client-kill/'}
   postgresql:
     support: full
     commands:
@@ -64,6 +66,8 @@ databases:
           zh: 断开整个连接，没提交的事务回滚
     notes:
       - zh: pid 从 pg_stat_activity 看。pid 不存在时只给一条警告并返回 false，不报错。
+    refs:
+      - {title: 'PostgreSQL: Server Signaling Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL'}
     verify:
       vars: {pid: '999999'}
   tidb:
@@ -81,6 +85,8 @@ databases:
     notes:
       - zh: 6.1 起默认开启 Global Kill，KILL 可以跨 tidb-server 生效；更早的版本只能在连接所在的那台 tidb-server 上 KILL，经过负载均衡时容易杀错。
       - zh: 连接 id 不存在时不报错。
+    refs:
+      - {title: 'TiDB: KILL', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-kill/'}
     verify:
       vars: {processlist_id: '999999'}
 related: [list-active-sessions]

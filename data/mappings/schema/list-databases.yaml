@@ -36,6 +36,9 @@ databases:
       - cmd: CONFIG GET databases
     notes:
       - zh: 库只有编号，没有名字；空的库不会出现在 INFO keyspace 里。
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
+      - {title: 'Redis: SELECT', url: 'https://redis.io/docs/latest/commands/select/'}
     verify:
       setup: SET app:1 a
       teardown: DEL app:1
@@ -46,10 +49,15 @@ databases:
       - cmd: \l
         note:
           zh: psql 的快捷命令，带上编码、排序规则和访问权限
+    refs:
+      - {title: 'PostgreSQL: pg_database', url: 'https://www.postgresql.org/docs/current/catalog-pg-database.html'}
+      - {title: 'PostgreSQL: psql', url: 'https://www.postgresql.org/docs/current/app-psql.html'}
   tidb:
     support: full
     commands:
       - cmd: SHOW DATABASES;
     notes:
       - zh: 除了 mysql、INFORMATION_SCHEMA、PERFORMANCE_SCHEMA，还有 TiDB 自己的 METRICS_SCHEMA。
+    refs:
+      - {title: 'TiDB: SHOW DATABASES', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-databases/'}
 related: [list-tables]

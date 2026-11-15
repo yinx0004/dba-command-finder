@@ -70,6 +70,9 @@ databases:
       rejected: rejected_connections
     notes:
       - zh: maxclients 还受进程能打开的文件数限制；启动时文件数不够，Redis 会自动调小 maxclients 并在日志里提示。
+    refs:
+      - {title: 'Redis: Client handling', url: 'https://redis.io/docs/latest/develop/reference/clients/'}
+      - {title: 'Redis: CONFIG SET', url: 'https://redis.io/docs/latest/commands/config-set/'}
     verify:
       teardown: CONFIG SET maxclients 10000
   postgresql:
@@ -86,6 +89,9 @@ databases:
       limit: max_connections
     notes:
       - zh: 改了要重启；也没有“因为连接满被拒绝”的计数，只能在日志里看 too many clients。每个连接是一个进程，连接数很多时用 pgbouncer 之类的连接池。
+    refs:
+      - {title: 'PostgreSQL: max_connections', url: 'https://www.postgresql.org/docs/current/runtime-config-connection.html#GUC-MAX-CONNECTIONS'}
+      - {title: 'PostgreSQL: superuser_reserved_connections', url: 'https://www.postgresql.org/docs/current/runtime-config-connection.html#GUC-SUPERUSER-RESERVED-CONNECTIONS'}
     verify:
       teardown: ALTER SYSTEM RESET max_connections;
   tidb:
@@ -99,6 +105,8 @@ databases:
       limit: max_connections
     notes:
       - zh: max_connections 是每台 tidb-server 各自的上限，SET GLOBAL 只改当前连着的这一台，也不会保留到重启后；要持久生效，改配置文件里的 instance.max_connections。
+    refs:
+      - {title: 'TiDB: max_connections', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#max_connections'}
     verify:
       teardown: SET GLOBAL max_connections = 0;
 related: [connection-usage, sharding-conn-pool, set-variable]

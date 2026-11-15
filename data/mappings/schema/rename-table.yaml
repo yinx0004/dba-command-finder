@@ -40,6 +40,9 @@ databases:
           zh: 目标键已存在时不改名，返回 0；这里把名字改回去
     notes:
       - zh: 没有表，改的是单个键的名字。在 Redis Cluster 里，两个键必须在同一个槽位（用 {} 哈希标签）才能 RENAME。
+    refs:
+      - {title: 'Redis: RENAME', url: 'https://redis.io/docs/latest/commands/rename/'}
+      - {title: 'Redis: RENAMENX', url: 'https://redis.io/docs/latest/commands/renamenx/'}
     verify:
       setup: HSET app:user:1 name a
       vars: {key: 'app:user:1', new_key: 'app:member:1'}
@@ -51,6 +54,8 @@ databases:
       - cmd: ALTER TABLE <new_table> SET SCHEMA archive;
         note:
           zh: 移到另一个模式
+    refs:
+      - {title: 'PostgreSQL: ALTER TABLE', url: 'https://www.postgresql.org/docs/current/sql-altertable.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -62,6 +67,8 @@ databases:
     support: full
     commands:
       - cmd: RENAME TABLE <table> TO <new_table>;
+    refs:
+      - {title: 'TiDB: RENAME TABLE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-rename-table/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY);
       vars: {table: t, new_table: t_new}

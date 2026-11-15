@@ -63,6 +63,9 @@ databases:
           zh: 从远程把快照下载到本地文件
     notes:
       - zh: 备份就是 RDB 快照，二进制、整个实例一份，不能只备份某个库或某些键。fork 时内存会按写入量额外增长，大实例要预留内存。
+    refs:
+      - {title: 'Redis: BGSAVE', url: 'https://redis.io/docs/latest/commands/bgsave/'}
+      - {title: 'Redis: Persistence', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
   postgresql:
     support: full
     commands:
@@ -74,6 +77,9 @@ databases:
         shell: true
         note:
           zh: 用户、角色和表空间不属于任何库，要单独导出
+    refs:
+      - {title: 'PostgreSQL: pg_dump', url: 'https://www.postgresql.org/docs/current/app-pgdump.html'}
+      - {title: 'PostgreSQL: pg_dumpall', url: 'https://www.postgresql.org/docs/current/app-pg-dumpall.html'}
     verify:
       setup: CREATE TABLE t (id int PRIMARY KEY);
   tidb:
@@ -94,6 +100,9 @@ databases:
           zh: 用 BR 做物理备份，速度快得多，恢复用 RESTORE DATABASE
     notes:
       - zh: 导出大表前先调大 tidb_gc_life_time，否则导出时间超过它时旧版本数据会被 GC，导出失败。
+    refs:
+      - {title: 'TiDB: Dumpling', url: 'https://docs.pingcap.com/tidb/stable/dumpling-overview/'}
+      - {title: 'TiDB: BACKUP', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-backup/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
 related: [logical-restore, global-read-lock, point-in-time-recovery]

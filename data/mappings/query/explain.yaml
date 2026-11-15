@@ -73,6 +73,8 @@ databases:
     notes:
       - zh: 核心命令没有执行计划，每个命令的复杂度是固定的，写在命令文档里（例如 HGET 是 O(1)，SMEMBERS 是 O(N)）。只有查询引擎的查询才有执行计划。
       - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    refs:
+      - {title: 'Redis: FT.EXPLAIN', url: 'https://redis.io/docs/latest/commands/ft.explain/'}
     verify:
       setup: |-
         HSET app:user:1 name alice age 30
@@ -93,6 +95,9 @@ databases:
       index_used: {name: Index Scan / Bitmap Index Scan}
       rows_examined: rows
       elapsed: {name: actual time}
+    refs:
+      - {title: 'PostgreSQL: EXPLAIN', url: 'https://www.postgresql.org/docs/current/sql-explain.html'}
+      - {title: 'PostgreSQL: Using EXPLAIN', url: 'https://www.postgresql.org/docs/current/using-explain.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -117,6 +122,9 @@ databases:
       elapsed: execution info（EXPLAIN ANALYZE）
     notes:
       - zh: 输出和 MySQL 完全不同，是一棵算子树。task 列为 cop[tikv] 的步骤下推到 TiKV 上执行，root 在 tidb-server 上执行。不支持 FORMAT=JSON。
+    refs:
+      - {title: 'TiDB: EXPLAIN', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-explain/'}
+      - {title: 'TiDB: EXPLAIN ANALYZE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-explain-analyze/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
       vars: {select: SELECT * FROM t WHERE a = 1}

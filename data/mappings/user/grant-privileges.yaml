@@ -54,6 +54,9 @@ databases:
           zh: 括号里是一组单独的权限（selector）：只对「cache:」开头的键允许写
     notes:
       - zh: 没有按库授权，权限按命令（或命令类别）和键名模式来给；同一个用户的权限会累加。
+    refs:
+      - {title: 'Redis: ACL SETUSER', url: 'https://redis.io/docs/latest/commands/acl-setuser/'}
+      - {title: 'Redis: ACL', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/'}
     verify:
       setup: 'ACL SETUSER app_grant on >Lab#Pass123 ~app:* +@read'
       vars: {user: app_grant}
@@ -72,6 +75,9 @@ databases:
           zh: 内置角色：所有库所有表只读
     notes:
       - zh: 权限分库、模式、表几层：还要有库的 CONNECT 和模式的 USAGE 才查得到表。15 起，public 模式不再默认允许所有人建表。
+    refs:
+      - {title: 'PostgreSQL: GRANT', url: 'https://www.postgresql.org/docs/current/sql-grant.html'}
+      - {title: 'PostgreSQL: ALTER DEFAULT PRIVILEGES', url: 'https://www.postgresql.org/docs/current/sql-alterdefaultprivileges.html'}
     verify:
       setup: CREATE ROLE app_grant LOGIN PASSWORD 'Lab#Pass123';
       vars: {user: app_grant}
@@ -87,6 +93,9 @@ databases:
           zh: 动态权限，例如 BACKUP_ADMIN、DASHBOARD_CLIENT、RESTRICTED_VARIABLES_ADMIN，只能授在 *.* 上
     notes:
       - zh: 列级权限不生效：GRANT 可以写列，但不检查。
+    refs:
+      - {title: 'TiDB: GRANT <privileges>', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-grant-privileges/'}
+      - {title: 'TiDB: Privilege Management', url: 'https://docs.pingcap.com/tidb/stable/privilege-management/'}
     verify:
       setup: CREATE USER 'app_grant'@'%' IDENTIFIED BY 'Lab#Pass123';
       vars: {user: app_grant, host: '%'}

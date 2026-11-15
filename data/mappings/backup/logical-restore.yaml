@@ -54,6 +54,8 @@ databases:
           zh: 停掉 Redis，用备份替换快照文件，再启动
     notes:
       - zh: 恢复就是用快照文件启动；开着 AOF 时启动会优先读 AOF，要先关掉 appendonly 或一起替换。单个键可以用 DUMP 导出、RESTORE 导回。
+    refs:
+      - {title: 'Redis: Persistence', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
   postgresql:
     support: full
     commands:
@@ -65,6 +67,8 @@ databases:
         shell: true
         note:
           zh: 列出备份里有哪些对象，可以挑着恢复
+    refs:
+      - {title: 'PostgreSQL: pg_restore', url: 'https://www.postgresql.org/docs/current/app-pgrestore.html'}
     verify:
       setup: CREATE TABLE t (id int PRIMARY KEY);
       setup_shell: pg_dump -Fc -d lab_logical_restore -f /tmp/lab_logical_restore.dump
@@ -78,6 +82,8 @@ databases:
         skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
         note:
           zh: 导入 Dumpling 的备份，大数据量用它
+    refs:
+      - {title: 'TiDB: TiDB Lightning', url: 'https://docs.pingcap.com/tidb/stable/tidb-lightning-overview/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
       setup_shell: mysqldump <db> > <db>.sql

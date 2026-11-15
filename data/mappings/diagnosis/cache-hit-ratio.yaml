@@ -55,6 +55,8 @@ databases:
       used: used_memory
     notes:
       - zh: 数据全在内存里，“没命中”是键不存在，不是要去读磁盘；这个比例反映的是应用拿不存在的键来查的情况，常见于把 Redis 当缓存用。
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
   postgresql:
     support: full
     commands:
@@ -68,6 +70,9 @@ databases:
     fields:
       requests: {name: blks_hit / blks_read, note: {zh: 两者相加是读请求总数}}
       misses: blks_read
+    refs:
+      - {title: 'PostgreSQL: pg_stat_database', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-DATABASE-VIEW'}
+      - {title: 'PostgreSQL: pg_stat_io', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-IO-VIEW'}
   tidb:
     support: none
     notes:
@@ -75,4 +80,6 @@ databases:
     alternatives:
       - title: {zh: 查看 TiKV block cache 的大小}
         cmd: SHOW CONFIG WHERE type = 'tikv' AND name = 'storage.block-cache.capacity';
+    refs:
+      - {title: 'TiDB: TiKV Monitoring Metrics', url: 'https://docs.pingcap.com/tidb/stable/grafana-tikv-dashboard/'}
 related: [memory-usage, server-status]

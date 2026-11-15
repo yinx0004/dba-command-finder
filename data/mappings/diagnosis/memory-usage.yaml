@@ -47,6 +47,9 @@ databases:
           zh: 用文字指出内存方面的问题，例如碎片太多
     fields:
       total: used_memory
+    refs:
+      - {title: 'Redis: MEMORY STATS', url: 'https://redis.io/docs/latest/commands/memory-stats/'}
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
   postgresql:
     support: partial
     commands:
@@ -63,6 +66,9 @@ databases:
       total: total
     notes:
       - zh: 每个连接是一个独立进程，排序、哈希另外按 work_mem 申请内存；没有一个视图能看全实例所有进程的内存。
+    refs:
+      - {title: 'PostgreSQL: pg_shmem_allocations', url: 'https://www.postgresql.org/docs/current/view-pg-shmem-allocations.html'}
+      - {title: 'PostgreSQL: pg_backend_memory_contexts', url: 'https://www.postgresql.org/docs/current/view-pg-backend-memory-contexts.html'}
   tidb:
     support: full
     commands:
@@ -76,4 +82,7 @@ databases:
       total: MEMORY_CURRENT
     notes:
       - zh: 超过 tidb_server_memory_limit 时，tidb-server 会取消占用内存最多的语句。TiKV 的内存看 Grafana。
+    refs:
+      - {title: 'TiDB: MEMORY_USAGE', url: 'https://docs.pingcap.com/tidb/stable/information-schema-memory-usage/'}
+      - {title: 'TiDB: PROCESSLIST', url: 'https://docs.pingcap.com/tidb/stable/information-schema-processlist/'}
 related: [cache-hit-ratio, server-status]

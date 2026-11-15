@@ -54,6 +54,9 @@ databases:
         note: {zh: 在 Sentinel 上执行，列出它监控的主库有哪些从库}
     fields:
       host: {name: ip, skip: {zh: 只在有从库时出现，lab 只跑单机}}
+    refs:
+      - {title: 'Redis: Replication', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/replication/'}
+      - {title: 'Redis: ROLE', url: 'https://redis.io/docs/latest/commands/role/'}
   postgresql:
     support: full
     commands:
@@ -65,6 +68,9 @@ databases:
           zh: 复制槽，包括暂时没连上的备库
     fields:
       host: client_addr
+    refs:
+      - {title: 'PostgreSQL: pg_stat_replication', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-REPLICATION-VIEW'}
+      - {title: 'PostgreSQL: pg_replication_slots', url: 'https://www.postgresql.org/docs/current/view-pg-replication-slots.html'}
   tidb:
     support: partial
     commands:
@@ -84,4 +90,7 @@ databases:
       host: INSTANCE
     notes:
       - zh: 没有 MySQL 那样的主从。每份数据在 TiKV 里默认有 3 个 Raft 副本，自动选主、自动切换；同步到另一个集群靠 TiCDC。
+    refs:
+      - {title: 'TiDB: CLUSTER_INFO', url: 'https://docs.pingcap.com/tidb/stable/information-schema-cluster-info/'}
+      - {title: 'TiDB: TIKV_STORE_STATUS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tikv-store-status/'}
 related: [replica-role, replication-status]

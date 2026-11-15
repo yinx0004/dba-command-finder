@@ -103,6 +103,8 @@ databases:
       statement: {name: cmd, note: {zh: 最近执行的命令名，不含参数}}
     notes:
       - zh: 没有“正在执行的语句”：Redis 在一个线程里依次执行命令，一条慢命令会挡住所有连接。找慢命令看 SLOWLOG。
+    refs:
+      - {title: 'Redis: CLIENT LIST', url: 'https://redis.io/docs/latest/commands/client-list/'}
   postgresql:
     support: full
     commands:
@@ -120,6 +122,8 @@ databases:
       elapsed: elapsed
       state: state
       statement: query
+    refs:
+      - {title: 'PostgreSQL: pg_stat_activity', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW'}
   tidb:
     support: full
     commands:
@@ -139,4 +143,7 @@ databases:
       statement: Info
     notes:
       - zh: 经过负载均衡连进来时，SHOW PROCESSLIST 只能看到碰巧连上的那一台；看整个集群要查 CLUSTER_PROCESSLIST。
+    refs:
+      - {title: 'TiDB: SHOW PROCESSLIST', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-processlist/'}
+      - {title: 'TiDB: PROCESSLIST', url: 'https://docs.pingcap.com/tidb/stable/information-schema-processlist/'}
 related: [kill-session, lock-waits, server-status]

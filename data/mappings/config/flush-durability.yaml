@@ -68,6 +68,8 @@ databases:
       log_flush: appendfsync
     notes:
       - zh: 默认只开 RDB 快照、不开 AOF，宕机可能丢几分钟的数据；对数据安全有要求时打开 AOF 并用 everysec。
+    refs:
+      - {title: 'Redis: Persistence', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
   postgresql:
     support: full
     commands:
@@ -80,6 +82,9 @@ databases:
       - cmd: SHOW wal_sync_method;
     fields:
       log_flush: synchronous_commit
+    refs:
+      - {title: 'PostgreSQL: synchronous_commit', url: 'https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT'}
+      - {title: 'PostgreSQL: fsync', url: 'https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-FSYNC'}
   tidb:
     support: partial
     commands:
@@ -88,4 +93,6 @@ databases:
           zh: IS_NOOP 为 YES：这两个变量只为兼容保留，设了也不起作用
     notes:
       - zh: 没有可调的刷盘策略。提交时数据要写进 TiKV 多数副本的 Raft 日志并落盘才返回，单台机器宕机不丢已提交的数据。
+    refs:
+      - {title: 'TiDB: VARIABLES_INFO', url: 'https://docs.pingcap.com/tidb/stable/information-schema-variables-info/'}
 related: [default-rw-concern, binlog-retention]

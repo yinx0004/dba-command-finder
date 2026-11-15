@@ -46,6 +46,8 @@ databases:
           zh: 每隔多少秒向客户端发 TCP keepalive，用来发现已经断掉的对端
     notes:
       - zh: timeout 不管处于订阅（Pub/Sub）状态的连接。
+    refs:
+      - {title: 'Redis: Client handling', url: 'https://redis.io/docs/latest/develop/reference/clients/'}
     verify:
       teardown: CONFIG SET timeout 0
   postgresql:
@@ -60,6 +62,9 @@ databases:
       - cmd: SET idle_in_transaction_session_timeout = '10min';
     notes:
       - zh: 可以按用户或按库设置，例如 ALTER ROLE app SET idle_session_timeout = '30min'。
+    refs:
+      - {title: 'PostgreSQL: idle_session_timeout', url: 'https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-IDLE-SESSION-TIMEOUT'}
+      - {title: 'PostgreSQL: idle_in_transaction_session_timeout', url: 'https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-IDLE-IN-TRANSACTION-SESSION-TIMEOUT'}
   tidb:
     support: full
     commands:
@@ -71,6 +76,9 @@ databases:
           zh: 开着事务却一直不发语句的连接，超过这个秒数就断开；wait_timeout 管不到事务中的空闲
     notes:
       - zh: SET GLOBAL 写进集群，所有 tidb-server 都生效，重启后也保留，不需要再改配置文件。
+    refs:
+      - {title: 'TiDB: wait_timeout', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#wait_timeout'}
+      - {title: 'TiDB: tidb_idle_transaction_timeout', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_idle_transaction_timeout-span-classversion-marknew-in-v760span'}
     verify:
       teardown: SET GLOBAL wait_timeout = 28800; SET GLOBAL tidb_idle_transaction_timeout = 0;
 related: [connection-usage, list-active-sessions]

@@ -48,6 +48,8 @@ databases:
       - cmd: CONFIG GET loglevel
     notes:
       - zh: 没有用命令读日志内容的办法，直接看日志文件。日志不分错误日志和普通日志，用 loglevel 控制详细程度。
+    refs:
+      - {title: 'Redis: CONFIG GET', url: 'https://redis.io/docs/latest/commands/config-get/'}
   postgresql:
     support: partial
     commands:
@@ -60,6 +62,8 @@ databases:
           zh: 当前日志文件的路径；没开 logging_collector 时为空
     notes:
       - zh: 日志不分错误日志和普通日志，用 log_min_messages 控制详细程度；超级用户可以用 pg_read_file(pg_current_logfile()) 在 SQL 里读日志。
+    refs:
+      - {title: 'PostgreSQL: Where to Log', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHERE'}
   tidb:
     support: full
     commands:
@@ -74,6 +78,9 @@ databases:
       message: MESSAGE
     notes:
       - zh: 没有 MySQL 那种单独的错误日志，错误和其他日志写在同一个文件里，按 LEVEL 区分。
+    refs:
+      - {title: 'TiDB: CLUSTER_LOG', url: 'https://docs.pingcap.com/tidb/stable/information-schema-cluster-log/'}
+      - {title: 'TiDB: log.file.filename', url: 'https://docs.pingcap.com/tidb/stable/tidb-configuration-file/#filename'}
     verify:
       vars: {start_time: '2026-01-01 00:00:00', end_time: '2026-01-01 01:00:00'}
       skip_fields: {zh: lab 的 tidb-server 把日志写到标准输出，没有日志文件可搜}

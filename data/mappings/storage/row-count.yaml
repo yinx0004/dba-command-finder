@@ -46,6 +46,9 @@ databases:
           zh: 一个哈希里有多少个字段；列表用 LLEN，集合用 SCARD，有序集合用 ZCARD，流用 XLEN
     notes:
       - zh: 没有表，最接近“行数”的是键的个数，或者一个大集合里的元素个数；这些计数都是现成的，不用遍历。
+    refs:
+      - {title: 'Redis: DBSIZE', url: 'https://redis.io/docs/latest/commands/dbsize/'}
+      - {title: 'Redis: HLEN', url: 'https://redis.io/docs/latest/commands/hlen/'}
     verify:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1'}
@@ -59,6 +62,8 @@ databases:
       - cmd: SELECT reltuples::bigint AS estimate FROM pg_class WHERE relname = '<table>';
         note:
           zh: 估算值，ANALYZE 或 VACUUM 后更新，立即返回
+    refs:
+      - {title: 'PostgreSQL: pg_class', url: 'https://www.postgresql.org/docs/current/catalog-pg-class.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -73,6 +78,8 @@ databases:
       - cmd: SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' AND TABLE_NAME = '<table>';
         note:
           zh: 来自统计信息，是估算值；没 ANALYZE 过时可能是 0
+    refs:
+      - {title: 'TiDB: TABLES', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tables/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1), (2), (3);
       vars: {table: t}

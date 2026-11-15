@@ -44,6 +44,8 @@ databases:
           zh: 提前恢复
     notes:
       - zh: 做备份不需要锁：BGSAVE 用 fork 出来的子进程写快照，快照是 fork 那一刻的数据，主进程照常处理读写。
+    refs:
+      - {title: 'Redis: CLIENT PAUSE', url: 'https://redis.io/docs/latest/commands/client-pause/'}
   postgresql:
     support: none
     notes:
@@ -51,6 +53,8 @@ databases:
     alternatives:
       - title: {zh: 让之后的新事务默认只读（用户可以自己改回来）}
         cmd: ALTER SYSTEM SET default_transaction_read_only = on;
+    refs:
+      - {title: 'PostgreSQL: pg_dump', url: 'https://www.postgresql.org/docs/current/app-pgdump.html'}
   tidb:
     support: none
     notes:

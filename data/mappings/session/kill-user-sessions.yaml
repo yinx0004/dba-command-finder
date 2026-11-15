@@ -39,6 +39,8 @@ databases:
       - cmd: CLIENT KILL USER <user>
         note:
           zh: 断开这个 ACL 用户的所有连接，返回断开的个数
+    refs:
+      - {title: 'Redis: CLIENT KILL', url: 'https://redis.io/docs/latest/commands/client-kill/'}
     verify:
       setup: 'ACL SETUSER app_kill on >Lab#Pass123 ~* +@all'
       vars: {user: app_kill}
@@ -49,6 +51,8 @@ databases:
       - cmd: SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename = '<user>' AND pid <> pg_backend_pid();
         note:
           zh: 一条语句断开这个用户的所有连接
+    refs:
+      - {title: 'PostgreSQL: Server Signaling Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL'}
     verify:
       setup: CREATE ROLE app_kill LOGIN;
       vars: {user: app_kill}
@@ -59,6 +63,9 @@ databases:
       - cmd: SELECT CONCAT('KILL ', ID, ';') FROM information_schema.CLUSTER_PROCESSLIST WHERE USER = '<user>';
         note:
           zh: 查 CLUSTER_PROCESSLIST 才能看到所有 tidb-server 上的会话；生成的 KILL 在任意一台上执行都有效
+    refs:
+      - {title: 'TiDB: KILL', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-kill/'}
+      - {title: 'TiDB: PROCESSLIST', url: 'https://docs.pingcap.com/tidb/stable/information-schema-processlist/'}
     verify:
       vars: {user: app_user}
 related: [kill-session, account-lock, list-active-sessions]

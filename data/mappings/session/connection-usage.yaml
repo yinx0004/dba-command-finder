@@ -69,6 +69,9 @@ databases:
       client: addr
     notes:
       - zh: 没有历史最高连接数，要看峰值得靠监控系统定期采样 connected_clients。
+    refs:
+      - {title: 'Redis: Client handling', url: 'https://redis.io/docs/latest/develop/reference/clients/'}
+      - {title: 'Redis: CLIENT LIST', url: 'https://redis.io/docs/latest/commands/client-list/'}
   postgresql:
     support: partial
     commands:
@@ -82,6 +85,9 @@ databases:
       client: client_addr
     notes:
       - zh: 没有历史最高连接数，要看峰值得靠监控定期采样。superuser_reserved_connections 个连接留给超级用户，普通用户能用的比 max_connections 少。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_activity', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW'}
+      - {title: 'PostgreSQL: max_connections', url: 'https://www.postgresql.org/docs/current/runtime-config-connection.html#GUC-MAX-CONNECTIONS'}
   tidb:
     support: partial
     commands:
@@ -97,4 +103,7 @@ databases:
       client: client_addr
     notes:
       - zh: 没有 Threads_connected、Max_used_connections 这类状态变量，历史峰值要看 Grafana 的 Connection Count 面板。max_connections 是每台 tidb-server 各自的上限，0 表示不限制。
+    refs:
+      - {title: 'TiDB: PROCESSLIST', url: 'https://docs.pingcap.com/tidb/stable/information-schema-processlist/'}
+      - {title: 'TiDB: max_connections', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#max_connections'}
 related: [list-active-sessions, kill-session, server-status]

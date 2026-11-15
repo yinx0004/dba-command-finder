@@ -52,6 +52,8 @@ databases:
           zh: 清掉原来能访问的键，只留「app:」开头的
     notes:
       - zh: 没有按库回收，权限按命令类别和键名模式来改。
+    refs:
+      - {title: 'Redis: ACL SETUSER', url: 'https://redis.io/docs/latest/commands/acl-setuser/'}
     verify:
       setup: 'ACL SETUSER app_revoke on >Lab#Pass123 ~* +@all'
       vars: {user: app_revoke}
@@ -65,6 +67,8 @@ databases:
           zh: 收回内置角色
     notes:
       - zh: 授给 PUBLIC 的权限所有人都有，单独 REVOKE 某个用户收不掉。
+    refs:
+      - {title: 'PostgreSQL: REVOKE', url: 'https://www.postgresql.org/docs/current/sql-revoke.html'}
     verify:
       setup: |-
         CREATE ROLE app_revoke LOGIN PASSWORD 'Lab#Pass123';
@@ -78,6 +82,8 @@ databases:
     commands:
       - cmd: REVOKE INSERT, UPDATE, DELETE ON <db>.* FROM '<user>'@'<host>';
       - cmd: REVOKE ALL PRIVILEGES, GRANT OPTION FROM '<user>'@'<host>';
+    refs:
+      - {title: 'TiDB: REVOKE <privileges>', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-revoke-privileges/'}
     verify:
       setup: CREATE USER 'app_revoke'@'%' IDENTIFIED BY 'Lab#Pass123'; GRANT SELECT, INSERT, UPDATE, DELETE ON <db>.* TO 'app_revoke'@'%';
       vars: {user: app_revoke, host: '%'}

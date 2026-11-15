@@ -39,6 +39,8 @@ databases:
     alternatives:
       - title: {zh: 给一个哈希加一个字段}
         cmd: HSET <key> <field> <value>
+    refs:
+      - {title: 'Redis: HSET', url: 'https://redis.io/docs/latest/commands/hset/'}
   postgresql:
     support: full
     commands:
@@ -48,6 +50,9 @@ databases:
           zh: 默认值是常量时只改元数据，不重写表，大表也是瞬间完成
     notes:
       - zh: 加列要短暂拿 ACCESS EXCLUSIVE 锁；如果前面有长事务挡着，后面所有查询都会排队，先 SET lock_timeout 更稳妥。
+    refs:
+      - {title: 'PostgreSQL: ALTER TABLE', url: 'https://www.postgresql.org/docs/current/sql-altertable.html'}
+      - {title: 'PostgreSQL: Adding a Column', url: 'https://www.postgresql.org/docs/current/ddl-alter.html#DDL-ALTER-ADDING-A-COLUMN'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -64,6 +69,8 @@ databases:
           zh: ALGORITHM 子句只为兼容，写不写都一样
     notes:
       - zh: DDL 是在线的，执行期间读写不受影响；进度用 ADMIN SHOW DDL JOBS 看。
+    refs:
+      - {title: 'TiDB: ADD COLUMN', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-add-column/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY);
       vars: {table: t, column: c1, column2: c2}

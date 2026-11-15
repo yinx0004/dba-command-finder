@@ -54,4 +54,6 @@ databases:
           zh: 每台 tidb-server 到每个 TiKV 保持的 gRPC 连接数
     notes:
       - zh: 分片和路由由 TiDB 自己完成，不需要 mongos 那样的路由层连接池。连接数只有一个固定值，没有最小、最大之分，改了要重启 tidb-server。
+    refs:
+      - {title: 'TiDB: grpc-connection-count', url: 'https://docs.pingcap.com/tidb/stable/tidb-configuration-file/#grpc-connection-count'}
 related: [max-connections, connection-usage]

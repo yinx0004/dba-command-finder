@@ -53,6 +53,9 @@ databases:
           zh: 7.0 之前的名字，7.0 起还能用
     notes:
       - zh: 普通命令没有超时，执行时也中止不了，只能在客户端设置读超时；BUSY 只针对脚本和函数，而且脚本不会被自动中止。
+    refs:
+      - {title: 'Redis: Programmability', url: 'https://redis.io/docs/latest/develop/programmability/'}
+      - {title: 'Redis: SCRIPT KILL', url: 'https://redis.io/docs/latest/commands/script-kill/'}
     verify:
       teardown: CONFIG SET lua-time-limit 5000
   postgresql:
@@ -64,6 +67,8 @@ databases:
       - cmd: ALTER ROLE <user> SET statement_timeout = '30s';
         note:
           zh: 给某个用户之后的连接都设上
+    refs:
+      - {title: 'PostgreSQL: statement_timeout', url: 'https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-STATEMENT-TIMEOUT'}
     verify:
       setup: CREATE ROLE app_timeout LOGIN;
       vars: {user: app_timeout}
@@ -77,6 +82,9 @@ databases:
       - cmd: SELECT /*+ MAX_EXECUTION_TIME(1000) */ * FROM <table>;
     notes:
       - zh: 超时的语句会被取消。限制所有语句（包括写入）可以用资源组的 QUERY_LIMIT，例如 EXEC_ELAPSED='60s'。
+    refs:
+      - {title: 'TiDB: max_execution_time', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#max_execution_time'}
+      - {title: 'TiDB: Optimizer Hints', url: 'https://docs.pingcap.com/tidb/stable/optimizer-hints/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY);
       vars: {table: t}

@@ -39,6 +39,9 @@ databases:
           zh: 同步删除；删除很大的集合时会卡住实例一阵
     notes:
       - zh: 没有表，删除的是单个键；要删一批键，见“分批删除大量数据”。
+    refs:
+      - {title: 'Redis: UNLINK', url: 'https://redis.io/docs/latest/commands/unlink/'}
+      - {title: 'Redis: DEL', url: 'https://redis.io/docs/latest/commands/del/'}
     verify:
       setup: |-
         HSET app:user:1 name a
@@ -54,6 +57,8 @@ databases:
       - cmd: DROP TABLE IF EXISTS <table>;
     notes:
       - zh: DDL 可以在事务里执行，BEGIN 后 DROP TABLE 再 ROLLBACK，表还在。
+    refs:
+      - {title: 'PostgreSQL: DROP TABLE', url: 'https://www.postgresql.org/docs/current/sql-droptable.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -66,6 +71,8 @@ databases:
       - cmd: DROP TABLE IF EXISTS <table>;
     notes:
       - zh: 删表很快，但空间要等 GC（tidb_gc_life_time 之后）才真正回收；在这之前可以用 FLASHBACK TABLE 找回。
+    refs:
+      - {title: 'TiDB: DROP TABLE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-drop-table/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY);
       vars: {table: t}

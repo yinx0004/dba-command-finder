@@ -63,6 +63,8 @@ databases:
           zh: 把运行中改过的参数写回启动时用的配置文件，重启后仍然生效
     notes:
       - zh: 要求 Redis 是用配置文件启动的；没有配置文件时 CONFIG REWRITE 会报错。
+    refs:
+      - {title: 'Redis: CONFIG REWRITE', url: 'https://redis.io/docs/latest/commands/config-rewrite/'}
     verify:
       teardown: |-
         CONFIG SET maxmemory 0
@@ -79,6 +81,9 @@ databases:
           zh: 去掉写进去的设置
     notes:
       - zh: 有的参数重新加载就生效，有的要重启，看 pg_settings 的 context 列（sighup 可以重新加载，postmaster 要重启）。
+    refs:
+      - {title: 'PostgreSQL: ALTER SYSTEM', url: 'https://www.postgresql.org/docs/current/sql-altersystem.html'}
+      - {title: 'PostgreSQL: pg_reload_conf', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL'}
     verify:
       teardown: SELECT pg_reload_conf();
   tidb:
@@ -93,6 +98,9 @@ databases:
           zh: 这些是实例级变量，SET GLOBAL 只改当前那台、不保留，要写在配置文件里
     notes:
       - zh: 没有 SET PERSIST，也不需要。
+    refs:
+      - {title: 'TiDB: SET [GLOBAL|SESSION]', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-set-variable/'}
+      - {title: 'TiDB: System Variables', url: 'https://docs.pingcap.com/tidb/stable/system-variables/'}
     verify:
       teardown: SET GLOBAL tidb_gc_life_time = '10m0s';
 related: [set-variable, show-variables, config-file]

@@ -40,6 +40,8 @@ databases:
     notes:
       - zh: 自己用集合维护的索引，删掉那个键就行。
       - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    refs:
+      - {title: 'Redis: FT.DROPINDEX', url: 'https://redis.io/docs/latest/commands/ft.dropindex/'}
     verify:
       setup: |-
         HSET app:user:1 name alice age 30
@@ -53,6 +55,8 @@ databases:
         note:
           zh: 不挡读写，但不能放在事务里
       - cmd: DROP INDEX IF EXISTS <index>;
+    refs:
+      - {title: 'PostgreSQL: DROP INDEX', url: 'https://www.postgresql.org/docs/current/sql-dropindex.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -65,6 +69,8 @@ databases:
       - cmd: ALTER TABLE <table> DROP INDEX <index2>;
     notes:
       - zh: 删除很快，空间等 GC 后回收。
+    refs:
+      - {title: 'TiDB: DROP INDEX', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-drop-index/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b));
       vars: {table: t, index: idx_a, index2: idx_b}

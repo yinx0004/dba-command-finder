@@ -43,6 +43,9 @@ databases:
           zh: 后台重写 AOF，把同一个键的多次修改压成一条，文件变小
     notes:
       - zh: 没有 binlog。复制靠内存里的积压缓冲区，大小固定、循环覆盖，不用清理；AOF 文件会一直变大，用 BGREWRITEAOF 或 auto-aof-rewrite-percentage 自动重写来缩小。
+    refs:
+      - {title: 'Redis: Replication', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/replication/'}
+      - {title: 'Redis: BGREWRITEAOF', url: 'https://redis.io/docs/latest/commands/bgrewriteaof/'}
     verify:
       teardown: CONFIG SET repl-backlog-size 1mb
   postgresql:
@@ -59,6 +62,9 @@ databases:
           zh: 删掉不用的复制槽，它占着的 WAL 才能回收
     notes:
       - zh: WAL 由检查点自动回收，不用手动清理，总量受 max_wal_size 控制；占着不放的通常是复制槽，max_slot_wal_keep_size 可以给它设上限。
+    refs:
+      - {title: 'PostgreSQL: wal_keep_size', url: 'https://www.postgresql.org/docs/current/runtime-config-replication.html#GUC-WAL-KEEP-SIZE'}
+      - {title: 'PostgreSQL: Replication Management Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-REPLICATION'}
     verify:
       setup: SELECT pg_create_physical_replication_slot('lab_slot', true);
       vars: {slot: lab_slot}
@@ -71,4 +77,6 @@ databases:
         cmd: SET GLOBAL tidb_gc_life_time = '24h';
       - title: {zh: 删掉不再需要的同步任务，让 GC 继续}
         cmd: cdc cli changefeed remove --server=http://<ticdc>:8300 --changefeed-id=<id>
+    refs:
+      - {title: 'TiDB: Garbage Collection', url: 'https://docs.pingcap.com/tidb/stable/garbage-collection-overview/'}
 related: [binlog-retention, rotate-logs]

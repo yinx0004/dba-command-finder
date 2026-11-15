@@ -46,6 +46,9 @@ databases:
           zh: 同时清理死行
     notes:
       - zh: autovacuum 会自动做 ANALYZE；大批量导入后手动做一次，优化器才能马上用上新的统计信息。
+    refs:
+      - {title: 'PostgreSQL: ANALYZE', url: 'https://www.postgresql.org/docs/current/sql-analyze.html'}
+      - {title: 'PostgreSQL: VACUUM', url: 'https://www.postgresql.org/docs/current/sql-vacuum.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -63,6 +66,9 @@ databases:
           zh: 正在进行和最近完成的 ANALYZE 任务，包括后台自动触发的
     notes:
       - zh: 修改的行数超过 tidb_auto_analyze_ratio（默认 0.5）时会在后台自动 ANALYZE。大表的 ANALYZE 比 MySQL 慢得多，因为要读全表或采样整张表。
+    refs:
+      - {title: 'TiDB: ANALYZE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-analyze-table/'}
+      - {title: 'TiDB: SHOW STATS_HEALTHY', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-stats-healthy/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
       vars: {table: t}

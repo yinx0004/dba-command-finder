@@ -48,6 +48,8 @@ databases:
           zh: 复制一个键和它的值；加 DB 1 可以复制到另一个库，加 REPLACE 覆盖已有的键
     notes:
       - zh: 没有表，只能按键复制；要复制一批键，用 SCAN 按模式遍历后逐个 COPY。
+    refs:
+      - {title: 'Redis: COPY', url: 'https://redis.io/docs/latest/commands/copy/'}
     verify:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1', new_key: 'app:user:1:copy'}
@@ -62,6 +64,9 @@ databases:
       - cmd: CREATE TABLE <new_table2> AS TABLE <table>;
         note:
           zh: 结构和数据一起复制，但不带索引和约束
+    refs:
+      - {title: 'PostgreSQL: CREATE TABLE', url: 'https://www.postgresql.org/docs/current/sql-createtable.html'}
+      - {title: 'PostgreSQL: CREATE TABLE AS', url: 'https://www.postgresql.org/docs/current/sql-createtableas.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -76,6 +81,9 @@ databases:
           zh: 大表会超过单个事务的大小限制，用 BATCH ON id LIMIT 10000 INSERT INTO ... 分批写
     notes:
       - zh: 不支持 CREATE TABLE ... AS SELECT，要先 CREATE TABLE ... LIKE 再 INSERT ... SELECT。
+    refs:
+      - {title: 'TiDB: CREATE TABLE LIKE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-create-table-like/'}
+      - {title: 'TiDB: INSERT', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-insert/'}
     verify:
       setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t (a) VALUES (1), (2);
       vars: {table: t, new_table: t_copy}

@@ -45,6 +45,8 @@ databases:
       - cmd: CONFIG GET maxmemory*
         note:
           zh: 支持通配符，列出名字匹配的参数
+    refs:
+      - {title: 'Redis: CONFIG GET', url: 'https://redis.io/docs/latest/commands/config-get/'}
   postgresql:
     support: full
     commands:
@@ -52,6 +54,9 @@ databases:
       - cmd: SELECT name, setting, unit, context, source FROM pg_settings WHERE name LIKE 'work_mem%';
         note:
           zh: context 说明改了要不要重启，source 说明是从哪设置的
+    refs:
+      - {title: 'PostgreSQL: SHOW', url: 'https://www.postgresql.org/docs/current/sql-show.html'}
+      - {title: 'PostgreSQL: pg_settings', url: 'https://www.postgresql.org/docs/current/view-pg-settings.html'}
   tidb:
     support: full
     commands:
@@ -62,4 +67,7 @@ databases:
           zh: 配置文件里的配置项是另一套，用 SHOW CONFIG 看
     notes:
       - zh: 有些 MySQL 变量只为兼容保留、设了不起作用，可以查 information_schema.VARIABLES_INFO 的 IS_NOOP 列。
+    refs:
+      - {title: 'TiDB: SHOW VARIABLES', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-variables/'}
+      - {title: 'TiDB: SHOW CONFIG', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-config/'}
 related: [set-variable, persist-parameters, server-status]

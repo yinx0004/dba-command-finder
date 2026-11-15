@@ -67,6 +67,9 @@ databases:
       query: statement
     notes:
       - zh: 计划缓存在每个连接里，没有全局缓存，也就没有全局清空的命令。
+    refs:
+      - {title: 'PostgreSQL: PREPARE', url: 'https://www.postgresql.org/docs/current/sql-prepare.html'}
+      - {title: 'PostgreSQL: plan_cache_mode', url: 'https://www.postgresql.org/docs/current/runtime-config-query.html#GUC-PLAN-CACHE-MODE'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -87,4 +90,7 @@ databases:
           zh: 清空这台 tidb-server 上的计划缓存
     notes:
       - zh: 缓存是每个会话各自一份，看不到缓存里具体有哪些语句。
+    refs:
+      - {title: 'TiDB: Prepared Plan Cache', url: 'https://docs.pingcap.com/tidb/stable/sql-prepared-plan-cache/'}
+      - {title: 'TiDB: Non-Prepared Plan Cache', url: 'https://docs.pingcap.com/tidb/stable/sql-non-prepared-plan-cache/'}
 related: [explain, force-index, analyze-table]

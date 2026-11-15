@@ -59,6 +59,8 @@ databases:
           zh: 找出每种类型里最大的键；大键往往也是最忙的键
     notes:
       - zh: 没有表，对应的是热点键。--hotkeys、--bigkeys 都用 SCAN 遍历整个键空间，键很多时会跑一阵，但不会长时间挡住其他命令。
+    refs:
+      - {title: 'Redis: redis-cli', url: 'https://redis.io/docs/latest/develop/tools/cli/'}
     verify:
       setup: CONFIG SET maxmemory-policy allkeys-lfu
       teardown: CONFIG SET maxmemory-policy noeviction
@@ -75,6 +77,9 @@ databases:
       table: relname
     notes:
       - zh: 只有次数和块数，没有按表统计的耗时。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_all_tables', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ALL-TABLES-VIEW'}
+      - {title: 'PostgreSQL: pg_statio_all_tables', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STATIO-ALL-TABLES-VIEW'}
   tidb:
     support: partial
     commands:
@@ -90,6 +95,9 @@ databases:
       total_time: total_latency
     notes:
       - zh: 写入集中在一张表的同一段主键上（自增主键、时间戳）会形成写热点，可以改用 AUTO_RANDOM 或 SHARD_ROW_ID_BITS 打散。图形化的热点分布看 TiDB Dashboard 的流量可视化。
+    refs:
+      - {title: 'TiDB: TIDB_HOT_REGIONS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tidb-hot-regions/'}
+      - {title: 'TiDB: Statement Summary Tables', url: 'https://docs.pingcap.com/tidb/stable/statement-summary-tables/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1;
 related: [live-throughput, top-statements, table-size]

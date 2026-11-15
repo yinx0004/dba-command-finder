@@ -35,6 +35,8 @@ databases:
           zh: 返回服务器当前的 Unix 时间：秒数和微秒数
     notes:
       - zh: 没有时区设置：时间都按 Unix 时间戳处理，过期时间也是绝对的 Unix 时间，显示成哪个时区由客户端决定。
+    refs:
+      - {title: 'Redis: TIME', url: 'https://redis.io/docs/latest/commands/time/'}
   postgresql:
     support: full
     commands:
@@ -45,6 +47,9 @@ databases:
           zh: 只对当前连接生效
     notes:
       - zh: timestamptz 按 UTC 存储，显示时按连接的时区换算；timestamp 不带时区，原样存取。
+    refs:
+      - {title: 'PostgreSQL: TimeZone', url: 'https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-TIMEZONE'}
+      - {title: 'PostgreSQL: Time Zones', url: 'https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-TIMEZONES'}
   tidb:
     support: full
     commands:
@@ -56,4 +61,6 @@ databases:
           zh: 只改当前会话
     notes:
       - zh: TIMESTAMP 和 DATETIME 的行为和 MySQL 一样：TIMESTAMP 按会话时区换算后显示，DATETIME 原样存原样取。
+    refs:
+      - {title: 'TiDB: Time Zone Support', url: 'https://docs.pingcap.com/tidb/stable/configure-time-zone/'}
 related: [charset-collation, show-variables]

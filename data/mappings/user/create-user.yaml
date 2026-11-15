@@ -42,6 +42,9 @@ databases:
     notes:
       - zh: 新建的用户默认是禁用的，也没有任何权限，要写上 on 和权限。
       - zh: 用户只在内存里，重启就没了；用了 aclfile 时执行 ACL SAVE 保存，否则执行 CONFIG REWRITE 写回配置文件。
+    refs:
+      - {title: 'Redis: ACL SETUSER', url: 'https://redis.io/docs/latest/commands/acl-setuser/'}
+      - {title: 'Redis: ACL', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/'}
     verify:
       vars: {user: app_new, password: 'Lab#Pass123'}
       teardown: ACL DELUSER app_new
@@ -53,6 +56,8 @@ databases:
           zh: CREATE USER 是一样的，只是默认带 LOGIN
     notes:
       - zh: 用户和角色是同一个东西，能登录的角色就是用户；能从哪里、用什么方式登录，另外由 pg_hba.conf 控制。
+    refs:
+      - {title: 'PostgreSQL: CREATE ROLE', url: 'https://www.postgresql.org/docs/current/sql-createrole.html'}
     verify:
       vars: {user: app_new, password: 'Lab#Pass123'}
       teardown: DROP ROLE app_new;
@@ -63,6 +68,8 @@ databases:
       - cmd: CREATE USER IF NOT EXISTS '<user>'@'<host>' IDENTIFIED BY '<password>';
     notes:
       - zh: 用户和权限存在集群里，在任意一台 tidb-server 上创建，所有节点都能用。
+    refs:
+      - {title: 'TiDB: CREATE USER', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-create-user/'}
     verify:
       vars: {user: app_create, host: '%', password: 'Lab#Pass123'}
 related: [grant-privileges, list-users]

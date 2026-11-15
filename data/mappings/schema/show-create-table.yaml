@@ -49,6 +49,9 @@ databases:
           zh: 哈希有哪些字段
     notes:
       - zh: 没有表结构，每个键有自己的类型，哈希里的字段也可以各不相同。
+    refs:
+      - {title: 'Redis: TYPE', url: 'https://redis.io/docs/latest/commands/type/'}
+      - {title: 'Redis: OBJECT ENCODING', url: 'https://redis.io/docs/latest/commands/object-encoding/'}
     verify:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1'}
@@ -63,6 +66,9 @@ databases:
         shell: true
         note:
           zh: 导出建表语句；没有 SHOW CREATE TABLE
+    refs:
+      - {title: 'PostgreSQL: psql', url: 'https://www.postgresql.org/docs/current/app-psql.html'}
+      - {title: 'PostgreSQL: pg_dump', url: 'https://www.postgresql.org/docs/current/app-pgdump.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -75,6 +81,9 @@ databases:
         note:
           zh: 会带上 /*T![clustered_index] CLUSTERED */ 这类 TiDB 专有的注释，在 MySQL 上执行时会被忽略
       - cmd: DESC <table>;
+    refs:
+      - {title: 'TiDB: SHOW CREATE TABLE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-create-table/'}
+      - {title: 'TiDB: DESC', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-desc/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10) NOT NULL);
       vars: {table: t}

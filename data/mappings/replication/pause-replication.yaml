@@ -47,6 +47,8 @@ databases:
           zh: 重新连回主库；能用积压缓冲区续上就增量同步，否则全量同步
     notes:
       - zh: 没有“暂停、继续”：断开复制就是停止，再连回去时从主库的复制积压缓冲区续传，断开太久就要全量同步。
+    refs:
+      - {title: 'Redis: REPLICAOF', url: 'https://redis.io/docs/latest/commands/replicaof/'}
   postgresql:
     support: full
     commands:
@@ -58,6 +60,8 @@ databases:
         on: [standby]
       - cmd: SELECT pg_wal_replay_resume();
         on: [standby]
+    refs:
+      - {title: 'PostgreSQL: Recovery Control Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-RECOVERY-CONTROL'}
   tidb:
     support: partial
     commands:
@@ -69,4 +73,6 @@ databases:
         on: [ticdc]
     notes:
       - zh: 集群内部的 Raft 复制不能暂停；能暂停的是 TiCDC 往下游同步的任务。暂停期间上游的变更会因为 GC safepoint 一直保留，暂停太久会占用空间，超过 gc-ttl（默认 24 小时）后任务会失败。
+    refs:
+      - {title: 'TiDB: Manage Changefeeds', url: 'https://docs.pingcap.com/tidb/stable/ticdc-manage-changefeed/'}
 related: [skip-replication-error, replication-status]

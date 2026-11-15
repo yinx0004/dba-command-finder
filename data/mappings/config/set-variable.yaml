@@ -47,6 +47,8 @@ databases:
           zh: 一次改多个参数，要么都改成功、要么都不改
     notes:
       - zh: 有些参数只能写在配置文件里重启生效，例如 io-threads、daemonize。
+    refs:
+      - {title: 'Redis: CONFIG SET', url: 'https://redis.io/docs/latest/commands/config-set/'}
     verify:
       vars: {parameter: slowlog-max-len, value: '256'}
       teardown: CONFIG SET slowlog-max-len 128
@@ -62,6 +64,9 @@ databases:
       - cmd: SELECT pg_reload_conf();
     notes:
       - zh: 还可以按用户或按库设置：ALTER ROLE、ALTER DATABASE ... SET。能不能不重启就生效，看 pg_settings 的 context 列。
+    refs:
+      - {title: 'PostgreSQL: SET', url: 'https://www.postgresql.org/docs/current/sql-set.html'}
+      - {title: 'PostgreSQL: ALTER SYSTEM', url: 'https://www.postgresql.org/docs/current/sql-altersystem.html'}
     verify:
       vars: {name: work_mem, value: 64MB}
       teardown: |-
@@ -77,6 +82,9 @@ databases:
         on: [tikv]
         note:
           zh: 在线改 TiKV、PD 的配置项；tidb-server 自己的配置项改不了
+    refs:
+      - {title: 'TiDB: SET [GLOBAL|SESSION]', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-set-variable/'}
+      - {title: 'TiDB: Modify Configuration Dynamically', url: 'https://docs.pingcap.com/tidb/stable/dynamic-config/'}
     verify:
       vars: {variable: tidb_mem_quota_query, value: '2147483648'}
       teardown: SET GLOBAL tidb_mem_quota_query = 1073741824;

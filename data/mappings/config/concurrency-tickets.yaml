@@ -58,6 +58,8 @@ databases:
       limit: io-threads
     notes:
       - zh: 命令始终在一个主线程里依次执行，没有并发执行的上限可调。io-threads 只把网络读写和协议解析分给多个线程，用来在连接很多、吞吐很高时减轻主线程负担。
+    refs:
+      - {title: 'Redis: CONFIG GET', url: 'https://redis.io/docs/latest/commands/config-get/'}
   postgresql:
     support: partial
     commands:
@@ -71,6 +73,9 @@ databases:
       running: running
     notes:
       - zh: 每个连接是一个进程，没有并发执行的票数可调，同时执行的语句数只受连接数限制；连接多时用 pgbouncer 之类的连接池控制。
+    refs:
+      - {title: 'PostgreSQL: max_parallel_workers', url: 'https://www.postgresql.org/docs/current/runtime-config-resource.html#GUC-MAX-PARALLEL-WORKERS'}
+      - {title: 'PostgreSQL: max_worker_processes', url: 'https://www.postgresql.org/docs/current/runtime-config-resource.html#GUC-MAX-WORKER-PROCESSES'}
   tidb:
     support: partial
     commands:
@@ -87,6 +92,9 @@ databases:
       running: running
     notes:
       - zh: innodb_thread_concurrency 只为兼容保留，设了也不起作用。没有实例级的并发闸门，整体限流用资源管控（RESOURCE GROUP）。
+    refs:
+      - {title: 'TiDB: tidb_executor_concurrency', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_executor_concurrency-span-classversion-marknew-in-v50span'}
+      - {title: 'TiDB: Resource Control', url: 'https://docs.pingcap.com/tidb/stable/tidb-resource-control-ru-groups/'}
     verify:
       teardown: SET GLOBAL tidb_executor_concurrency = 5;
 related: [live-throughput, list-active-sessions, lock-waits]

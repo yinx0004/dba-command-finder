@@ -36,6 +36,8 @@ databases:
           zh: 看 redis_version
       - cmd: redis-server --version
         shell: true
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
   postgresql:
     support: full
     commands:
@@ -43,6 +45,9 @@ databases:
       - cmd: SHOW server_version_num;
         note:
           zh: 数字形式，例如 170004，方便在脚本里比较
+    refs:
+      - {title: 'PostgreSQL: version()', url: 'https://www.postgresql.org/docs/current/functions-info.html'}
+      - {title: 'PostgreSQL: server_version_num', url: 'https://www.postgresql.org/docs/current/runtime-config-preset.html#GUC-SERVER-VERSION-NUM'}
   tidb:
     support: full
     commands:
@@ -53,4 +58,7 @@ databases:
         note:
           zh: 版本、Git 提交和存储引擎
       - cmd: SHOW VARIABLES LIKE 'version%';
+    refs:
+      - {title: 'TiDB: TIDB_VERSION', url: 'https://docs.pingcap.com/tidb/stable/tidb-functions/'}
+      - {title: 'TiDB: Information Functions', url: 'https://docs.pingcap.com/tidb/stable/information-functions/'}
 related: [server-status, show-variables]

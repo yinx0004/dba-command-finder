@@ -50,6 +50,9 @@ databases:
       size: maxmemory
     notes:
       - zh: maxmemory 是全部数据能用的内存上限，不是单独的一块缓存；到了上限怎么办由 maxmemory-policy 决定，默认 noeviction 是拒绝写入。
+    refs:
+      - {title: 'Redis: Key eviction', url: 'https://redis.io/docs/latest/develop/reference/eviction/'}
+      - {title: 'Redis: CONFIG SET', url: 'https://redis.io/docs/latest/commands/config-set/'}
     verify:
       teardown: CONFIG SET maxmemory 0
   postgresql:
@@ -63,6 +66,8 @@ databases:
       size: shared_buffers
     notes:
       - zh: 改 shared_buffers 必须重启，不能在线调整。读数据还大量依赖操作系统的页缓存，effective_cache_size 告诉优化器大约有多少可用。
+    refs:
+      - {title: 'PostgreSQL: shared_buffers', url: 'https://www.postgresql.org/docs/current/runtime-config-resource.html#GUC-SHARED-BUFFERS'}
     verify:
       teardown: ALTER SYSTEM RESET shared_buffers;
   tidb:
@@ -78,6 +83,9 @@ databases:
           zh: 数据缓存在 TiKV 的 block cache 里，可以在线调大调小
     notes:
       - zh: tidb-server 不缓存数据，innodb_buffer_pool_size 只为兼容保留，设了不起作用。
+    refs:
+      - {title: 'TiDB: tidb_server_memory_limit', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_server_memory_limit-span-classversion-marknew-in-v640span'}
+      - {title: 'TiDB: Tune TiKV Memory', url: 'https://docs.pingcap.com/tidb/stable/tune-tikv-memory-performance/'}
     verify:
       teardown: SET GLOBAL tidb_server_memory_limit = '80%';
 related: [cache-hit-ratio, set-variable]

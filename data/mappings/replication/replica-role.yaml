@@ -42,12 +42,16 @@ databases:
       - cmd: INFO replication
         note:
           zh: role 一行；从库上还有 master_host、master_link_status
+    refs:
+      - {title: 'Redis: ROLE', url: 'https://redis.io/docs/latest/commands/role/'}
   postgresql:
     support: full
     commands:
       - cmd: SELECT pg_is_in_recovery();
         note:
           zh: true 是备库，false 是主库
+    refs:
+      - {title: 'PostgreSQL: Recovery Control Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-RECOVERY-CONTROL'}
   tidb:
     support: partial
     commands:
@@ -56,4 +60,6 @@ databases:
           zh: 主备集群里，备集群通常设成 tidb_super_read_only = ON
     notes:
       - zh: 集群里的 tidb-server 没有主从之分，连哪台都能读写。用 TiCDC 搭的主备集群，要靠只读开关和 TiCDC 的同步方向来区分。
+    refs:
+      - {title: 'TiDB: tidb_super_read_only', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_super_read_only-span-classversion-marknew-in-v531span'}
 related: [replication-status, list-replicas, set-read-only]

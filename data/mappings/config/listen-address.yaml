@@ -57,6 +57,9 @@ databases:
       port: port
     notes:
       - zh: 没设置密码或 ACL 时，protected-mode 默认只接受本机连接。
+    refs:
+      - {title: 'Redis: Security', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/security/'}
+      - {title: 'Redis: CONFIG GET', url: 'https://redis.io/docs/latest/commands/config-get/'}
   postgresql:
     support: full
     commands:
@@ -68,6 +71,8 @@ databases:
       port: port
     notes:
       - zh: 改 listen_addresses 要重启；能不能连进来还要看 pg_hba.conf。
+    refs:
+      - {title: 'PostgreSQL: listen_addresses', url: 'https://www.postgresql.org/docs/current/runtime-config-connection.html#GUC-LISTEN-ADDRESSES'}
   tidb:
     support: full
     commands:
@@ -80,4 +85,6 @@ databases:
       port: port
     notes:
       - zh: 默认端口是 4000，不是 3306。
+    refs:
+      - {title: 'TiDB: Command-line Flags', url: 'https://docs.pingcap.com/tidb/stable/command-line-flags-for-tidb-configuration/'}
 related: [tls-check, config-file, current-connection]

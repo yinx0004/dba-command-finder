@@ -43,6 +43,8 @@ databases:
           zh: 重新启用
     notes:
       - zh: 禁用只挡住新的登录，已经登录的连接还能继续用；要立即生效，再执行 CLIENT KILL USER <user>。
+    refs:
+      - {title: 'Redis: ACL SETUSER', url: 'https://redis.io/docs/latest/commands/acl-setuser/'}
     verify:
       setup: 'ACL SETUSER app_lock on >Lab#Pass123 ~* +@all'
       vars: {user: app_lock}
@@ -58,6 +60,8 @@ databases:
           zh: 恢复登录
     notes:
       - zh: 已经连着的会话不受影响；要立即生效，再用 pg_terminate_backend 断开它的连接。也可以设 VALID UNTIL 让密码在某个时间后失效。
+    refs:
+      - {title: 'PostgreSQL: ALTER ROLE', url: 'https://www.postgresql.org/docs/current/sql-alterrole.html'}
     verify:
       setup: CREATE ROLE app_lock LOGIN PASSWORD 'Lab#Pass123';
       vars: {user: app_lock}
@@ -69,6 +73,8 @@ databases:
       - cmd: ALTER USER '<user>'@'<host>' ACCOUNT UNLOCK;
     notes:
       - zh: 锁定后新连接会被拒绝，已经连着的会话不受影响，需要的话再 KILL。
+    refs:
+      - {title: 'TiDB: ALTER USER', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-alter-user/'}
     verify:
       setup: CREATE USER 'app_lock'@'%' IDENTIFIED BY 'Lab#Pass123';
       vars: {user: app_lock, host: '%'}

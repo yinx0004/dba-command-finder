@@ -49,6 +49,9 @@ databases:
     notes:
       - zh: 核心命令只能按键名取值，没有二级索引；要按字段查，用查询引擎，或者自己用集合、有序集合维护索引。
       - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    refs:
+      - {title: 'Redis: FT.CREATE', url: 'https://redis.io/docs/latest/commands/ft.create/'}
+      - {title: 'Redis: Secondary indexing', url: 'https://redis.io/docs/latest/develop/clients/patterns/indexes/'}
     verify:
       setup: HSET app:user:1 name alice age 30
       teardown: |-
@@ -65,6 +68,8 @@ databases:
           zh: 普通建法，期间挡住写入
     notes:
       - zh: CONCURRENTLY 中途失败会留下一个无效的索引，要 DROP 掉重建。
+    refs:
+      - {title: 'PostgreSQL: CREATE INDEX', url: 'https://www.postgresql.org/docs/current/sql-createindex.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -79,6 +84,9 @@ databases:
           zh: ALGORITHM、LOCK 子句只为兼容；建索引本身就是在线的
     notes:
       - zh: 建索引要回填已有数据，大表要很久；进度看 ADMIN SHOW DDL JOBS 的 ROW_COUNT。回填速度受 tidb_ddl_reorg_worker_cnt 和 tidb_ddl_reorg_batch_size 控制。
+    refs:
+      - {title: 'TiDB: CREATE INDEX', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-create-index/'}
+      - {title: 'TiDB: ADD INDEX', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-add-index/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT);
       vars: {table: t, index: idx_a, column: a, index2: uk_b, column2: b}

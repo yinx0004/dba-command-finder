@@ -41,6 +41,9 @@ databases:
           zh: 让 redis-cli 自己翻完所有游标
     notes:
       - zh: 没有表，常见做法是用键名前缀表示“表”，例如 user:1、user:2。不要在生产环境用 KEYS，它会一次遍历所有键，期间挡住其他命令。
+    refs:
+      - {title: 'Redis: SCAN', url: 'https://redis.io/docs/latest/commands/scan/'}
+      - {title: 'Redis: redis-cli', url: 'https://redis.io/docs/latest/develop/tools/cli/'}
     verify:
       setup: |-
         SET app:1 a
@@ -53,6 +56,9 @@ databases:
       - cmd: \dt
         note:
           zh: psql 的快捷命令，只列当前 search_path 里的表；\dt *.* 列所有模式
+    refs:
+      - {title: 'PostgreSQL: pg_tables', url: 'https://www.postgresql.org/docs/current/view-pg-tables.html'}
+      - {title: 'PostgreSQL: psql', url: 'https://www.postgresql.org/docs/current/app-psql.html'}
     verify:
       setup: CREATE TABLE t (id int);
   tidb:
@@ -60,4 +66,6 @@ databases:
     commands:
       - cmd: SHOW TABLES;
       - cmd: SHOW FULL TABLES;
+    refs:
+      - {title: 'TiDB: SHOW TABLES', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-tables/'}
 related: [list-databases, show-indexes]

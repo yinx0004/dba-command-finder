@@ -73,6 +73,9 @@ databases:
     fields:
       sort: work_mem
       tmp: temp_buffers
+    refs:
+      - {title: 'PostgreSQL: work_mem', url: 'https://www.postgresql.org/docs/current/runtime-config-resource.html#GUC-WORK-MEM'}
+      - {title: 'PostgreSQL: maintenance_work_mem', url: 'https://www.postgresql.org/docs/current/runtime-config-resource.html#GUC-MAINTENANCE-WORK-MEM'}
   tidb:
     support: partial
     commands:
@@ -83,6 +86,9 @@ databases:
       - cmd: SET GLOBAL tidb_mem_quota_query = 2147483648;
     notes:
       - zh: 没有按算子分开的 sort_buffer_size、tmp_table_size，它们只为兼容保留，设了不起作用；只有一个按语句计算的总额度。
+    refs:
+      - {title: 'TiDB: tidb_mem_quota_query', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_mem_quota_query'}
+      - {title: 'TiDB: Configure Memory Usage', url: 'https://docs.pingcap.com/tidb/stable/configure-memory-usage/'}
     verify:
       teardown: SET GLOBAL tidb_mem_quota_query = 1073741824;
 related: [disk-spills, memory-usage, set-variable]

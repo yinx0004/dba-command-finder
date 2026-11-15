@@ -46,6 +46,8 @@ databases:
           zh: 不保存直接退出，上次快照之后的写入会丢
     notes:
       - zh: 7.0 起，有从库时主库会先等从库追上（最多 shutdown-timeout 秒）再退出。
+    refs:
+      - {title: 'Redis: SHUTDOWN', url: 'https://redis.io/docs/latest/commands/shutdown/'}
   postgresql:
     support: partial
     commands:
@@ -56,6 +58,9 @@ databases:
           zh: fast 断开所有连接、回滚没提交的事务后正常关闭；smart 等所有连接自己断开；immediate 直接退出，下次启动要做恢复
     notes:
       - zh: 没有关闭实例的 SQL 命令，要在服务器上用 pg_ctl 或 systemctl。
+    refs:
+      - {title: 'PostgreSQL: pg_ctl', url: 'https://www.postgresql.org/docs/current/app-pg-ctl.html'}
+      - {title: 'PostgreSQL: Shutting Down the Server', url: 'https://www.postgresql.org/docs/current/server-shutdown.html'}
   tidb:
     support: full
     commands:
@@ -68,4 +73,7 @@ databases:
         skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
         note:
           zh: 按顺序停掉整个集群；只停某类节点加 -R tidb、-R tikv
+    refs:
+      - {title: 'TiDB: SHUTDOWN', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-shutdown/'}
+      - {title: 'TiDB: tiup cluster stop', url: 'https://docs.pingcap.com/tidb/stable/tiup-component-cluster-stop/'}
 related: [rotate-logs]

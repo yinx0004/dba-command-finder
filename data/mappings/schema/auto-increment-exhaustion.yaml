@@ -39,6 +39,8 @@ databases:
           zh: 用 INCR 生成 ID 的计数器现在到多少了
     notes:
       - zh: 没有自增列，ID 通常由 INCR 计数器生成；计数器是有符号 64 位整数，上限 9223372036854775807，超过时 INCR 报错。离上限还远时一般不用担心。
+    refs:
+      - {title: 'Redis: INCR', url: 'https://redis.io/docs/latest/commands/incr/'}
     verify:
       setup: SET app:seq 1000
       vars: {key: 'app:seq'}
@@ -54,6 +56,8 @@ databases:
       max: max_value
     notes:
       - zh: 快用完时把列和序列改成 bigint：ALTER TABLE ... ALTER COLUMN id TYPE bigint 会重写表，大表要找维护窗口。
+    refs:
+      - {title: 'PostgreSQL: pg_sequences', url: 'https://www.postgresql.org/docs/current/view-pg-sequences.html'}
     verify:
       setup: |-
         CREATE TABLE t (id serial PRIMARY KEY);
@@ -67,6 +71,9 @@ databases:
       - cmd: SELECT TABLE_NAME, AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' AND AUTO_INCREMENT IS NOT NULL;
     notes:
       - zh: 没有 sys 库，要自己拿下一个 ID 和列类型的上限比较。每台 tidb-server 会预先分到一段 ID（默认 30000 个），所以 ID 不连续，增长比行数快得多；建表时写 AUTO_ID_CACHE 1 可以让 ID 连续递增。写入量大的表更推荐 AUTO_RANDOM，避免写入集中在一个 Region 上。
+    refs:
+      - {title: 'TiDB: SHOW TABLE NEXT_ROW_ID', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-table-next-rowid/'}
+      - {title: 'TiDB: AUTO_INCREMENT', url: 'https://docs.pingcap.com/tidb/stable/auto-increment/'}
     verify:
       setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT); INSERT INTO t (a) VALUES (1);
       vars: {table: t}
