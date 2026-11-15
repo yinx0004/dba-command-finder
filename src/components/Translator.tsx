@@ -175,9 +175,10 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
             {q.trim() && (
               <p className={top ? 'tr-recog' : 'tr-recog tr-miss'}>
                 {top ? fmt(match ? L.recognizedCmd : L.recognizedTask, { title: top.title }) : L.notFound}
+                {status?.kind === 'ok' && <span className="tr-recog-ok"> · {status.body}</span>}
               </p>
             )}
-            {status && (
+            {status && status.kind !== 'ok' && (
               <div className={`tr-status tr-status-${status.kind}`}>
                 <strong>{status.head}</strong>
                 <span>{status.body}</span>
@@ -266,33 +267,15 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
         </div>
       </div>
 
-      {top && (fromSide?.cmds.length || picks?.usable.length || top.fields.length) ? (
-        <div className="tr-ev">
-          {fromSide && fromSide.cmds.length > 0 && (
+      {top && (fromSide?.cmds.length || toSide?.cmds.length || top.fields.length) ? (
+        <div className={`tr-ev${top.fields.length ? ' tr-ev-2' : ''}`}>
+          {(fromSide?.cmds.length || toSide?.cmds.length) ? (
             <div className="tr-ev-col">
-              <h3>{fmt(L.evAvail, { db: from.name })}</h3>
-              <AvailMini side={fromSide} db={from} line={fromLine} servers={servers(fromSide)} L={L} />
+              <h3>{L.evVersions}</h3>
+              {fromSide && fromSide.cmds.length > 0 && <VersionTable side={fromSide} db={from} line={fromLine} L={L} />}
+              {toSide && toSide.cmds.length > 0 && <VersionTable side={toSide} db={to} line={toLine} L={L} />}
             </div>
-          )}
-          <div className="tr-ev-col">
-            <h3>{L.evRuns}</h3>
-            {[...(match ? [match.cmd] : fromSide?.cmds.slice(0, 1) ?? []), ...(picks?.usable.map((p) => p.cmd) ?? [])].slice(0, 4).map((c) => (
-              <div key={c.cmd} className="tr-run">
-                <code>{c.cmd}</code>
-                <span className="runs">
-                  {c.skip ? (
-                    <span className="run run-skip">{fmt(L.skip, { why: c.skip })}</span>
-                  ) : (
-                    c.runs.map(([line, server, outcome]) => (
-                      <span key={line} className={`run ${outcome === 'ok' ? 'run-ok' : 'run-fail'}`}>
-                        {fmt(outcome === 'ok' ? L.runOk : L.runFail, { server })}
-                      </span>
-                    ))
-                  )}
-                </span>
-              </div>
-            ))}
-          </div>
+          ) : null}
           {top.fields.length > 0 && (
             <div className="tr-ev-col">
               <h3>{L.evFields}</h3>
@@ -305,11 +288,11 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
                         <span className="tr-field-db">{d.name}</span>
                         <code>{f.names[d.id]}</code>
                         {f.checked[d.id] ? (
-                          <span className="field-ok" title={fmt(L.fieldChecked, { v: f.checked[d.id] })}>
+                          <span className="tr-mark tr-mark-ok" title={fmt(L.fieldChecked, { v: f.checked[d.id] })}>
                             ✓
                           </span>
                         ) : (
-                          <span className="field-mark">{L.noFieldCheck}</span>
+                          <span className="tr-mark">{L.noFieldCheck}</span>
                         )}
                       </span>
                     ) : null,
@@ -402,51 +385,54 @@ function PaneHead({
   );
 }
 
-/** "各版本能不能用" for one side, compact. */
-function AvailMini({ side, db, line, servers, L }: { side: TSide; db: Db; line: string; servers: Record<string, string>; L: Labels }) {
+/** One database's commands against its lab versions: the server each ran on, or why it is not there. */
+function VersionTable({ side, db, line, L }: { side: TSide; db: Db; line: string; L: Labels }) {
   return (
-    <div className="avail-grid" style={{ ['--cols' as string]: db.vers.length }}>
-      <span />
+    <div className="tr-vt" style={{ ['--cols' as string]: db.vers.length }}>
+      <span className={`tr-vt-db side-${db.role}`}>{db.name}</span>
       {db.vers.map((v) => (
-        <span key={v} className={`avail-head${v === line ? ' ver-mine' : ''}`}>
+        <span key={v} className={`tr-vt-head${v === line ? ' ver-mine' : ''}`}>
           {v}
-          {servers[v] && <span>{servers[v]}</span>}
         </span>
       ))}
       {side.cmds.slice(0, 4).map((c) => (
-        <Row key={c.cmd} c={c} vers={db.vers} line={line} L={L} />
+        <VersionRow key={c.cmd} c={c} vers={db.vers} line={line} L={L} />
       ))}
     </div>
   );
 }
 
-function Row({ c, vers, line, L }: { c: TCmd; vers: string[]; line: string; L: Labels }) {
+function VersionRow({ c, vers, line, L }: { c: TCmd; vers: string[]; line: string; L: Labels }) {
   return (
     <>
-      <code className="avail-cmd">{c.cmd}</code>
-      {vers.map((v) => {
-        const on = cmdOnLine(c, v);
-        const proven = c.runs.some((r) => r[0] === v);
-        const text = { ok: L.avail.ok, deprecated: L.avail.deprecated, 'not-yet': L.avail.notYet, removed: L.avail.removed }[on.state];
-        const sub =
-          on.state === 'ok'
-            ? on.since
-              ? fmt(L.avail.since, { v: on.since })
-              : on.removed
-                ? fmt(L.avail.removedAt, { v: on.removed })
+      <code className="tr-vt-cmd">{c.cmd}</code>
+      {c.skip ? (
+        <span className="tr-vt-skip">{fmt(L.skip, { why: c.skip })}</span>
+      ) : (
+        vers.map((v) => {
+          const on = cmdOnLine(c, v);
+          const server = c.runs.find((r) => r[0] === v)?.[1];
+          const mark = { ok: '✓', deprecated: '⚠', 'not-yet': '—', removed: '✕' }[on.state];
+          const note =
+            on.state === 'ok'
+              ? on.since
+                ? fmt(L.avail.since, { v: on.since })
                 : ''
-            : on.state === 'deprecated'
-              ? fmt(L.avail.deprecatedAt, { v: on.version })
-              : on.state === 'not-yet'
-                ? fmt(L.avail.since, { v: on.version })
-                : fmt(L.avail.removedAt, { v: on.version });
-        return (
-          <span key={v} className={`avail-cell avail-${on.state}${proven ? '' : ' avail-unproven'}${v === line ? ' ver-mine' : ''}`}>
-            {text}
-            {sub && <span>{sub}</span>}
-          </span>
-        );
-      })}
+              : on.state === 'deprecated'
+                ? fmt(L.avail.deprecatedAt, { v: on.version })
+                : on.state === 'not-yet'
+                  ? fmt(L.avail.since, { v: on.version })
+                  : fmt(L.avail.removedAt, { v: on.version });
+          return (
+            <span key={v} className={`tr-vt-cell tr-vt-${on.state}${v === line ? ' ver-mine' : ''}`}>
+              <span className="tr-vt-run">
+                {mark} {on.state === 'ok' || on.state === 'deprecated' ? (server ?? L.unproven) : ''}
+              </span>
+              {note && <span className="tr-vt-note">{note}</span>}
+            </span>
+          );
+        })
+      )}
     </>
   );
 }
@@ -464,7 +450,7 @@ function sourceStatus(c: TCmd, side: TSide, db: Db, line: string, L: Labels) {
   const alt = pickForLine(side, line, db.vers).usable.find((p) => p.on.state === 'ok' && p.cmd.cmd !== c.cmd)?.cmd.cmd;
   if (on.state === 'ok') {
     const run = c.runs.find((r) => r[0] === line && r[2] === 'ok');
-    return run ? { kind: 'ok', head: L.okHead, body: fmt(L.okBody, { db: db.name, server: run[1] }), alt: undefined } : undefined;
+    return run ? { kind: 'ok', head: L.okHead, body: fmt(L.okInline, { db: db.name, server: run[1] }), alt: undefined } : undefined;
   }
   if (on.state === 'deprecated') {
     return { kind: 'dep', head: L.depHead, body: fmt(L.depBody, { v: on.version }) + (alt ? fmt(L.altBody, { line }) : ''), alt };

@@ -269,7 +269,7 @@ td.mono { overflow-wrap: anywhere; }
 
 /* translator */
 .tr { display: flex; flex-direction: column; }
-.tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); border: 1px solid var(--ink); border-radius: 8px 8px 0 0; overflow: hidden; background: var(--surface); }
+.tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); border: 1px solid var(--border-strong); border-radius: 8px 8px 0 0; overflow: hidden; background: var(--surface); }
 .tr-grid:last-child { border-radius: 8px; }
 .tr-pane { display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); }
 .tr-pane-out { border-right: 0; background: var(--surface-2); }
@@ -282,20 +282,21 @@ td.mono { overflow-wrap: anywhere; }
 .tr-head .badge, .tr-swap { margin-left: auto; }
 .tr-swap { min-height: 32px; padding: 0 12px; font: inherit; font-size: 13px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
 .tr-swap:hover { color: var(--ink); border-color: var(--border-strong); }
-.tr-input { width: 100%; min-height: 120px; padding: 16px; border: 0; resize: vertical; background: transparent; color: var(--ink); font-family: var(--mono); font-size: 19px; line-height: 1.5; }
+.tr-input { width: 100%; min-height: 104px; padding: 16px; border: 0; resize: none; background: transparent; color: var(--ink); font-family: var(--mono); font-size: 16px; line-height: 1.6; }
 .tr-input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--focus); }
 .tr-below { display: flex; flex-direction: column; gap: 10px; padding: 0 16px 16px; }
-.tr-recog { margin: 0; font-size: 13px; color: var(--exact-fg); }
+.tr-recog { margin: 0; font-size: 14px; color: var(--exact-fg); }
+.tr-recog-ok { color: var(--muted); }
 .tr-recog.tr-miss { color: var(--none-fg); }
 .tr-status { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
 .tr-status code { margin-top: 4px; color: var(--ink); }
 .tr-status-ok { color: var(--exact-fg); background: var(--exact-bg); }
 .tr-status-dep { color: var(--approx-fg); background: var(--approx-bg); }
 .tr-status-gone { color: var(--none-fg); background: var(--none-bg); }
-.tr-out { display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; }
+.tr-out { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
 .tr-cmd { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; }
-.tr-cmd code { flex: 1 1 200px; min-width: 0; font-size: 19px; line-height: 1.5; overflow-wrap: anywhere; }
-.tr-cmd .copy { min-height: 34px; }
+.tr-cmd code { flex: 1 1 200px; min-width: 0; font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.tr-cmd .copy { min-height: 30px; }
 .tr-cmd-gone code { color: var(--muted); text-decoration: line-through; }
 .tr-tag { flex-basis: 100%; font-size: 12px; color: var(--approx-fg); }
 .tr-cmd-gone .tr-tag { color: var(--none-fg); }
@@ -309,20 +310,51 @@ td.mono { overflow-wrap: anywhere; }
 .tr-extra { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
 .tr-extra code { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
 .tr-open { font-size: 13px; }
-.tr-ev { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); border: 1px solid var(--ink); border-top: 1px solid var(--border); border-radius: 0 0 8px 8px; background: var(--surface); }
-.tr-ev-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 16px; border-right: 1px solid var(--border); }
-.tr-ev-col:last-child { border-right: 0; }
-.tr-ev h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-2); }
-.tr-run { display: flex; flex-direction: column; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid var(--divider); }
-.tr-run code, .tr-field code { font-size: 12px; overflow-wrap: anywhere; }
-.tr-field { display: flex; flex-direction: column; gap: 3px; padding-bottom: 10px; border-bottom: 1px solid var(--divider); font-size: 13px; }
-.tr-field-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.tr-ev { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--border-strong); border-top: 0; border-radius: 0 0 8px 8px; background: var(--surface); }
+.tr-ev-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 16px; }
+.tr-ev-col + .tr-ev-col { border-top: 1px solid var(--border); }
+@media (min-width: 900px) {
+  .tr-ev-2 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .tr-ev-col + .tr-ev-col { border-top: 0; border-left: 1px solid var(--border); }
+}
+.tr-ev h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+/* each database's commands against its versions: text, not filled blocks, so the answer above stays the loudest thing */
+.tr-vt { display: grid; grid-template-columns: minmax(0, 2.4fr) repeat(var(--cols), minmax(0, 1fr)); column-gap: 12px; align-items: baseline; }
+.tr-vt + .tr-vt { padding-top: 12px; border-top: 1px solid var(--divider); }
+.tr-vt-db { font-size: 13px; font-weight: 600; padding-bottom: 4px; }
+.tr-vt-head { font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 0 6px 4px; }
+.tr-vt-head.ver-mine { color: var(--link); font-weight: 600; }
+.tr-vt-cmd { font-size: 13px; line-height: 1.5; color: var(--ink-2); padding: 6px 0; border-top: 1px solid var(--divider); overflow-wrap: anywhere; }
+.tr-vt-cell, .tr-vt-skip { display: flex; flex-direction: column; align-self: stretch; padding: 6px; border-top: 1px solid var(--divider); font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+.tr-vt-skip { grid-column: span var(--cols); font-family: var(--sans); color: var(--muted); }
+.tr-vt-note { font-family: var(--sans); color: var(--muted); }
+.tr-vt-run { white-space: nowrap; }
+/* phones: each command gets a full row, its versions under it */
+@media (max-width: 600px) {
+  .tr-vt { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); column-gap: 4px; }
+  .tr-vt-db, .tr-vt-cmd { grid-column: 1 / -1; }
+  .tr-vt-cmd { padding-bottom: 2px; }
+  .tr-vt-cell, .tr-vt-skip { border-top: 0; padding: 2px 4px 8px; }
+  .tr-vt-head { padding-left: 4px; padding-right: 4px; }
+}
+.tr-vt-ok .tr-vt-run { color: var(--exact-fg); }
+.tr-vt-deprecated .tr-vt-run { color: var(--approx-fg); }
+.tr-vt-not-yet .tr-vt-run { color: var(--muted); }
+.tr-vt-removed .tr-vt-run { color: var(--none-fg); }
+.tr-vt-cell.ver-mine { background: var(--nav-active); border-radius: 4px; }
+.tr-field { display: flex; flex-direction: column; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--divider); font-size: 13px; }
+.tr-field:last-child { border-bottom: 0; padding-bottom: 0; }
+.tr-field strong { font-weight: 600; }
+.tr-field-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.tr-field-row code { font-size: 13px; overflow-wrap: anywhere; }
 .tr-field-db { font-size: 12px; color: var(--muted); }
+.tr-mark { font-size: 12px; color: var(--muted); }
+.tr-mark-ok { color: var(--exact-fg); cursor: help; }
 .tr-more { margin-top: 20px; display: flex; flex-direction: column; }
 .tr-more h3 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .tr-more-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2px 20px; padding: 9px 0; border-bottom: 1px solid var(--divider); color: var(--ink); font-size: 14px; }
 .tr-more-row:hover { text-decoration: none; color: var(--link); }
-.tr-more-row code { font-size: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
+.tr-more-row code { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
 .tr-tries { margin: 14px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-size: 13px; color: var(--muted); }
 .tr-tries button { min-height: 32px; padding: 0; border: 0; background: none; color: var(--ink-2); font-family: var(--mono); font-size: 13px; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; cursor: pointer; }
 .tr-tries button:hover { color: var(--link); text-decoration-color: currentColor; }
