@@ -44,4 +44,18 @@ databases:
       setup: HSET app:user:1 name a
       vars: {key: 'app:user:1', new_key: 'app:member:1'}
       teardown: DEL app:user:1 app:member:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> RENAME TO <new_table>;
+      - cmd: ALTER TABLE <new_table> SET SCHEMA archive;
+        note:
+          zh: 移到另一个模式
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+        CREATE SCHEMA archive;
+      vars: {table: t, new_table: t_old}
+      teardown: DROP SCHEMA archive CASCADE;
 related: [drop-table]

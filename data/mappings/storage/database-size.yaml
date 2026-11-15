@@ -68,4 +68,18 @@ databases:
         SET app:1 a
         SET app:2 b
       teardown: DEL app:1 app:2
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT datname, pg_size_pretty(pg_database_size(datname)) AS total_size FROM pg_database ORDER BY pg_database_size(datname) DESC;
+        note:
+          zh: 每个库的总大小
+      - cmd: SELECT pg_size_pretty(sum(pg_table_size(oid))) AS data_size, pg_size_pretty(sum(pg_indexes_size(oid))) AS index_size FROM pg_class WHERE relkind = 'r';
+        note:
+          zh: 当前库里表和索引各占多少
+    fields:
+      name: datname
+      data: data_size
+      index: index_size
+      total: total_size
 related: [table-size, list-databases]

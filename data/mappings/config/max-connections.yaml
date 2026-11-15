@@ -72,4 +72,20 @@ databases:
       - zh: maxclients 还受进程能打开的文件数限制；启动时文件数不够，Redis 会自动调小 maxclients 并在日志里提示。
     verify:
       teardown: CONFIG SET maxclients 10000
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SHOW max_connections;
+      - cmd: ALTER SYSTEM SET max_connections = 500;
+        note:
+          zh: 写进 postgresql.auto.conf，重启后生效
+      - cmd: SHOW superuser_reserved_connections;
+        note:
+          zh: 留给超级用户的连接数，普通用户能用的要减掉它
+    fields:
+      limit: max_connections
+    notes:
+      - zh: 改了要重启；也没有“因为连接满被拒绝”的计数，只能在日志里看 too many clients。每个连接是一个进程，连接数很多时用 pgbouncer 之类的连接池。
+    verify:
+      teardown: ALTER SYSTEM RESET max_connections;
 related: [connection-usage, sharding-conn-pool, set-variable]

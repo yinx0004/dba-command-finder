@@ -50,4 +50,21 @@ databases:
     verify:
       vars: {parameter: slowlog-max-len, value: '256'}
       teardown: CONFIG SET slowlog-max-len 128
+  postgresql:
+    support: full
+    commands:
+      - cmd: SET <name> = '<value>';
+        note:
+          zh: 只对当前连接生效
+      - cmd: ALTER SYSTEM SET <name> = '<value>';
+        note:
+          zh: 对整个实例，执行 pg_reload_conf() 或重启后生效
+      - cmd: SELECT pg_reload_conf();
+    notes:
+      - zh: 还可以按用户或按库设置：ALTER ROLE、ALTER DATABASE ... SET。能不能不重启就生效，看 pg_settings 的 context 列。
+    verify:
+      vars: {name: work_mem, value: 64MB}
+      teardown: |-
+        ALTER SYSTEM RESET work_mem;
+        SELECT pg_reload_conf();
 related: [show-variables, persist-parameters]

@@ -37,4 +37,15 @@ databases:
           zh: 是否要求客户端出示证书
     notes:
       - zh: 只能看服务器有没有开 TLS，看不出某个连接是不是走的 TLS；开了 tls-port 后，可以把 port 设成 0，只留加密端口。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW ssl;
+        note:
+          zh: 服务器有没有开 TLS
+      - cmd: SELECT ssl, version, cipher FROM pg_stat_ssl WHERE pid = pg_backend_pid();
+        note:
+          zh: 当前这个连接是不是加密的、用的什么协议和算法
+    notes:
+      - zh: pg_hba.conf 里写 hostssl 的规则只接受加密连接。
 related: [config-file, create-user]

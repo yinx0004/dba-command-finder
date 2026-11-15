@@ -50,4 +50,18 @@ databases:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1'}
       teardown: DEL app:user:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT count(*) FROM <table>;
+        note:
+          zh: 精确，但要扫一遍表，大表会慢
+      - cmd: SELECT reltuples::bigint AS estimate FROM pg_class WHERE relname = '<table>';
+        note:
+          zh: 估算值，ANALYZE 或 VACUUM 后更新，立即返回
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [table-size]

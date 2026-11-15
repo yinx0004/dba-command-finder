@@ -50,4 +50,26 @@ databases:
     support: none
     notes:
       - zh: 没有执行计划缓存。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: PREPARE q1 (int) AS SELECT * FROM <table> WHERE a = $1; EXECUTE q1(1); SELECT name, statement, generic_plans, custom_plans FROM pg_prepared_statements;
+        note:
+          zh: 只看得到当前连接里准备好的语句和它们用过几次通用计划、定制计划
+      - cmd: DEALLOCATE ALL;
+        note:
+          zh: 清掉当前连接的所有预备语句
+      - cmd: SHOW plan_cache_mode;
+        note:
+          zh: auto 时，同一条预备语句执行几次后可能改用通用计划
+    fields:
+      key: name
+      query: statement
+    notes:
+      - zh: 计划缓存在每个连接里，没有全局缓存，也就没有全局清空的命令。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [explain, force-index, analyze-table]

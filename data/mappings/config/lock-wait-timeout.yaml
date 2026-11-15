@@ -30,4 +30,16 @@ databases:
     support: none
     notes:
       - zh: 没有锁，也就没有锁等待超时。BLPOP、XREAD BLOCK 这类阻塞命令的等待时间是命令自己的参数。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW lock_timeout;
+        note:
+          zh: 等锁超过这个时间就报错，默认 0 表示一直等
+      - cmd: SET lock_timeout = '5s';
+      - cmd: SHOW deadlock_timeout;
+        note:
+          zh: 等锁多久之后检查一次有没有死锁，默认 1 秒
+    notes:
+      - zh: 做 DDL 前常先 SET lock_timeout，免得排在一个长事务后面，又把后面所有查询挡住。
 related: [lock-waits, long-transactions]

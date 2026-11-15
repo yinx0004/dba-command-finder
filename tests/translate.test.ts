@@ -111,12 +111,12 @@ describe('telling commands from task descriptions', () => {
 
 describe('the databases the site shows', () => {
   it('puts the pair first, then the others the lab runs, each with its color', () => {
-    expect(siteDbs(ds).map((x) => `${x.def.id}:${x.role}`)).toEqual(['mysql:source', 'mongodb:target', 'redis:third']);
+    expect(siteDbs(ds).map((x) => `${x.def.id}:${x.role}`)).toEqual(['mysql:source', 'mongodb:target', 'redis:third', 'postgresql:fourth']);
   });
 
   it('gives the translator every database, fields included', () => {
     const all = translateEntries(ds, null, 'zh', siteDbs(ds).map((x) => x.def.id));
-    expect(Object.keys(all['list-active-sessions'].sides)).toEqual(['mysql', 'mongodb', 'redis']);
+    expect(Object.keys(all['list-active-sessions'].sides)).toEqual(['mysql', 'mongodb', 'redis', 'postgresql']);
     const id = all['list-active-sessions'].fields.find((f) => f.names.redis === 'id');
     expect(id?.names).toMatchObject({ redis: 'id' });
   });

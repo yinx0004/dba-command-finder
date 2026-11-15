@@ -48,4 +48,16 @@ databases:
       - zh: timeout 不管处于订阅（Pub/Sub）状态的连接。
     verify:
       teardown: CONFIG SET timeout 0
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW idle_session_timeout;
+        note:
+          zh: 空闲多久断开，0 表示不断开（默认）
+      - cmd: SHOW idle_in_transaction_session_timeout;
+        note:
+          zh: 开着事务却什么都不做的连接，多久断开；这类连接会挡住 VACUUM，更值得设
+      - cmd: SET idle_in_transaction_session_timeout = '10min';
+    notes:
+      - zh: 可以按用户或按库设置，例如 ALTER ROLE app SET idle_session_timeout = '30min'。
 related: [connection-usage, list-active-sessions]

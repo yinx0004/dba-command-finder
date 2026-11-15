@@ -43,4 +43,14 @@ databases:
       setup: 'ACL SETUSER app_kill on >Lab#Pass123 ~* +@all'
       vars: {user: app_kill}
       teardown: ACL DELUSER app_kill
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename = '<user>' AND pid <> pg_backend_pid();
+        note:
+          zh: 一条语句断开这个用户的所有连接
+    verify:
+      setup: CREATE ROLE app_kill LOGIN;
+      vars: {user: app_kill}
+      teardown: DROP ROLE app_kill;
 related: [kill-session, account-lock, list-active-sessions]

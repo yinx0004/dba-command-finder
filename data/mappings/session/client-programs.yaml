@@ -51,4 +51,15 @@ databases:
       conn_id: id
     notes:
       - zh: 连接本身不带程序名，要靠程序自己报：连接后执行 CLIENT SETNAME 起名字；7.2 起较新的客户端库还会用 CLIENT SETINFO 报上库名和版本。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT pid, usename, application_name, client_addr FROM pg_stat_activity WHERE backend_type = 'client backend';
+        note:
+          zh: application_name 是程序在连接参数里报上来的名字，没设置时为空或是驱动的默认值
+    fields:
+      program: application_name
+      conn_id: pid
+    notes:
+      - zh: 只有程序自己在连接串里写了 application_name 才看得出来；驱动名和版本不会报给服务器。
 related: [connection-usage, list-active-sessions]

@@ -75,4 +75,22 @@ databases:
       avg_time: usec_per_call
     notes:
       - zh: 只能按命令名统计，不能按具体参数（哪个键）统计；要看具体哪一次慢，用 SLOWLOG GET。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT query, calls, total_exec_time, mean_exec_time, rows FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;
+        note:
+          zh: 同一条语句不同参数会合并成一行；时间单位是毫秒
+      - cmd: SELECT pg_stat_statements_reset();
+        note:
+          zh: 清零，重新开始统计
+    fields:
+      statement: query
+      count: calls
+      total_time: total_exec_time
+      avg_time: mean_exec_time
+    notes:
+      - zh: 要先在 shared_preload_libraries 里加载 pg_stat_statements 并重启，再在库里 CREATE EXTENSION pg_stat_statements。
+    verify:
+      setup: CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 related: [full-table-scans, slow-query-log, explain]

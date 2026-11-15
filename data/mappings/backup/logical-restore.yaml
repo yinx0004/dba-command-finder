@@ -54,4 +54,18 @@ databases:
           zh: 停掉 Redis，用备份替换快照文件，再启动
     notes:
       - zh: 恢复就是用快照文件启动；开着 AOF 时启动会优先读 AOF，要先关掉 appendonly 或一起替换。单个键可以用 DUMP 导出、RESTORE 导回。
+  postgresql:
+    support: full
+    commands:
+      - cmd: pg_restore -d <db> --clean --if-exists /tmp/<db>.dump
+        shell: true
+        note:
+          zh: 先删掉同名对象再恢复；加 -j 4 可以并行
+      - cmd: pg_restore -l /tmp/<db>.dump
+        shell: true
+        note:
+          zh: 列出备份里有哪些对象，可以挑着恢复
+    verify:
+      setup: CREATE TABLE t (id int PRIMARY KEY);
+      setup_shell: pg_dump -Fc -d lab_logical_restore -f /tmp/lab_logical_restore.dump
 related: [logical-backup, point-in-time-recovery]

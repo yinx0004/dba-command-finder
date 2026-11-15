@@ -45,4 +45,11 @@ databases:
       - cmd: CONFIG GET maxmemory*
         note:
           zh: 支持通配符，列出名字匹配的参数
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW ALL;
+      - cmd: SELECT name, setting, unit, context, source FROM pg_settings WHERE name LIKE 'work_mem%';
+        note:
+          zh: context 说明改了要不要重启，source 说明是从哪设置的
 related: [set-variable, persist-parameters, server-status]

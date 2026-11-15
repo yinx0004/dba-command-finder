@@ -78,4 +78,20 @@ databases:
       - zh: 没有复制错误这一说：从库只是按顺序重放主库发来的命令，连接断了就重连续传，续不上就全量同步。
     verify:
       skip_fields: {zh: 这些字段只在从库上出现}
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT client_addr, state, sent_lsn, replay_lsn, write_lag, flush_lag, replay_lag FROM pg_stat_replication;
+        note:
+          zh: 在主库上看每个备库：state 为 streaming 是正常，replay_lag 是回放落后的时间
+      - cmd: SELECT status, sender_host, last_msg_receipt_time FROM pg_stat_wal_receiver;
+        on: [standby]
+        note:
+          zh: 在备库上看自己和主库的连接
+    fields:
+      lag: replay_lag
+      health: state
+      source: {name: sender_host, skip: {zh: 在备库的 pg_stat_wal_receiver 里，lab 只跑主库}}
+    notes:
+      - zh: 复制断了不会报“错误信息”字段，原因看备库日志；复制本身不会因为某条语句出错而停下。
 related: [server-status]

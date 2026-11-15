@@ -1,10 +1,10 @@
 # DBA Command Finder
 
-同一件运维任务，在 MySQL、MongoDB、Redis 里分别怎么做？输入任意一个库的命令或中文关键词，查到其他库的对应写法、输出字段对照、版本差异和注意事项。没有对应命令时会明确说明，并给出可以改看的信号。
+同一件运维任务，在 MySQL、MongoDB、Redis、PostgreSQL 里分别怎么做？输入任意一个库的命令或中文关键词，查到其他库的对应写法、输出字段对照、版本差异和注意事项。没有对应命令时会明确说明，并给出可以改看的信号。
 
 网站：<https://www.solidstack.io/dba-command-finder/>
 
-*A lookup site for DBAs working across MySQL, MongoDB and Redis. Chinese first; English pages will follow.*
+*A lookup site for DBAs working across MySQL, MongoDB, Redis and PostgreSQL. Chinese first; English pages will follow.*
 
 ## 本地运行
 
@@ -91,7 +91,7 @@ data/
 
 ## 验证 lab
 
-页面上的每条命令都会在真实数据库上**原样执行**：MySQL 用 `mysql` 命令行，MongoDB 用镜像自带的 `mongosh`，Redis 用 `redis-cli`（命令从标准输入送入，一行一条）。要验证的版本写在 [data/databases.yaml](data/databases.yaml) 的 `lab_versions` 里。
+页面上的每条命令都会在真实数据库上**原样执行**：MySQL 用 `mysql` 命令行，MongoDB 用镜像自带的 `mongosh`，Redis 用 `redis-cli`（命令从标准输入送入，一行一条），PostgreSQL 用 `psql`（遇到错误立即停止，靠退出码判断成败）。PostgreSQL 以 `shared_preload_libraries=pg_stat_statements` 和 `wal_level=logical` 启动，和常见的生产配置一致。要验证的版本写在 [data/databases.yaml](data/databases.yaml) 的 `lab_versions` 里。
 
 - 版本在 `since` 和 `removed_in` 之间：必须执行成功
 - 早于 `since` 或从 `removed_in` 起：必须报错，这样版本区间写错也能被发现
@@ -122,7 +122,7 @@ mysql:
 
 - **命令行工具**（`mysqldump`、`mongodump`、`mongoexport`……）：给命令加 `shell: true`，lab 会在容器里用 bash 执行。MySQL 容器里已经写好 `~/.my.cnf`，所以命令不用带 `-u`、`-p`。需要先准备文件时（例如恢复前先有一份备份），用 `verify.setup_shell`。
 - **没法自动执行的命令**（例如 `KILL` 需要另一个连接）：给命令加 `skip: {zh: 原因}`，页面上会显示「未自动验证」和原因。
-- **只能在 mongos 或 config server 上执行的命令**：lab 只有副本集（`roles` 里标了 `lab: true` 的角色）。`on` 里没有 mongod 的命令会被自动跳过，页面上显示 `roles_unverified` 写的原因，不用再写 `skip`。Redis 同理：lab 只跑单机 `redis-server`，集群（`on: [cluster]`）和 Sentinel（`on: [sentinel]`）的命令会被跳过。
+- **只能在 mongos 或 config server 上执行的命令**：lab 只有副本集（`roles` 里标了 `lab: true` 的角色）。`on` 里没有 mongod 的命令会被自动跳过，页面上显示 `roles_unverified` 写的原因，不用再写 `skip`。Redis 同理：lab 只跑单机 `redis-server`，集群（`on: [cluster]`）和 Sentinel（`on: [sentinel]`）的命令会被跳过；PostgreSQL 只跑一个主库，只能在备库上执行的命令（`on: [standby]`）会被跳过。
 - **准备步骤在旧版本上会失败**：如果一条记录的命令在某个版本上全都应该报错（例如 Redis 8.0 才有的 `FT.*`），它的 `setup` 在那个版本上失败也不算失败，因为准备步骤往往用的就是同一个功能（比如先建好要删的索引）。只要有一条命令应该成功，`setup` 就必须成功。
 - **Redis 命令的成败**：`redis-cli` 碰到错误回复也返回 0，lab 改看输出里有没有 `ERR`、`WRONGTYPE`、`NOPERM` 这类错误前缀。
 - **没法检查的字段**：单个字段在字段名后面加 `skip: {zh: 原因}`；整条记录的字段都查不了（例如只有从库上才有的字段），用 `verify.skip_fields`。某个字段从某个版本起才出现在输出里时，给它加 `since`，更早的版本上就不检查它。

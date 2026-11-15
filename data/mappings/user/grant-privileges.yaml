@@ -58,4 +58,24 @@ databases:
       setup: 'ACL SETUSER app_grant on >Lab#Pass123 ~app:* +@read'
       vars: {user: app_grant}
       teardown: ACL DELUSER app_grant
+  postgresql:
+    support: full
+    commands:
+      - cmd: GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO <user>;
+        note:
+          zh: 只对已经存在的表生效
+      - cmd: ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO <user>;
+        note:
+          zh: 之后新建的表也自动授权
+      - cmd: GRANT pg_read_all_data TO <user>;
+        note:
+          zh: 内置角色：所有库所有表只读
+    notes:
+      - zh: 权限分库、模式、表几层：还要有库的 CONNECT 和模式的 USAGE 才查得到表。15 起，public 模式不再默认允许所有人建表。
+    verify:
+      setup: CREATE ROLE app_grant LOGIN PASSWORD 'Lab#Pass123';
+      vars: {user: app_grant}
+      teardown: |-
+        DROP OWNED BY app_grant;
+        DROP ROLE app_grant;
 related: [create-user, show-grants]

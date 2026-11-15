@@ -44,4 +44,11 @@ databases:
           zh: 提前恢复
     notes:
       - zh: 做备份不需要锁：BGSAVE 用 fork 出来的子进程写快照，快照是 fork 那一刻的数据，主进程照常处理读写。
+  postgresql:
+    support: none
+    notes:
+      - zh: 没有全局只读锁，也不需要：pg_dump 用一个事务快照导出，备份期间照常读写。
+    alternatives:
+      - title: {zh: 让之后的新事务默认只读（用户可以自己改回来）}
+        cmd: ALTER SYSTEM SET default_transaction_read_only = on;
 related: [lock-waits]

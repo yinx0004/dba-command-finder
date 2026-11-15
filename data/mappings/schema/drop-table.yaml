@@ -45,4 +45,18 @@ databases:
         HSET app:user:2 name b
       vars: {key: 'app:user:1'}
       teardown: DEL app:user:1 app:user:2
+  postgresql:
+    support: full
+    commands:
+      - cmd: DROP TABLE <table>;
+        note:
+          zh: 有视图或外键引用它时会失败，加 CASCADE 会一起删掉
+      - cmd: DROP TABLE IF EXISTS <table>;
+    notes:
+      - zh: DDL 可以在事务里执行，BEGIN 后 DROP TABLE 再 ROLLBACK，表还在。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [rename-table]

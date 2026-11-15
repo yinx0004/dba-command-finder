@@ -82,4 +82,24 @@ databases:
       teardown: |-
         FT.DROPINDEX idx:users
         DEL app:user:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT indexname, indexdef FROM pg_indexes WHERE tablename = '<table>';
+        note:
+          zh: indexdef 是建索引的语句，列都在里面
+      - cmd: SELECT i.indexrelid::regclass AS index_name, i.indisunique, am.amname FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_am am ON am.oid = c.relam WHERE i.indrelid = '<table>'::regclass;
+        note:
+          zh: 是否唯一、索引类型（btree、hash、gin、gist、brin）
+    fields:
+      index_name: indexname
+      key_columns: {name: indexdef, note: {zh: 列写在建索引语句里}}
+      unique: indisunique
+      index_type: amname
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+        CREATE INDEX idx_a ON t (a);
+      vars: {table: t}
 related: [list-tables, explain]

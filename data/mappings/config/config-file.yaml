@@ -44,4 +44,18 @@ databases:
           zh: 把运行中改过的参数写回这个文件
     fields:
       source: config_file
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW config_file;
+      - cmd: SHOW hba_file;
+        note:
+          zh: 控制谁能从哪连进来的 pg_hba.conf
+      - cmd: SELECT name, setting, sourcefile, sourceline FROM pg_settings WHERE sourcefile IS NOT NULL;
+        note:
+          zh: 每个参数是在哪个文件的第几行设置的
+    fields:
+      source: sourcefile
+    notes:
+      - zh: ALTER SYSTEM 改的参数写在数据目录下的 postgresql.auto.conf，优先于 postgresql.conf。
 related: [show-variables, set-variable]

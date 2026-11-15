@@ -52,4 +52,17 @@ databases:
       - zh: maxmemory 是全部数据能用的内存上限，不是单独的一块缓存；到了上限怎么办由 maxmemory-policy 决定，默认 noeviction 是拒绝写入。
     verify:
       teardown: CONFIG SET maxmemory 0
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SHOW shared_buffers;
+      - cmd: ALTER SYSTEM SET shared_buffers = '1GB';
+        note:
+          zh: 重启后生效
+    fields:
+      size: shared_buffers
+    notes:
+      - zh: 改 shared_buffers 必须重启，不能在线调整。读数据还大量依赖操作系统的页缓存，effective_cache_size 告诉优化器大约有多少可用。
+    verify:
+      teardown: ALTER SYSTEM RESET shared_buffers;
 related: [cache-hit-ratio, set-variable]

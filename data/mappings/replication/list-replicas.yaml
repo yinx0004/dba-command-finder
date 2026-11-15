@@ -54,4 +54,15 @@ databases:
         note: {zh: 在 Sentinel 上执行，列出它监控的主库有哪些从库}
     fields:
       host: {name: ip, skip: {zh: 只在有从库时出现，lab 只跑单机}}
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT client_addr, application_name, state, sync_state FROM pg_stat_replication;
+        note:
+          zh: 在主库上执行，每个连上来的备库一行
+      - cmd: SELECT slot_name, slot_type, active FROM pg_replication_slots;
+        note:
+          zh: 复制槽，包括暂时没连上的备库
+    fields:
+      host: client_addr
 related: [replica-role, replication-status]

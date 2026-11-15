@@ -47,4 +47,19 @@ databases:
       setup: 'ACL SETUSER app_lock on >Lab#Pass123 ~* +@all'
       vars: {user: app_lock}
       teardown: ACL DELUSER app_lock
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER ROLE <user> NOLOGIN;
+        note:
+          zh: 之后不能再用它登录
+      - cmd: ALTER ROLE <user> LOGIN;
+        note:
+          zh: 恢复登录
+    notes:
+      - zh: 已经连着的会话不受影响；要立即生效，再用 pg_terminate_backend 断开它的连接。也可以设 VALID UNTIL 让密码在某个时间后失效。
+    verify:
+      setup: CREATE ROLE app_lock LOGIN PASSWORD 'Lab#Pass123';
+      vars: {user: app_lock}
+      teardown: DROP ROLE app_lock;
 related: [drop-user, kill-session]

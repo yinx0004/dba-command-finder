@@ -36,4 +36,11 @@ databases:
           zh: 看 redis_version
       - cmd: redis-server --version
         shell: true
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT version();
+      - cmd: SHOW server_version_num;
+        note:
+          zh: 数字形式，例如 170004，方便在脚本里比较
 related: [server-status, show-variables]

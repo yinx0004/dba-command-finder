@@ -70,4 +70,18 @@ databases:
       operations: total_commands_processed
       network_bytes: total_net_input_bytes / total_net_output_bytes
       cache: {name: keyspace_hits / keyspace_misses, note: {zh: 数据都在内存里，这里是读到和没读到键的次数}}
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT datname, numbackends, xact_commit, xact_rollback, blks_read, blks_hit, tup_returned, tup_inserted, tup_updated, tup_deleted FROM pg_stat_database WHERE datname = current_database();
+        note:
+          zh: 按库累计的计数，从上次重置统计起算
+      - cmd: SELECT now() - pg_postmaster_start_time() AS uptime;
+    fields:
+      connections: numbackends
+      uptime: uptime
+      operations: xact_commit / xact_rollback
+      cache: blks_hit / blks_read
+    notes:
+      - zh: 没有网络流量计数；统计分散在 pg_stat_database、pg_stat_bgwriter、pg_stat_wal 等多张视图里。
 related: [list-active-sessions, show-variables]

@@ -42,4 +42,16 @@ databases:
         on: [cluster]
     notes:
       - zh: 没有分区表。Redis Cluster 把键按哈希分到 16384 个槽位，再分给各个节点；键名里用 {} 包住的部分决定槽位，可以让相关的键落在同一个节点上。
+  postgresql:
+    support: full
+    commands:
+      - cmd: CREATE TABLE <table> (id bigint, created_at date, PRIMARY KEY (id, created_at)) PARTITION BY RANGE (created_at);
+      - cmd: CREATE TABLE <table>_2026 PARTITION OF <table> FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
+        note:
+          zh: 每个分区是一张普通的表，要提前建好；DROP TABLE 删掉旧分区就是清理旧数据
+    notes:
+      - zh: 主键和唯一约束必须包含分区键。
+    verify:
+      vars: {table: events}
+      teardown: DROP TABLE events;
 related: [ttl-expiry, batch-delete]

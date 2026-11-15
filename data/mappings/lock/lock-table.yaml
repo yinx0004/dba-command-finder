@@ -39,4 +39,17 @@ databases:
     alternatives:
       - title: {zh: 用一个键做锁：不存在才设置成功，30 秒后自动过期}
         cmd: SET lock:<name> <token> NX PX 30000
+  postgresql:
+    support: full
+    commands:
+      - cmd: BEGIN; LOCK TABLE <table> IN SHARE MODE; COMMIT;
+        note:
+          zh: 锁只在事务里有效，COMMIT 或 ROLLBACK 就释放；SHARE 模式挡住写入，ACCESS EXCLUSIVE 连读也挡住
+    notes:
+      - zh: 没有单独的解锁命令，事务结束就解锁。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [global-read-lock, lock-waits]

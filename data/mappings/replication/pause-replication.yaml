@@ -47,4 +47,15 @@ databases:
           zh: 重新连回主库；能用积压缓冲区续上就增量同步，否则全量同步
     notes:
       - zh: 没有“暂停、继续”：断开复制就是停止，再连回去时从主库的复制积压缓冲区续传，断开太久就要全量同步。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_wal_replay_pause();
+        on: [standby]
+        note:
+          zh: 在备库上执行，暂停回放；WAL 照常接收
+      - cmd: SELECT pg_get_wal_replay_pause_state();
+        on: [standby]
+      - cmd: SELECT pg_wal_replay_resume();
+        on: [standby]
 related: [skip-replication-error, replication-status]

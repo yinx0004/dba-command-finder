@@ -50,4 +50,17 @@ databases:
     alternatives:
       - title: {zh: 看实例监听了哪些地址}
         cmd: CONFIG GET bind
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT line_number, type, database, user_name, address, auth_method FROM pg_hba_file_rules;
+        note:
+          zh: pg_hba.conf 现在生效的规则，按顺序第一条匹配的生效
+      - cmd: SELECT pg_reload_conf();
+        note:
+          zh: 改完 pg_hba.conf 后重新加载
+    fields:
+      source: address
+    notes:
+      - zh: 来源限制写在 pg_hba.conf 里，例如 host app_db app_user 10.0.0.0/8 scram-sha-256；一个用户可以按库、按地址写多条规则，不像 MySQL 那样拆成多个账号。
 related: [create-user, account-lock, list-users]

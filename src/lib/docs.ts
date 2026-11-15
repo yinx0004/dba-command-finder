@@ -10,8 +10,8 @@ export function versionedCmds(d: DatabaseEntry | undefined): VersionedCmd[] {
   return (d?.commands ?? []).map((c) => ({ cmd: c.cmd, since: c.since, removed_in: c.removed_in }));
 }
 
-/** Which color a database is drawn in: the pair's source blue, its target green, any other in a third color. */
-export type Role = 'source' | 'target' | 'third';
+/** Which color a database is drawn in: the pair's source blue, its target green, then a third and a fourth color. */
+export type Role = 'source' | 'target' | 'third' | 'fourth';
 
 /** The databases the site shows: the pair first, then the others the lab runs, in data/databases.yaml order. */
 export function siteDbs(ds: Dataset): { def: Database; role: Role }[] {
@@ -20,7 +20,7 @@ export function siteDbs(ds: Dataset): { def: Database; role: Role }[] {
   return order
     .map((id) => ds.databases.find((d) => d.id === id)!)
     .filter((d) => d.lab_versions.length)
-    .map((def, i) => ({ def, role: i === 0 ? 'source' : i === 1 ? 'target' : 'third' }));
+    .map((def, i) => ({ def, role: (['source', 'target', 'third'] as const)[i] ?? 'fourth' }));
 }
 
 /** Mappings the site's pair can show: those written up for the source database. */

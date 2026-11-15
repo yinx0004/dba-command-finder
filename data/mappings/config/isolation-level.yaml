@@ -50,4 +50,19 @@ databases:
     alternatives:
       - title: {zh: 用 WATCH 做乐观锁：被监视的键在 EXEC 前被改过，整个事务就不执行}
         cmd: WATCH <key>
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW default_transaction_isolation;
+        note:
+          zh: 默认 read committed
+      - cmd: SHOW transaction_isolation;
+      - cmd: SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+      - cmd: ALTER DATABASE <db> SET default_transaction_isolation = 'repeatable read';
+        note:
+          zh: 只对之后新建的连接生效
+    fields:
+      level: transaction_isolation
+    notes:
+      - zh: 默认是读已提交，和 MySQL 的可重复读不同；可重复读和可串行化下遇到冲突会直接报错，程序要能重试。
 related: [default-rw-concern, long-transactions, lock-waits]

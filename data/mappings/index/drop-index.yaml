@@ -46,4 +46,16 @@ databases:
         FT.CREATE idx:users ON HASH PREFIX 1 app:user: SCHEMA name TEXT age NUMERIC
       vars: {index: 'idx:users'}
       teardown: DEL app:user:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: DROP INDEX CONCURRENTLY <index>;
+        note:
+          zh: 不挡读写，但不能放在事务里
+      - cmd: DROP INDEX IF EXISTS <index>;
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        CREATE INDEX idx_a ON t (a);
+      vars: {index: idx_a}
 related: [index-usage, invisible-index]

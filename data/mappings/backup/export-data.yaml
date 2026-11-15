@@ -50,4 +50,19 @@ databases:
           zh: 按模式导出键名，用 SCAN 遍历，不会挡住其他命令
     notes:
       - zh: 没有表，也没有导出成 CSV 的命令；要导出成文本，得按键遍历，再按类型用 GET、HGETALL 等取值。
+  postgresql:
+    support: full
+    commands:
+      - cmd: COPY <table> TO '/tmp/<table>.csv' WITH (FORMAT csv, HEADER);
+        note:
+          zh: 由服务器写文件，文件在数据库服务器上，要有 pg_write_server_files 权限
+      - cmd: psql -d <db> -c "\copy <table> TO '/tmp/<table>_client.csv' WITH (FORMAT csv, HEADER)"
+        shell: true
+        note:
+          zh: 由 psql 写文件，文件在执行 psql 的机器上，不需要特殊权限
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [import-data, logical-backup]

@@ -39,4 +39,11 @@ databases:
     verify:
       setup: SET app:1 a
       teardown: DEL app:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT datname FROM pg_database WHERE NOT datistemplate;
+      - cmd: \l
+        note:
+          zh: psql 的快捷命令，带上编码、排序规则和访问权限
 related: [list-tables]

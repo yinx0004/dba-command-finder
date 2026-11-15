@@ -53,4 +53,8 @@ databases:
       limit: proto-max-bulk-len
     verify:
       teardown: CONFIG SET proto-max-bulk-len 512mb
+  postgresql:
+    support: none
+    notes:
+      - zh: 没有单条消息大小的参数；单个字段值最大 1GB，超过就报错。
 related: [import-data, set-variable]

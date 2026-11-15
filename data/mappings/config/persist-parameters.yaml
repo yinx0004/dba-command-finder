@@ -67,4 +67,18 @@ databases:
       teardown: |-
         CONFIG SET maxmemory 0
         CONFIG REWRITE
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER SYSTEM SET work_mem = '64MB';
+        note:
+          zh: 写进数据目录下的 postgresql.auto.conf，重启后仍然生效
+      - cmd: SELECT pg_reload_conf();
+      - cmd: ALTER SYSTEM RESET work_mem;
+        note:
+          zh: 去掉写进去的设置
+    notes:
+      - zh: 有的参数重新加载就生效，有的要重启，看 pg_settings 的 context 列（sighup 可以重新加载，postmaster 要重启）。
+    verify:
+      teardown: SELECT pg_reload_conf();
 related: [set-variable, show-variables, config-file]

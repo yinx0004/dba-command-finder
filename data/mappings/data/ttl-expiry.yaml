@@ -58,4 +58,11 @@ databases:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:session:1', hash_key: 'app:user:1', field: name}
       teardown: DEL app:session:1 app:user:1
+  postgresql:
+    support: none
+    notes:
+      - zh: 没有按时间自动删除行的机制。常见做法是按时间分区、定期删掉旧分区，或者用外部定时任务（例如 pg_cron 扩展）定期执行 DELETE。
+    alternatives:
+      - title: {zh: 按时间分区，删掉旧分区}
+        see: partitioning
 related: [batch-delete, partitioning]

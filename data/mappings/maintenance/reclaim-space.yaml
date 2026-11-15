@@ -59,4 +59,20 @@ databases:
       - zh: 删掉的数据占的内存会被复用，但碎片多时进程占用的内存降不下来；主动碎片整理会占用一些 CPU。
     verify:
       teardown: CONFIG SET activedefrag no
+  postgresql:
+    support: full
+    commands:
+      - cmd: VACUUM <table>;
+        note:
+          zh: 把死行占的空间标成可复用，不缩小文件，也不挡读写
+      - cmd: VACUUM FULL <table>;
+        note:
+          zh: 重写整张表，文件变小，但期间拿 ACCESS EXCLUSIVE 锁，读写都被挡住
+    notes:
+      - zh: 生产上要在线缩小表，常用 pg_repack 扩展；平时靠 autovacuum 让空间及时复用。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [table-size, check-table]

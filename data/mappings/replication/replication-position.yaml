@@ -5,7 +5,7 @@ title: {zh: 查看复制位点}
 summary: {zh: 记下或对比主从各自执行到哪了，做切换、搭从库、按位点恢复时都要用。}
 keywords:
   zh: [复制位点, 同步位置, GTID, binlog 位置]
-  en: [gtid_executed, executed_gtid_set, binlog position, optime]
+  en: [gtid_executed, executed_gtid_set, binlog position, optime, pg_current_wal_lsn]
 fields:
   - {id: position, name: {zh: 位点}}
 databases:
@@ -48,4 +48,16 @@ databases:
       position: master_repl_offset
     notes:
       - zh: 位置是复制流里的字节偏移，主从对比 master_repl_offset 和 slave_repl_offset 就知道从库落后多少字节。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_current_wal_lsn();
+        note:
+          zh: 主库写到 WAL 的哪个位置
+      - cmd: SELECT pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn();
+        on: [standby]
+        note:
+          zh: 备库收到和回放到哪个位置
+    fields:
+      position: pg_current_wal_lsn
 related: [replication-status, binlog-retention, point-in-time-recovery]

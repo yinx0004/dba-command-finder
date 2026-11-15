@@ -43,4 +43,15 @@ databases:
     support: none
     notes:
       - zh: 没有字符集和排序规则：键和值都是二进制安全的字节串，存进去什么字节，读出来就是什么字节，编码由客户端决定。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT datname, pg_encoding_to_char(encoding) AS encoding, datcollate, datctype FROM pg_database;
+        note:
+          zh: 每个库的字符集和排序规则，建库时定下
+      - cmd: SHOW server_encoding;
+    fields:
+      collation: datcollate
+    notes:
+      - zh: 列和表达式还可以单独指定 COLLATE；换操作系统或 glibc 版本时排序规则可能变，索引要重建。
 related: [show-create-table, time-zone]

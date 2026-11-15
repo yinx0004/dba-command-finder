@@ -43,4 +43,16 @@ databases:
       - zh: 没有等待事件的概念，命令执行时不会等锁或等 IO。LATENCY 监控记录的是让整个实例卡住的事件，例如 fork 生成快照、AOF 刷盘、集中过期。
     verify:
       teardown: CONFIG SET latency-monitor-threshold 0
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT wait_event_type, wait_event, count(*) AS sessions FROM pg_stat_activity WHERE wait_event IS NOT NULL GROUP BY 1, 2 ORDER BY 3 DESC;
+        note:
+          zh: 此刻每个连接在等什么，例如 Lock、IO、LWLock
+      - cmd: SELECT type, name, description FROM pg_wait_events WHERE type = 'IO' LIMIT 5;
+        since: '17'
+        note:
+          zh: 每种等待事件的说明
+    notes:
+      - zh: 只有此刻的快照，没有累计的等待时间；要看趋势，得定期采样 pg_stat_activity。
 related: [lock-waits, cache-hit-ratio]

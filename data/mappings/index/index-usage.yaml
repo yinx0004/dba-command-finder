@@ -50,4 +50,24 @@ databases:
     support: none
     notes:
       - zh: 没有按索引统计使用次数的命令。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT relname, indexrelname, idx_scan FROM pg_stat_user_indexes ORDER BY idx_scan;
+        note:
+          zh: idx_scan 为 0 的是从统计重置以来没用过的索引
+      - cmd: SELECT indexrelname, idx_scan, last_idx_scan FROM pg_stat_user_indexes ORDER BY last_idx_scan NULLS FIRST;
+        since: '16'
+        note:
+          zh: 最后一次被用到的时间
+    fields:
+      index: indexrelname
+      usage: idx_scan
+      since: {name: last_idx_scan, since: '16'}
+    notes:
+      - zh: 统计只在本机，备库上的使用不算进主库；判断没用之前，主备都要看。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
 related: [show-indexes, drop-index, invisible-index]

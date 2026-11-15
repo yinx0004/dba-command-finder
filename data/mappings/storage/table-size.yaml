@@ -71,4 +71,25 @@ databases:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1'}
       teardown: DEL app:user:1
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_size_pretty(pg_table_size('<table>')) AS data_size, pg_size_pretty(pg_indexes_size('<table>')) AS index_size, pg_size_pretty(pg_total_relation_size('<table>')) AS total_size;
+      - cmd: SELECT n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE relname = '<table>';
+        note:
+          zh: 存活的行数和等待 VACUUM 清理的死行数
+      - cmd: SELECT free_space, free_percent FROM pgstattuple('<table>');
+        note:
+          zh: 要先 CREATE EXTENSION pgstattuple；会扫一遍整张表
+    fields:
+      rows: n_live_tup
+      data: data_size
+      index: index_size
+      free: free_space
+    verify:
+      setup: |-
+        CREATE EXTENSION IF NOT EXISTS pgstattuple;
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t}
 related: [database-size, row-count]

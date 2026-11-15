@@ -103,4 +103,21 @@ databases:
       statement: {name: cmd, note: {zh: 最近执行的命令名，不含参数}}
     notes:
       - zh: 没有“正在执行的语句”：Redis 在一个线程里依次执行命令，一条慢命令会挡住所有连接。找慢命令看 SLOWLOG。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pid, usename, client_addr, datname, state, now() - query_start AS elapsed, query FROM pg_stat_activity WHERE state <> 'idle';
+        note:
+          zh: state 为 active 是正在执行；idle in transaction 是开着事务在等
+      - cmd: SELECT pid, wait_event_type, wait_event, backend_type FROM pg_stat_activity;
+        note:
+          zh: 后台进程（checkpointer、autovacuum 等）也在这张视图里，backend_type 区分
+    fields:
+      session_id: pid
+      user: usename
+      client: client_addr
+      database: datname
+      elapsed: elapsed
+      state: state
+      statement: query
 related: [kill-session, lock-waits, server-status]

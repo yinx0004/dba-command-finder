@@ -56,4 +56,18 @@ databases:
       disk_total: Size
     notes:
       - zh: 数据都在内存里，磁盘只放快照和 AOF；但 BGSAVE 和 AOF 重写时会临时多出一份文件，要留够空间。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW data_directory;
+      - cmd: df -h "$(psql -At -c 'SHOW data_directory')"
+        shell: true
+        note:
+          zh: 数据目录所在磁盘的空间
+    fields:
+      data_dir: data_directory
+      disk_used: Used
+      disk_total: Size
+    notes:
+      - zh: WAL 在数据目录下的 pg_wal 里，表空间可以放在别的磁盘上。
 related: [database-size, table-size]

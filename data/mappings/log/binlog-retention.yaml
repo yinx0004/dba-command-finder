@@ -46,4 +46,14 @@ databases:
       - cmd: CONFIG GET repl-backlog-size
     notes:
       - zh: 复制积压缓冲区在内存里，大小固定、循环覆盖；从库断开期间主库写入的量超过它，就只能全量同步。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SHOW wal_keep_size;
+      - cmd: SHOW max_wal_size;
+      - cmd: SELECT slot_name, wal_status, safe_wal_size FROM pg_replication_slots;
+        note:
+          zh: 每个复制槽还能保留多少 WAL，wal_status 为 lost 表示已经保不住了
+    notes:
+      - zh: WAL 没有按时间保留的设置；要长期保留得配归档（archive_command），归档的保留期由备份工具管。
 related: [binlog-events, replication-status, point-in-time-recovery]

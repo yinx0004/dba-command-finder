@@ -45,4 +45,15 @@ databases:
     verify:
       vars: {user: app_new, password: 'Lab#Pass123'}
       teardown: ACL DELUSER app_new
+  postgresql:
+    support: full
+    commands:
+      - cmd: CREATE ROLE <user> LOGIN PASSWORD '<password>';
+        note:
+          zh: CREATE USER 是一样的，只是默认带 LOGIN
+    notes:
+      - zh: 用户和角色是同一个东西，能登录的角色就是用户；能从哪里、用什么方式登录，另外由 pg_hba.conf 控制。
+    verify:
+      vars: {user: app_new, password: 'Lab#Pass123'}
+      teardown: DROP ROLE app_new;
 related: [grant-privileges, list-users]

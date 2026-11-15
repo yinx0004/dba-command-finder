@@ -35,4 +35,14 @@ databases:
           zh: 返回服务器当前的 Unix 时间：秒数和微秒数
     notes:
       - zh: 没有时区设置：时间都按 Unix 时间戳处理，过期时间也是绝对的 Unix 时间，显示成哪个时区由客户端决定。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW timezone;
+      - cmd: SELECT now(), current_setting('TimeZone') AS timezone;
+      - cmd: SET TIME ZONE 'Asia/Shanghai';
+        note:
+          zh: 只对当前连接生效
+    notes:
+      - zh: timestamptz 按 UTC 存储，显示时按连接的时区换算；timestamp 不带时区，原样存取。
 related: [charset-collation, show-variables]

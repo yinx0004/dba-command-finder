@@ -60,4 +60,20 @@ databases:
       level: loglevel
     verify:
       teardown: CONFIG SET loglevel notice
+  postgresql:
+    support: full
+    commands:
+      - cmd: SHOW log_min_messages;
+        note:
+          zh: 从 debug5 到 panic，默认 warning
+      - cmd: ALTER SYSTEM SET log_min_messages = 'info';
+      - cmd: SELECT pg_reload_conf();
+        note:
+          zh: 重新加载配置，不用重启
+    fields:
+      level: log_min_messages
+    verify:
+      teardown: |-
+        ALTER SYSTEM RESET log_min_messages;
+        SELECT pg_reload_conf();
 related: [error-log, general-log, slow-query-log]

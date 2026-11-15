@@ -54,4 +54,20 @@ databases:
       teardown: |-
         FT.DROPINDEX idx:users
         DEL app:user:1 app:user:by_age
+  postgresql:
+    support: full
+    commands:
+      - cmd: CREATE INDEX CONCURRENTLY <index> ON <table> (<column>);
+        note:
+          zh: 建索引期间不挡写入，但要扫两遍表，也不能放在事务里
+      - cmd: CREATE INDEX <index>_2 ON <table> (<column>, id);
+        note:
+          zh: 普通建法，期间挡住写入
+    notes:
+      - zh: CONCURRENTLY 中途失败会留下一个无效的索引，要 DROP 掉重建。
+    verify:
+      setup: |-
+        CREATE TABLE t (id int PRIMARY KEY, a int);
+        INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+      vars: {table: t, index: idx_a, column: a}
 related: [show-indexes, drop-index, explain]

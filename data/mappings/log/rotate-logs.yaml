@@ -33,4 +33,12 @@ databases:
     support: none
     notes:
       - zh: 没有切换日志文件的命令，Redis 不会重新打开日志文件。日志写到文件时，用 logrotate 的 copytruncate 方式切割。
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_rotate_logfile();
+        note:
+          zh: 开着 logging_collector 时切换到新文件；没开时只给一条警告
+    notes:
+      - zh: 也可以按时间、按大小自动切换：log_rotation_age、log_rotation_size。
 related: [error-log, binlog-retention]
