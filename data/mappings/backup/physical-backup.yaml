@@ -1,0 +1,84 @@
+schema_version: 2
+id: physical-backup
+category: backup
+title: {zh: 物理备份}
+summary: {zh: 直接拷数据文件做备份。大库比逻辑备份快得多，恢复也快，也常用来搭新的从库。}
+keywords:
+  zh: [物理备份, 热备份, 拷贝数据文件, 全量物理备份, 快照备份]
+  en: [xtrabackup, clone, pg_basebackup, bgsave, rdb, br backup, physical backup, hot backup]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: xtrabackup --backup --target-dir=/backup/full
+        shell: true
+        skip: {zh: Percona XtraBackup 要单独安装，lab 的镜像里没有}
+        note: {zh: 最常用的开源热备工具；恢复前要先 xtrabackup --prepare}
+      - cmd: INSTALL PLUGIN clone SONAME 'mysql_clone.so'; CLONE LOCAL DATA DIRECTORY = '/var/lib/mysql-files/clone1';
+        since: 8.0.17
+        note: {zh: 用 clone 插件把整个实例拷到本机另一个目录，拿这个目录就能直接启动一个实例}
+    notes:
+      - zh: xtrabackup 的版本要和 MySQL 对应（8.0 用 8.0 系列，8.4 用 8.4 系列）。clone 插件拷出来的是完整的数据目录，不支持增量；MySQL Enterprise Backup 是官方的商业版工具。
+    refs:
+      - {title: 'MySQL: Cloning Data Locally', url: 'https://dev.mysql.com/doc/refman/8.4/en/clone-plugin-local.html'}
+      - {title: 'MySQL: Backup Methods', url: 'https://dev.mysql.com/doc/refman/8.4/en/backup-methods.html'}
+    verify:
+      teardown: UNINSTALL PLUGIN clone;
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.fsyncLock()
+        note: {zh: 把数据刷到磁盘并暂停写入；这时对数据目录做文件系统快照或拷贝}
+      - cmd: db.fsyncUnlock()
+        note: {zh: 拷完立刻解锁}
+    notes:
+      - zh: 社区版没有在线物理备份工具。常见做法是在一个从节点上 fsyncLock，再用 LVM、云盘快照或直接拷贝数据目录；数据目录和日志在同一个卷上时，有快照可以不加锁。企业版、Atlas 和 Ops Manager 提供在线的物理备份。
+    refs:
+      - {title: 'MongoDB: Back Up with Filesystem Snapshots', url: 'https://www.mongodb.com/docs/manual/tutorial/backup-with-filesystem-snapshots/'}
+      - {title: 'MongoDB: db.fsyncLock()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.fsynclock/'}
+  redis:
+    support: full
+    commands:
+      - cmd: BGSAVE
+        note:
+          zh: 在后台生成 RDB 快照文件（dump.rdb）；完成后把它拷走就是一份备份
+      - cmd: LASTSAVE
+        note:
+          zh: 最近一次成功保存的时间（Unix 时间戳），用来确认 BGSAVE 已经完成
+      - cmd: redis-cli --rdb /tmp/backup.rdb
+        shell: true
+        note:
+          zh: 远程拉一份 RDB 到执行命令的机器上
+    notes:
+      - zh: BGSAVE 会 fork 子进程，内存大的实例要预留足够的内存和时间。开了 AOF 时，备份 appendonlydir 目录下的文件也可以。
+    refs:
+      - {title: 'Redis: BGSAVE', url: 'https://redis.io/docs/latest/commands/bgsave/'}
+      - {title: 'Redis: Persistence', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
+  postgresql:
+    support: full
+    commands:
+      - cmd: pg_basebackup -D /tmp/full_backup -Ft -z -X stream -P
+        shell: true
+        note:
+          zh: 在线拷整个实例，打成压缩的 tar 包，并带上备份期间的 WAL
+    notes:
+      - zh: 只有全量，没有增量；17 起 pg_basebackup 支持增量备份（--incremental，配合 pg_combinebackup）。生产上常用 pgBackRest、Barman 管理全量、增量和 WAL 归档。
+    refs:
+      - {title: 'PostgreSQL: pg_basebackup', url: 'https://www.postgresql.org/docs/current/app-pgbasebackup.html'}
+      - {title: 'PostgreSQL: Continuous Archiving and PITR', url: 'https://www.postgresql.org/docs/current/continuous-archiving.html'}
+  tidb:
+    support: full
+    commands:
+      - cmd: BACKUP DATABASE * TO 's3://<bucket>/backup/full';
+        on: [tikv]
+        note:
+          zh: 用 SQL 发起 BR 全量备份，每个 TiKV 并行把自己的数据写到外部存储
+      - cmd: tiup br backup full --pd <pd>:2379 --storage 's3://<bucket>/backup/full'
+        shell: true
+        on: [pd]
+    notes:
+      - zh: BR 备份的是 TiKV 上的数据文件，速度快，对业务影响可以用 --ratelimit 控制。存储要所有 TiKV 都能访问，例如 S3 或共享的 NFS。
+    refs:
+      - {title: 'TiDB: BR Overview', url: 'https://docs.pingcap.com/tidb/stable/backup-and-restore-overview/'}
+      - {title: 'TiDB: BACKUP', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-backup/'}
+related: [logical-backup, point-in-time-recovery, add-replica]

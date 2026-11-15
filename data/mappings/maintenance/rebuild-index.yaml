@@ -1,0 +1,76 @@
+schema_version: 2
+id: rebuild-index
+category: maintenance
+title: {zh: 重建索引}
+summary: {zh: 索引膨胀、损坏或者需要重新整理时，把它重建一遍。}
+keywords:
+  zh: [重建索引, 索引膨胀, 索引重建, 修复索引]
+  en: [reindex, rebuild index, reindex concurrently, admin recover index, index bloat]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> DROP INDEX <index>, ADD INDEX <index> (<column>);
+        note: {zh: 一条语句里删了再建，只重建这一个索引}
+      - cmd: ALTER TABLE <table> FORCE;
+        note: {zh: 重建整张表和它所有的索引，在线执行}
+    notes:
+      - zh: InnoDB 的索引一般不需要定期重建；大量删除之后想回收空间，用 OPTIMIZE TABLE 或 ALTER TABLE ... FORCE，会重建整张表。
+    refs:
+      - {title: 'MySQL: ALTER TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/alter-table.html'}
+      - {title: 'MySQL: Online DDL Operations', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t, index: idx_a, column: a}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.<collection>.dropIndex("<index>")
+      - cmd: 'db.<collection>.createIndex({ <field>: 1 }, { name: "<index>" })'
+        note: {zh: 删掉再建；建索引期间只在开始和结束时短暂加锁}
+    notes:
+      - zh: reIndex 已经废弃，而且只能在单机（standalone）上用，副本集成员上会报错。在副本集上重建，要么删了再建，要么让一个从节点重新做初始同步。
+    refs:
+      - {title: 'MongoDB: db.collection.dropIndex()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.dropindex/'}
+      - {title: 'MongoDB: db.collection.reIndex()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.reindex/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 }, { name: "idx_a" })'
+      vars: {collection: t, index: idx_a, field: a}
+  redis:
+    support: none
+    notes:
+      - zh: 键空间没有索引需要重建。用了 Redis 查询引擎（FT.*）的，可以 FT.DROPINDEX 后用同样的定义重新 FT.CREATE，它会重新扫描所有匹配的键。
+  postgresql:
+    support: full
+    commands:
+      - cmd: REINDEX INDEX CONCURRENTLY <index>;
+        note:
+          zh: 在线重建，不挡读写；比普通 REINDEX 慢，失败时会留下一个 _ccnew 结尾的无效索引，要手动删掉
+      - cmd: REINDEX TABLE <table>;
+        note:
+          zh: 重建这张表的所有索引，期间挡住写入
+    notes:
+      - zh: 频繁更新的表上 B-tree 索引会膨胀，VACUUM 回收不了；用 pgstattuple 扩展的 pgstatindex() 看膨胀程度，再决定是否重建。
+    refs:
+      - {title: 'PostgreSQL: REINDEX', url: 'https://www.postgresql.org/docs/current/sql-reindex.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); CREATE INDEX idx_a ON t (a); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t, index: idx_a}
+  tidb:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> ADD INDEX <index>_new (<column>); ALTER TABLE <table> DROP INDEX <index>; ALTER TABLE <table> RENAME INDEX <index>_new TO <index>;
+        note:
+          zh: 先建一个新的，再删旧的、改名；不能在一条语句里删了再建同名索引。中间一直有索引可用
+      - cmd: ADMIN RECOVER INDEX <table> <index>;
+        note:
+          zh: ADMIN CHECK 发现索引和数据不一致时，按表数据补齐索引
+    notes:
+      - zh: 索引不会因为删除而膨胀，空间由 GC 和 compaction 自动回收，一般不需要重建。
+    refs:
+      - {title: 'TiDB: ADMIN RECOVER INDEX', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-admin-recover/'}
+      - {title: 'TiDB: ADD INDEX', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-add-index/'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t, index: idx_a, column: a}
+related: [create-index, drop-index, reclaim-space, check-table]
