@@ -1,0 +1,68 @@
+schema_version: 2
+id: convert-charset
+category: schema
+title: {zh: 修改表的字符集}
+summary: {zh: 把老表从 latin1、utf8 改成 utf8mb4，存得下 emoji 和生僻字。}
+keywords:
+  zh: [修改字符集, 改字符集, 转成 utf8mb4, emoji 存不进去, 乱码, 修改排序规则]
+  en: [convert to character set, utf8mb4, alter table charset, collation, encoding]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        note: {zh: 转换表里已有的数据并改所有字符列，会重建整张表}
+      - cmd: ALTER DATABASE <db> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        note: {zh: 只改库的默认值，影响之后新建的表，已有的表不变}
+      - cmd: SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>';
+    notes:
+      - zh: utf8mb4 每个字符最多 4 字节，原来 VARCHAR(255) 上的索引可能超出长度限制。连接字符集也要一起改成 utf8mb4（character_set_client 等），否则写进来时就已经变成问号。
+    refs:
+      - {title: 'MySQL: ALTER TABLE', url: 'https://dev.mysql.com/doc/refman/8.4/en/alter-table.html'}
+      - {title: 'MySQL: Converting to utf8mb4', url: 'https://dev.mysql.com/doc/refman/8.4/en/charset-unicode-conversion.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, name VARCHAR(20)) DEFAULT CHARSET = latin1; INSERT INTO t VALUES (1, 'a');
+      vars: {table: t}
+  mongodb:
+    support: none
+    notes:
+      - zh: 字符串一律是 UTF-8，没有字符集可改。排序规则（collation）在集合或索引上设置，建好后不能修改，要换就新建集合再把数据拷过去。
+    alternatives:
+      - title: {zh: 新建一个指定排序规则的集合}
+        cmd: 'db.createCollection("<collection>", { collation: { locale: "zh" } })'
+  redis:
+    support: none
+    notes:
+      - zh: 值是二进制安全的字节串，服务器不关心字符集；编码由客户端决定。
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT datname, pg_encoding_to_char(encoding) AS encoding, datcollate FROM pg_database;
+        note:
+          zh: 编码是整个库的属性
+      - cmd: ALTER TABLE <table> ALTER COLUMN <column> TYPE text COLLATE "C";
+        note:
+          zh: 排序规则可以按列修改
+    notes:
+      - zh: 库的编码建好后不能修改。要从 SQL_ASCII、LATIN1 换成 UTF8，只能新建一个 ENCODING 'UTF8' 的库（CREATE DATABASE ... TEMPLATE template0），再用 pg_dump 导出、导入过去。
+    refs:
+      - {title: 'PostgreSQL: Character Set Support', url: 'https://www.postgresql.org/docs/current/multibyte.html'}
+      - {title: 'PostgreSQL: Collation Support', url: 'https://www.postgresql.org/docs/current/collation.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, name text);
+      vars: {table: t, column: name}
+  tidb:
+    support: partial
+    commands:
+      - cmd: ALTER TABLE <table> CONVERT TO CHARACTER SET utf8mb4;
+        note:
+          zh: 只支持从 ascii、latin1、utf8 升级到 utf8mb4 这类不会丢数据的转换
+      - cmd: SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>';
+    notes:
+      - zh: 不支持降级（例如 utf8mb4 改回 latin1），也不支持在不同排序规则之间随意转换；改排序规则通常要新建表再导数据。
+    refs:
+      - {title: 'TiDB: Character Set and Collation', url: 'https://docs.pingcap.com/tidb/stable/character-set-and-collation/'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, name VARCHAR(20)) DEFAULT CHARSET = latin1; INSERT INTO t VALUES (1, 'a');
+      vars: {table: t}
+related: [charset-collation, modify-column]

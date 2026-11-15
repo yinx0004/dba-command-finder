@@ -1,0 +1,102 @@
+schema_version: 2
+id: roles
+category: user
+title: {zh: 用角色管理权限}
+summary: {zh: 把一组权限定义成角色，再把角色授给用户；人员变动时只改角色归属，不用逐个改权限。}
+keywords:
+  zh: [角色, 创建角色, 授予角色, 权限组, 角色管理]
+  en: [create role, grant role, set default role, createrole, grantrolestouser, pg_auth_members]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE ROLE '<role>';
+        since: '8.0'
+      - cmd: GRANT SELECT ON <db>.* TO '<role>';
+        since: '8.0'
+        note: {zh: 先给角色授权}
+      - cmd: GRANT '<role>' TO '<user>'@'<host>';
+        since: '8.0'
+      - cmd: SET DEFAULT ROLE '<role>' TO '<user>'@'<host>';
+        since: '8.0'
+        note: {zh: 不设默认角色的话，用户登录后要自己 SET ROLE 才生效}
+      - cmd: SHOW GRANTS FOR '<user>'@'<host>' USING '<role>';
+        since: '8.0'
+        note: {zh: 展开角色，看用户实际拥有的权限}
+    notes:
+      - zh: 5.7 没有角色。设 activate_all_roles_on_login = ON 可以让所有授予的角色在登录时自动生效，不用逐个 SET DEFAULT ROLE。
+    refs:
+      - {title: 'MySQL: Using Roles', url: 'https://dev.mysql.com/doc/refman/8.4/en/roles.html'}
+    verify:
+      setup: CREATE USER 'app_role'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {role: app_read, user: app_role, host: '%'}
+      teardown: DROP USER IF EXISTS 'app_role'@'%'; DROP ROLE IF EXISTS 'app_read';
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.createRole({ role: "<role>", privileges: [{ resource: { db: "<db>", collection: "" }, actions: ["find"] }], roles: [] })'
+        note: {zh: 自定义角色：在哪个库、哪个集合上能做哪些操作}
+      - cmd: db.grantRolesToUser("<user>", ["<role>"])
+      - cmd: 'db.getRole("<role>", { showPrivileges: true })'
+    notes:
+      - zh: 内置角色（read、readWrite、dbAdmin、clusterMonitor 等）够用时直接授内置角色。角色属于创建它的库，授给其他库的用户时写成 { role, db }。
+    refs:
+      - {title: 'MongoDB: db.createRole()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.createrole/'}
+      - {title: 'MongoDB: Built-In Roles', url: 'https://www.mongodb.com/docs/manual/reference/built-in-roles/'}
+    verify:
+      setup: 'db.createUser({ user: "app_role", pwd: "Lab#Pass123", roles: [] })'
+      vars: {role: app_read, user: app_role}
+      teardown: 'db.dropUser("app_role"); db.dropRole("app_read")'
+  redis:
+    support: partial
+    commands:
+      - cmd: ACL CAT
+        note:
+          zh: 列出命令类别（@read、@write、@admin 等），相当于预设好的权限组
+      - cmd: ACL SETUSER <user> on ><password> ~app:* +@read
+        note:
+          zh: 用类别给用户授权：只能读「app:」开头的键
+    notes:
+      - zh: 没有角色，权限只能直接写在每个用户上；可以用命令类别和键名模式减少要写的规则。
+    refs:
+      - {title: 'Redis: ACL', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/'}
+    verify:
+      vars: {user: app_role, password: 'Lab#Pass123'}
+      teardown: ACL DELUSER app_role
+  postgresql:
+    support: full
+    commands:
+      - cmd: CREATE ROLE <role> NOLOGIN;
+        note:
+          zh: 用户和角色是同一种东西，NOLOGIN 的就当权限组用
+      - cmd: GRANT SELECT ON ALL TABLES IN SCHEMA public TO <role>;
+      - cmd: GRANT <role> TO <user>;
+      - cmd: SELECT r.rolname AS role, m.rolname AS member FROM pg_auth_members am JOIN pg_roles r ON r.oid = am.roleid JOIN pg_roles m ON m.oid = am.member WHERE r.rolname = '<role>';
+        note:
+          zh: 这个角色授给了谁
+    notes:
+      - zh: GRANT ... ON ALL TABLES 只对现在已有的表生效，之后新建的表要用 ALTER DEFAULT PRIVILEGES 预先授权。14 起有内置的 pg_read_all_data、pg_write_all_data 角色。
+    refs:
+      - {title: 'PostgreSQL: Role Membership', url: 'https://www.postgresql.org/docs/current/role-membership.html'}
+      - {title: 'PostgreSQL: Predefined Roles', url: 'https://www.postgresql.org/docs/current/predefined-roles.html'}
+    verify:
+      setup: CREATE ROLE app_role LOGIN PASSWORD 'Lab#Pass123';
+      vars: {role: app_read, user: app_role}
+      teardown: DROP OWNED BY app_read; DROP ROLE app_read; DROP ROLE app_role;
+  tidb:
+    support: full
+    commands:
+      - cmd: CREATE ROLE '<role>';
+      - cmd: GRANT SELECT ON <db>.* TO '<role>';
+      - cmd: GRANT '<role>' TO '<user>'@'<host>';
+      - cmd: SET DEFAULT ROLE '<role>' TO '<user>'@'<host>';
+      - cmd: SHOW GRANTS FOR '<user>'@'<host>' USING '<role>';
+    notes:
+      - zh: 和 MySQL 8.0 一样。
+    refs:
+      - {title: 'TiDB: Role-Based Access Control', url: 'https://docs.pingcap.com/tidb/stable/role-based-access-control/'}
+    verify:
+      setup: CREATE USER 'app_role'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {role: app_read, user: app_role, host: '%'}
+      teardown: DROP USER IF EXISTS 'app_role'@'%'; DROP ROLE IF EXISTS 'app_read';
+related: [grant-privileges, show-grants, create-user]

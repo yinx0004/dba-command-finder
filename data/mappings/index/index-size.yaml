@@ -1,0 +1,82 @@
+schema_version: 2
+id: index-size
+category: index
+title: {zh: 查看索引大小}
+summary: {zh: 看每个索引占了多少空间，找出占地方又不常用的索引。}
+keywords:
+  zh: [索引大小, 索引占用空间, 索引多大, 索引占多少]
+  en: [index size, index_length, innodb_index_stats, totalindexsize, indexsizes, pg_relation_size, pg_indexes_size]
+fields:
+  - {id: index, name: {zh: 索引}}
+  - {id: size, name: {zh: 大小}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT TABLE_NAME, INDEX_NAME, ROUND(STAT_VALUE * @@innodb_page_size / 1024 / 1024, 2) AS size_mb FROM mysql.innodb_index_stats WHERE DATABASE_NAME = '<db>' AND STAT_NAME = 'size' ORDER BY size_mb DESC;
+        note: {zh: 每个索引占多少 MB；STAT_VALUE 是页数}
+      - cmd: SELECT TABLE_NAME, INDEX_LENGTH FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>';
+        note: {zh: 每张表所有二级索引加起来的大小，不含主键}
+    fields:
+      index: INDEX_NAME
+      size: size_mb
+    notes:
+      - zh: 统计值在 ANALYZE TABLE 或自动统计更新时刷新，刚建的索引可能还显示旧值。主键（PRIMARY）就是数据本身，它的大小约等于表的数据大小。
+    refs:
+      - {title: 'MySQL: InnoDB Persistent Statistics', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-persistent-stats.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2); ANALYZE TABLE t;
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.<collection>.aggregate([{ $collStats: { storageStats: {} } }])'
+        note: {zh: storageStats 里的 indexSizes 是每个索引的字节数，totalIndexSize 是合计}
+      - cmd: db.<collection>.totalIndexSize()
+    fields:
+      index: indexSizes
+      size: totalIndexSize
+    refs:
+      - {title: 'MongoDB: $collStats', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/collstats/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1 }, { a: 2 }]); db.t.createIndex({ a: 1 })'
+      vars: {collection: t}
+  redis:
+    support: none
+    notes:
+      - zh: 键空间没有索引。用了查询引擎（FT.*）时，FT.INFO 里的 inverted_sz_mb 等字段是索引占用的内存。
+    alternatives:
+      - title: {zh: 查看查询引擎索引占用的内存}
+        cmd: FT.INFO <index>
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT indexrelname AS index_name, pg_size_pretty(pg_relation_size(indexrelid)) AS size FROM pg_stat_user_indexes WHERE relname = '<table>' ORDER BY pg_relation_size(indexrelid) DESC;
+      - cmd: SELECT pg_size_pretty(pg_indexes_size('<table>'));
+        note:
+          zh: 这张表所有索引加起来的大小
+    fields:
+      index: index_name
+      size: size
+    refs:
+      - {title: 'PostgreSQL: Database Object Size Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); CREATE INDEX idx_a ON t (a); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t}
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT TABLE_NAME, INDEX_LENGTH FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>';
+        note:
+          zh: 按统计信息估算的所有索引合计大小
+      - cmd: SHOW TABLE <table> INDEX <index> REGIONS;
+        on: [pd]
+        note:
+          zh: 这个索引占了哪些 Region，APPROXIMATE_SIZE(MB) 是每个 Region 的大小
+    notes:
+      - zh: 没有精确到单个索引的大小统计；数据按 Region 存放，要按 Region 加起来估算。
+    refs:
+      - {title: 'TiDB: SHOW TABLE REGIONS', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-table-regions/'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t, index: idx_a}
+related: [show-indexes, index-usage, table-size]
