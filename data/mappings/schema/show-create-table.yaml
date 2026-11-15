@@ -68,4 +68,14 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW CREATE TABLE <table>;
+        note:
+          zh: 会带上 /*T![clustered_index] CLUSTERED */ 这类 TiDB 专有的注释，在 MySQL 上执行时会被忽略
+      - cmd: DESC <table>;
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10) NOT NULL);
+      vars: {table: t}
 related: [list-tables, show-indexes, add-column]

@@ -62,4 +62,15 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t, column: a}
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT <column>, COUNT(*) AS cnt FROM <table> GROUP BY <column> HAVING COUNT(*) > 1 ORDER BY cnt DESC;
+      - cmd: DELETE t1 FROM <table> t1 JOIN <table> t2 ON t1.<column> = t2.<column> AND t1.id > t2.id;
+    fields:
+      value: email
+      count: cnt
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(50)); INSERT INTO t (email) VALUES ('a@x.com'), ('a@x.com'), ('b@x.com'), ('a@x.com');
+      vars: {table: t, column: email}
 related: [create-index, batch-delete]

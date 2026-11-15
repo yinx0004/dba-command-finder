@@ -5,7 +5,7 @@ title: {zh: 查看正在执行的会话}
 summary: {zh: 列出当前实例上的连接和正在运行的语句，用来排查慢查询堆积、连接打满或某条语句卡住。}
 keywords:
   zh: [会话, 连接, 线程, 正在执行, 进程列表]
-  en: [processlist, threads, connections, CLIENT LIST]
+  en: [processlist, threads, connections, CLIENT LIST, cluster_processlist]
 fields:
   - id: session_id
     name: {zh: 会话 ID}
@@ -120,4 +120,23 @@ databases:
       elapsed: elapsed
       state: state
       statement: query
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW FULL PROCESSLIST;
+        note:
+          zh: 只看当前连着的这台 tidb-server
+      - cmd: SELECT * FROM information_schema.CLUSTER_PROCESSLIST WHERE COMMAND <> 'Sleep';
+        note:
+          zh: 所有 tidb-server 上的会话，INSTANCE 列是所在节点；还有 MEM、DISK、TxnStart 等列
+    fields:
+      session_id: Id
+      user: User
+      client: Host
+      database: db
+      elapsed: Time
+      state: State
+      statement: Info
+    notes:
+      - zh: 经过负载均衡连进来时，SHOW PROCESSLIST 只能看到碰巧连上的那一台；看整个集群要查 CLUSTER_PROCESSLIST。
 related: [kill-session, lock-waits, server-status]

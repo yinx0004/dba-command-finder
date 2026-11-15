@@ -70,4 +70,22 @@ databases:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.schema_unused_indexes WHERE object_schema = '<db>';
+        since: '8.0'
+        note:
+          zh: tidb-server 启动以来没用过的索引
+      - cmd: SELECT TABLE_NAME, INDEX_NAME, QUERY_TOTAL, ROWS_ACCESS_TOTAL, LAST_ACCESS_TIME FROM information_schema.TIDB_INDEX_USAGE WHERE TABLE_SCHEMA = '<db>';
+        since: '8.0'
+        note:
+          zh: 每个索引被查询用了多少次、读了多少行；看整个集群用 CLUSTER_TIDB_INDEX_USAGE
+    fields:
+      index: index_name
+      usage: QUERY_TOTAL
+    notes:
+      - zh: 统计只在内存里，tidb-server 重启后从零开始；多台 tidb-server 时，一个索引在某台上没用过不代表没人用。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b)); INSERT INTO t VALUES (1, 1, 1); SELECT * FROM t FORCE INDEX (idx_a) WHERE a = 1;
 related: [show-indexes, drop-index, invisible-index]

@@ -73,4 +73,12 @@ databases:
       teardown: |-
         DROP OWNED BY app_revoke;
         DROP ROLE app_revoke;
+  tidb:
+    support: full
+    commands:
+      - cmd: REVOKE INSERT, UPDATE, DELETE ON <db>.* FROM '<user>'@'<host>';
+      - cmd: REVOKE ALL PRIVILEGES, GRANT OPTION FROM '<user>'@'<host>';
+    verify:
+      setup: CREATE USER 'app_revoke'@'%' IDENTIFIED BY 'Lab#Pass123'; GRANT SELECT, INSERT, UPDATE, DELETE ON <db>.* TO 'app_revoke'@'%';
+      vars: {user: app_revoke, host: '%'}
 related: [grant-privileges, show-grants, account-lock]

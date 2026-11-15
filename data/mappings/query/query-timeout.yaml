@@ -68,4 +68,16 @@ databases:
       setup: CREATE ROLE app_timeout LOGIN;
       vars: {user: app_timeout}
       teardown: DROP ROLE app_timeout;
+  tidb:
+    support: full
+    commands:
+      - cmd: SET SESSION max_execution_time = 1000;
+        note:
+          zh: 单位毫秒，只对 SELECT 生效
+      - cmd: SELECT /*+ MAX_EXECUTION_TIME(1000) */ * FROM <table>;
+    notes:
+      - zh: 超时的语句会被取消。限制所有语句（包括写入）可以用资源组的 QUERY_LIMIT，例如 EXEC_ELAPSED='60s'。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t}
 related: [kill-session, slow-query-log]

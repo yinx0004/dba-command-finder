@@ -65,4 +65,22 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT * FROM <table> INTO OUTFILE '/tmp/<table>.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+        note:
+          zh: 文件写在执行这条语句的那台 tidb-server 所在的机器上
+      - cmd: mysql -e "SELECT * FROM <table>" <db> > <table>.tsv
+        shell: true
+        note:
+          zh: 写在执行命令的客户端机器上
+      - cmd: tiup dumpling -h <host> -P 4000 -u root --filetype csv -T <db>.<table> -o /tmp/export
+        shell: true
+        skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
+        note:
+          zh: 数据量大时用 Dumpling，多线程导出，还可以按行数切成多个文件
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10)); INSERT INTO t VALUES (1, 'x'), (2, 'y');
+      vars: {table: t}
 related: [import-data, logical-backup]

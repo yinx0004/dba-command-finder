@@ -65,7 +65,7 @@ data/
 
 ### 在哪个进程上执行：`on`
 
-有的数据库不止一种进程，例如 MongoDB 的 mongod、mongos 和 config server，Redis 的单机、集群和 Sentinel，PostgreSQL 的主库和备库。这些角色登记在 [data/databases.yaml](data/databases.yaml) 的 `roles` 里。命令用 `on` 写明能在哪些角色上执行，页面会在命令旁边显示角色标签：
+有的数据库不止一种进程，例如 MongoDB 的 mongod、mongos 和 config server，Redis 的单机、集群和 Sentinel，PostgreSQL 的主库和备库，TiDB 的 tidb-server、PD 和 TiKV。这些角色登记在 [data/databases.yaml](data/databases.yaml) 的 `roles` 里。命令用 `on` 写明能在哪些角色上执行，页面会在命令旁边显示角色标签：
 
 ```yaml
 - cmd: db.serverStatus().connections
@@ -111,6 +111,7 @@ data/
 | MongoDB | 镜像自带的 `mongosh` | 退出码 |
 | Redis | `redis-cli`，命令从标准输入送入，一行一条 | 输出里有没有 `ERR`、`WRONGTYPE`、`NOPERM` 这类错误前缀，因为 `redis-cli` 碰到错误回复也返回 0 |
 | PostgreSQL | `psql`，遇到错误立即停止 | 退出码。启动时带 `shared_preload_libraries=pg_stat_statements` 和 `wal_level=logical`，和常见的生产配置一致 |
+| TiDB | 一个使用内置存储（unistore）的 `tidb-server`；镜像里没有客户端，命令从一个共用网络的 MySQL 8.4 容器里用 `mysql` 执行 | 退出码。镜像只按补丁版本打标签，lab 会从 Docker Hub 取每条版本线最新的补丁 |
 
 ### 规则
 
@@ -157,7 +158,7 @@ mysql:
 |---|---|
 | 命令行工具（`mysqldump`、`mongodump`、`pg_dump`……） | 给命令加 `shell: true`，lab 会在容器里用 bash 执行。MySQL 容器里已经写好 `~/.my.cnf`，命令不用带 `-u`、`-p`。需要先准备文件（例如恢复前先有一份备份）时，用 `verify.setup_shell` |
 | 没法自动执行的命令（例如 `KILL` 需要另一个连接） | 加 `skip: {zh: 原因}`，页面上会显示「未自动验证」和原因 |
-| 只能在 lab 没有的角色上执行 | lab 只跑 `roles` 里标了 `lab: true` 的角色：MongoDB 副本集、Redis 单机、PostgreSQL 主库。`on` 里没有这些角色的命令会被自动跳过，页面上显示 `roles_unverified` 写的原因，不用再写 `skip` |
+| 只能在 lab 没有的角色上执行 | lab 只跑 `roles` 里标了 `lab: true` 的角色：MongoDB 副本集、Redis 单机、PostgreSQL 主库、TiDB 的 tidb-server。`on` 里没有这些角色的命令会被自动跳过，页面上显示 `roles_unverified` 写的原因，不用再写 `skip` |
 | 准备步骤在旧版本上会失败 | 如果一条记录的命令在某个版本上全都应该报错（例如 Redis 8.0 才有的 `FT.*`），它的 `setup` 在那个版本上失败也不算失败。只要有一条命令应该成功，`setup` 就必须成功 |
 | 某个字段没法检查 | 在字段名后面加 `skip: {zh: 原因}`。整条记录的字段都查不了（例如只有从库上才有）时，用 `verify.skip_fields` |
 | 字段从某个版本起才出现 | 给字段加 `since`，更早的版本上就不检查它 |

@@ -53,4 +53,12 @@ databases:
       setup: CREATE ROLE app_kill LOGIN;
       vars: {user: app_kill}
       teardown: DROP ROLE app_kill;
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT CONCAT('KILL ', ID, ';') FROM information_schema.CLUSTER_PROCESSLIST WHERE USER = '<user>';
+        note:
+          zh: 查 CLUSTER_PROCESSLIST 才能看到所有 tidb-server 上的会话；生成的 KILL 在任意一台上执行都有效
+    verify:
+      vars: {user: app_user}
 related: [kill-session, account-lock, list-active-sessions]

@@ -56,4 +56,13 @@ databases:
     verify:
       vars: {user: app_new, password: 'Lab#Pass123'}
       teardown: DROP ROLE app_new;
+  tidb:
+    support: full
+    commands:
+      - cmd: CREATE USER '<user>'@'<host>' IDENTIFIED BY '<password>';
+      - cmd: CREATE USER IF NOT EXISTS '<user>'@'<host>' IDENTIFIED BY '<password>';
+    notes:
+      - zh: 用户和权限存在集群里，在任意一台 tidb-server 上创建，所有节点都能用。
+    verify:
+      vars: {user: app_create, host: '%', password: 'Lab#Pass123'}
 related: [grant-privileges, list-users]

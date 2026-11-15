@@ -61,4 +61,13 @@ databases:
       auth: auth
     notes:
       - zh: pg_roles 里也有不能登录的角色（rolcanlogin 为 false），它们只是用来分组授权的。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT user, host, plugin, account_locked FROM mysql.user;
+    fields:
+      user: user
+      auth: plugin
+    verify:
+      setup: CREATE USER 'app_list'@'%' IDENTIFIED BY 'Lab#Pass123';
 related: [create-user, drop-user]

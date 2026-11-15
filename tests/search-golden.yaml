@@ -362,3 +362,27 @@
 - {q: pg_wal_replay_pause, top: pause-replication}
 - {q: pg_current_wal_lsn, top: replication-position}
 - {q: pg_wait_events, top: wait-events}
+
+# TiDB
+- {q: CLUSTER_PROCESSLIST, top: list-active-sessions}
+- {q: KILL TIDB, top: kill-session}
+- {q: CLUSTER_TIDB_TRX, top: long-transactions}
+- {q: CLUSTER_STATEMENTS_SUMMARY, top: top-statements}
+- {q: tidb_slow_log_threshold, top: slow-query-log}
+- {q: ADMIN SHOW DDL JOBS, top: ddl-progress}
+- {q: ADMIN CHECK TABLE, top: check-table}
+- {q: tidb_super_read_only, top: set-read-only}
+- {q: dumpling, top: logical-backup}
+- {q: tidb-lightning, top: logical-restore}
+- {q: br log start, top: point-in-time-recovery}
+- {q: TIDB_HOT_REGIONS, top: hot-tables}
+- {q: CLUSTER_DEADLOCKS, top: latest-deadlock}
+- {q: BATCH ON, top: batch-delete}
+- {q: TTL_ENABLE, top: ttl-expiry}
+- {q: SHOW STATS_HEALTHY, top: analyze-table}
+- {q: tidb_mem_quota_query, top: sort-memory}
+- {q: CREATE GLOBAL BINDING, top: force-index}
+- {q: TIDB_INDEX_USAGE, top: index-usage}
+- {q: tidb_server_memory_limit, top: resize-cache}
+- {q: IMPORT INTO, top: import-data}
+- {q: tidb_version, top: server-version}

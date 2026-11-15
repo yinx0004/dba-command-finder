@@ -76,4 +76,14 @@ databases:
       teardown: |-
         ALTER SYSTEM RESET log_min_messages;
         SELECT pg_reload_conf();
+  tidb:
+    support: partial
+    commands:
+      - cmd: SHOW CONFIG WHERE type = 'tidb' AND name = 'log.level';
+      - cmd: SET CONFIG tikv `log.level` = 'info';
+        on: [tikv]
+        note:
+          zh: TiKV 和 PD 的日志级别可以在线改；tidb-server 的不行
+    notes:
+      - zh: tidb-server 的 log.level 只能改配置文件后重启，或者调它的 HTTP 接口：curl -X POST -d log_level=debug http://<tidb>:10080/settings，重启后失效。
 related: [error-log, general-log, slow-query-log]

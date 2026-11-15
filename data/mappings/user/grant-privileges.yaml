@@ -78,4 +78,16 @@ databases:
       teardown: |-
         DROP OWNED BY app_grant;
         DROP ROLE app_grant;
+  tidb:
+    support: full
+    commands:
+      - cmd: GRANT SELECT, INSERT, UPDATE, DELETE ON <db>.* TO '<user>'@'<host>';
+      - cmd: GRANT BACKUP_ADMIN, RESTORE_ADMIN ON *.* TO '<user>'@'<host>';
+        note:
+          zh: 动态权限，例如 BACKUP_ADMIN、DASHBOARD_CLIENT、RESTRICTED_VARIABLES_ADMIN，只能授在 *.* 上
+    notes:
+      - zh: 列级权限不生效：GRANT 可以写列，但不检查。
+    verify:
+      setup: CREATE USER 'app_grant'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {user: app_grant, host: '%'}
 related: [create-user, show-grants]

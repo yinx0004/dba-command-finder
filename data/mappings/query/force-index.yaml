@@ -57,4 +57,20 @@ databases:
           zh: 反过来，不用索引扫描
     notes:
       - zh: 没有 FORCE INDEX 这样的提示；enable_* 参数只能整体关掉某种扫描方式。要按语句指定索引，用 pg_hint_plan 扩展。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT * FROM <table> FORCE INDEX (<index>) WHERE a = 1;
+      - cmd: SELECT * FROM <table> IGNORE INDEX (<index>) WHERE a = 1;
+      - cmd: SELECT /*+ USE_INDEX(<table>, <index>) */ * FROM <table> WHERE a = 1;
+        note:
+          zh: 优化器提示的写法，还可以用 IGNORE_INDEX、USE_INDEX_MERGE 等
+      - cmd: CREATE GLOBAL BINDING FOR SELECT * FROM <table> WHERE a = 1 USING SELECT * FROM <table> USE INDEX (<index>) WHERE a = 1;
+        note:
+          zh: 执行计划绑定：不改应用的 SQL，让同一类语句都走指定的索引
+    notes:
+      - zh: 已有的绑定用 SHOW GLOBAL BINDINGS 查看，DROP GLOBAL BINDING FOR ... 删除。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b)); INSERT INTO t VALUES (1, 1, 1), (2, 1, 2);
+      vars: {table: t, index: idx_a}
 related: [explain, invisible-index, index-usage]

@@ -84,4 +84,17 @@ databases:
       cache: blks_hit / blks_read
     notes:
       - zh: 没有网络流量计数；统计分散在 pg_stat_database、pg_stat_bgwriter、pg_stat_wal 等多张视图里。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SHOW GLOBAL STATUS;
+        note:
+          zh: 只有很少几项，例如 Uptime 和 SSL 相关的；没有 Com_*、Threads_*、Bytes_* 这类计数
+      - cmd: SELECT TYPE, INSTANCE, VERSION, START_TIME, UPTIME FROM information_schema.CLUSTER_INFO;
+        note:
+          zh: 集群里每个节点的版本和运行时长
+    fields:
+      uptime: Uptime
+    notes:
+      - zh: QPS、连接数、网络流量这些计数都在 Prometheus 里，看 Grafana 的 TiDB 面板；单台 tidb-server 也可以 curl http://<tidb>:10080/status 和 /metrics。
 related: [list-active-sessions, show-variables]

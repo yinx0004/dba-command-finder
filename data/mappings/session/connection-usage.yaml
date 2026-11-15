@@ -82,4 +82,19 @@ databases:
       client: client_addr
     notes:
       - zh: 没有历史最高连接数，要看峰值得靠监控定期采样。superuser_reserved_connections 个连接留给超级用户，普通用户能用的比 max_connections 少。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT COUNT(*) AS connections, @@max_connections AS max_connections FROM information_schema.CLUSTER_PROCESSLIST;
+        note:
+          zh: CLUSTER_PROCESSLIST 汇总了所有 tidb-server 上的连接
+      - cmd: SELECT INSTANCE, SUBSTRING_INDEX(HOST, ':', 1) AS client_addr, USER, COUNT(*) AS connections FROM information_schema.CLUSTER_PROCESSLIST GROUP BY INSTANCE, client_addr, USER ORDER BY connections DESC;
+        note:
+          zh: 按 tidb-server、来源地址和用户分组，看连接都从哪来、落在哪台上
+    fields:
+      current: connections
+      limit: max_connections
+      client: client_addr
+    notes:
+      - zh: 没有 Threads_connected、Max_used_connections 这类状态变量，历史峰值要看 Grafana 的 Connection Count 面板。max_connections 是每台 tidb-server 各自的上限，0 表示不限制。
 related: [list-active-sessions, kill-session, server-status]

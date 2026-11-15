@@ -65,4 +65,16 @@ databases:
       level: transaction_isolation
     notes:
       - zh: 默认是读已提交，和 MySQL 的可重复读不同；可重复读和可串行化下遇到冲突会直接报错，程序要能重试。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT @@GLOBAL.transaction_isolation AS global_isolation, @@SESSION.transaction_isolation AS transaction_isolation;
+      - cmd: SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+      - cmd: SET GLOBAL transaction_isolation = 'READ-COMMITTED';
+    fields:
+      level: transaction_isolation
+    notes:
+      - zh: 默认的 REPEATABLE-READ 实际是快照隔离，没有间隙锁，和 MySQL 的可重复读不完全一样。READ-COMMITTED 只在悲观事务（默认）下生效；SERIALIZABLE 不支持，会报错。
+    verify:
+      teardown: SET GLOBAL transaction_isolation = 'REPEATABLE-READ';
 related: [default-rw-concern, long-transactions, lock-waits]

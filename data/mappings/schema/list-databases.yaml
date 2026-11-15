@@ -46,4 +46,10 @@ databases:
       - cmd: \l
         note:
           zh: psql 的快捷命令，带上编码、排序规则和访问权限
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW DATABASES;
+    notes:
+      - zh: 除了 mysql、INFORMATION_SCHEMA、PERFORMANCE_SCHEMA，还有 TiDB 自己的 METRICS_SCHEMA。
 related: [list-tables]

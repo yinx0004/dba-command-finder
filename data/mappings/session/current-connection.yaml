@@ -67,4 +67,15 @@ databases:
       conn_id: pid
       user: current_user
       client: client_addr
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT CONNECTION_ID() AS connection_id, CURRENT_USER() AS account, USER() AS login, DATABASE() AS current_db;
+      - cmd: status
+        note:
+          zh: mysql 客户端的命令，不是 SQL；连 TiDB 时 Server version 一栏会显示 TiDB 的版本
+    fields:
+      conn_id: connection_id
+      user: account
+      client: login
 related: [list-active-sessions, show-grants, server-version]

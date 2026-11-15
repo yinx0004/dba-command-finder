@@ -60,4 +60,21 @@ databases:
           zh: 备库收到和回放到哪个位置
     fields:
       position: pg_current_wal_lsn
+  tidb:
+    support: partial
+    commands:
+      - cmd: SHOW MASTER STATUS;
+        note:
+          zh: Position 是当前的 TSO（时间戳），不是 binlog 位点；File 固定为 tidb-binlog
+      - cmd: SHOW BINARY LOG STATUS;
+        since: '8.0'
+      - cmd: SELECT TIDB_PARSE_TSO(<tso>);
+        note:
+          zh: 把 TSO 换算成时间
+    fields:
+      position: Position
+    notes:
+      - zh: 没有 GTID。TiCDC 同步任务的进度看它的 checkpoint-ts，用 cdc cli changefeed query 查。
+    verify:
+      vars: {tso: '470474558623449088'}
 related: [replication-status, binlog-retention, point-in-time-recovery]

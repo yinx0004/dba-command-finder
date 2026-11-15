@@ -66,4 +66,16 @@ databases:
       connections: numbackends
     notes:
       - zh: 在 psql 里可以用 \watch 1 每秒重跑一次查询。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT * FROM METRICS_SCHEMA.tidb_qps WHERE time = NOW();
+        on: [pd]
+        note:
+          zh: 从 Prometheus 查询当前每秒的语句数，按类型分开
+      - cmd: SELECT INSTANCE, COUNT(*) AS running FROM information_schema.CLUSTER_PROCESSLIST WHERE COMMAND <> 'Sleep' GROUP BY INSTANCE;
+        note:
+          zh: 每台 tidb-server 上正在执行的语句数
+    notes:
+      - zh: 没有 Com_*、Questions 这类计数，mysqladmin extended-status 看不出吞吐。实时吞吐看 Grafana 的 TiDB → Query Summary 面板。
 related: [server-status, hot-tables]

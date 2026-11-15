@@ -71,4 +71,14 @@ databases:
       write: synchronous_commit
     notes:
       - zh: synchronous_commit 可以按会话、甚至按事务改，例如不重要的写入 SET LOCAL synchronous_commit = off。没有对应读关注的设置。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT @@tidb_replica_read;
+        note:
+          zh: leader 表示从 Raft leader 读；follower、closest-replicas 等会从副本读，读到的仍然是一致的数据
+    fields:
+      read: tidb_replica_read
+    notes:
+      - zh: 写入总是等 Raft 多数副本落盘才返回，不能调低；副本数由 PD 的 max-replicas 决定，默认 3。
 related: [flush-durability, isolation-level, replication-status]

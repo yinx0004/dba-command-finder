@@ -66,4 +66,21 @@ databases:
       - zh: pid 从 pg_stat_activity 看。pid 不存在时只给一条警告并返回 false，不报错。
     verify:
       vars: {pid: '999999'}
+  tidb:
+    support: full
+    commands:
+      - cmd: KILL <processlist_id>;
+        note:
+          zh: 断开连接。连接 id 从 CLUSTER_PROCESSLIST 看，在任意一台 tidb-server 上执行都行
+      - cmd: KILL QUERY <processlist_id>;
+        note:
+          zh: 只终止正在执行的语句，连接保留
+      - cmd: KILL TIDB <processlist_id>;
+        note:
+          zh: 和 KILL 一样，是早期版本只能杀本机连接时留下的写法
+    notes:
+      - zh: 6.1 起默认开启 Global Kill，KILL 可以跨 tidb-server 生效；更早的版本只能在连接所在的那台 tidb-server 上 KILL，经过负载均衡时容易杀错。
+      - zh: 连接 id 不存在时不报错。
+    verify:
+      vars: {processlist_id: '999999'}
 related: [list-active-sessions]

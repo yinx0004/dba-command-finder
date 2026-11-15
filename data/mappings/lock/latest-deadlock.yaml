@@ -47,4 +47,15 @@ databases:
           zh: 打开后，等锁超过 deadlock_timeout 会写日志，方便排查
     notes:
       - zh: 死锁的详情（双方的语句和锁）写在服务器日志里，没有视图可以查。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT * FROM information_schema.CLUSTER_DEADLOCKS;
+        note:
+          zh: 最近发生的死锁，每个参与的事务一行，同一个死锁的 DEADLOCK_ID 相同
+      - cmd: SHOW CONFIG WHERE type = 'tidb' AND name = 'pessimistic-txn.deadlock-history-capacity';
+        note:
+          zh: 每台 tidb-server 保留最近多少次死锁，默认 10
+    notes:
+      - zh: 只记录悲观事务（默认）的死锁。乐观事务不等锁，冲突在提交时报错，不算死锁。
 related: [lock-waits]

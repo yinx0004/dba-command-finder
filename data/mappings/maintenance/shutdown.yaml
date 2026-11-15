@@ -56,4 +56,16 @@ databases:
           zh: fast 断开所有连接、回滚没提交的事务后正常关闭；smart 等所有连接自己断开；immediate 直接退出，下次启动要做恢复
     notes:
       - zh: 没有关闭实例的 SQL 命令，要在服务器上用 pg_ctl 或 systemctl。
+  tidb:
+    support: full
+    commands:
+      - cmd: SHUTDOWN;
+        skip: {zh: 会把 lab 正在用的 tidb-server 关掉}
+        note:
+          zh: 只关掉当前连着的这一台 tidb-server，其他节点照常服务
+      - cmd: tiup cluster stop <cluster>
+        shell: true
+        skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
+        note:
+          zh: 按顺序停掉整个集群；只停某类节点加 -R tidb、-R tikv
 related: [rotate-logs]

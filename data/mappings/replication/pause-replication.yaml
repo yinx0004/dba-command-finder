@@ -58,4 +58,15 @@ databases:
         on: [standby]
       - cmd: SELECT pg_wal_replay_resume();
         on: [standby]
+  tidb:
+    support: partial
+    commands:
+      - cmd: cdc cli changefeed pause --server=http://<ticdc>:8300 --changefeed-id=<id>
+        shell: true
+        on: [ticdc]
+      - cmd: cdc cli changefeed resume --server=http://<ticdc>:8300 --changefeed-id=<id>
+        shell: true
+        on: [ticdc]
+    notes:
+      - zh: 集群内部的 Raft 复制不能暂停；能暂停的是 TiCDC 往下游同步的任务。暂停期间上游的变更会因为 GC safepoint 一直保留，暂停太久会占用空间，超过 gc-ttl（默认 24 小时）后任务会失败。
 related: [skip-replication-error, replication-status]

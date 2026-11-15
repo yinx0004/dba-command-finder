@@ -80,4 +80,12 @@ databases:
       - cmd: SHOW wal_sync_method;
     fields:
       log_flush: synchronous_commit
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT VARIABLE_NAME, CURRENT_VALUE, IS_NOOP FROM information_schema.VARIABLES_INFO WHERE VARIABLE_NAME IN ('innodb_flush_log_at_trx_commit', 'sync_binlog');
+        note:
+          zh: IS_NOOP 为 YES：这两个变量只为兼容保留，设了也不起作用
+    notes:
+      - zh: 没有可调的刷盘策略。提交时数据要写进 TiKV 多数副本的 Raft 日志并落盘才返回，单台机器宕机不丢已提交的数据。
 related: [default-rw-concern, binlog-retention]

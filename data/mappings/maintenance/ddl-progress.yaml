@@ -66,4 +66,17 @@ databases:
     fields:
       done: blocks_done
       total: blocks_total
+  tidb:
+    support: full
+    commands:
+      - cmd: ADMIN SHOW DDL JOBS;
+        note:
+          zh: 最近的 DDL 任务；ROW_COUNT 是建索引、改类型时已经处理的行数，STATE 是状态
+      - cmd: SELECT JOB_ID, JOB_TYPE, TABLE_NAME, ROW_COUNT, STATE FROM information_schema.DDL_JOBS WHERE STATE = 'running';
+      - cmd: ADMIN CANCEL DDL JOBS <job_id>;
+        skip: {zh: 需要一个正在执行的 DDL}
+    fields:
+      done: ROW_COUNT
+    notes:
+      - zh: 没有总行数，进度要拿 ROW_COUNT 和表的行数比。DDL 在整个集群里排队执行，一个慢的 DDL 会挡住后面的。
 related: [create-index, list-active-sessions]

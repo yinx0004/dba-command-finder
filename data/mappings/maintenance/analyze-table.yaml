@@ -51,4 +51,19 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: ANALYZE TABLE <table>;
+      - cmd: SHOW STATS_HEALTHY WHERE Table_name = '<table>';
+        note:
+          zh: 统计信息的健康度，越低说明和实际数据差得越多
+      - cmd: SHOW ANALYZE STATUS;
+        note:
+          zh: 正在进行和最近完成的 ANALYZE 任务，包括后台自动触发的
+    notes:
+      - zh: 修改的行数超过 tidb_auto_analyze_ratio（默认 0.5）时会在后台自动 ANALYZE。大表的 ANALYZE 比 MySQL 慢得多，因为要读全表或采样整张表。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t}
 related: [explain, show-indexes]

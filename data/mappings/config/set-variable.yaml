@@ -67,4 +67,17 @@ databases:
       teardown: |-
         ALTER SYSTEM RESET work_mem;
         SELECT pg_reload_conf();
+  tidb:
+    support: full
+    commands:
+      - cmd: SET GLOBAL <variable> = <value>;
+        note:
+          zh: 写进集群，所有 tidb-server 生效，重启后保留（实例级变量除外）
+      - cmd: SET CONFIG tikv `<config>` = '<value>';
+        on: [tikv]
+        note:
+          zh: 在线改 TiKV、PD 的配置项；tidb-server 自己的配置项改不了
+    verify:
+      vars: {variable: tidb_mem_quota_query, value: '2147483648'}
+      teardown: SET GLOBAL tidb_mem_quota_query = 1073741824;
 related: [show-variables, persist-parameters]

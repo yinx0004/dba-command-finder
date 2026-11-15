@@ -82,4 +82,12 @@ databases:
         DROP OWNED BY app_show;
         DROP TABLE t;
         DROP ROLE app_show;
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW GRANTS FOR '<user>'@'<host>';
+      - cmd: SHOW GRANTS;
+    verify:
+      setup: CREATE USER 'app_show'@'%' IDENTIFIED BY 'Lab#Pass123'; GRANT SELECT ON *.* TO 'app_show'@'%';
+      vars: {user: app_show, host: '%'}
 related: [grant-privileges, list-users]

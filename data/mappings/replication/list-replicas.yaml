@@ -65,4 +65,23 @@ databases:
           zh: 复制槽，包括暂时没连上的备库
     fields:
       host: client_addr
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT TYPE, INSTANCE, VERSION, START_TIME FROM information_schema.CLUSTER_INFO;
+        note:
+          zh: 集群里所有 tidb、pd、tikv、tiflash 节点
+      - cmd: SELECT STORE_ID, ADDRESS, STORE_STATE_NAME, LEADER_COUNT, REGION_COUNT FROM information_schema.TIKV_STORE_STATUS;
+        on: [pd]
+        note:
+          zh: 每个 TiKV 上有多少 Raft leader 和副本
+      - cmd: cdc cli changefeed list --server=http://<ticdc>:8300
+        shell: true
+        on: [ticdc]
+        note:
+          zh: 同步到下游（另一个 TiDB、MySQL、Kafka）的任务
+    fields:
+      host: INSTANCE
+    notes:
+      - zh: 没有 MySQL 那样的主从。每份数据在 TiKV 里默认有 3 个 Raft 副本，自动选主、自动切换；同步到另一个集群靠 TiCDC。
 related: [replica-role, replication-status]

@@ -82,4 +82,23 @@ databases:
       data: data_size
       index: index_size
       total: total_size
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT TABLE_SCHEMA, SUM(DATA_LENGTH) AS data_bytes, SUM(INDEX_LENGTH) AS index_bytes, SUM(DATA_LENGTH + INDEX_LENGTH) AS total_bytes FROM information_schema.TABLES GROUP BY TABLE_SCHEMA ORDER BY total_bytes DESC;
+        note:
+          zh: 按统计信息里的行数和平均行长估算的逻辑大小，没 ANALYZE 过的表是 0
+      - cmd: SELECT TABLE_SCHEMA, SUM(TABLE_SIZE) AS size_mb FROM information_schema.TABLE_STORAGE_STATS WHERE TABLE_SCHEMA = '<db>' GROUP BY TABLE_SCHEMA;
+        on: [pd]
+        note:
+          zh: 按 Region 统计的大小，单位 MB，不含副本
+    fields:
+      name: TABLE_SCHEMA
+      data: data_bytes
+      index: index_bytes
+      total: total_bytes
+    notes:
+      - zh: 磁盘上的实际占用要乘上副本数（默认 3），再考虑压缩，以 Grafana 或 TIKV_STORE_STATUS 为准。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1);
 related: [table-size, list-databases]

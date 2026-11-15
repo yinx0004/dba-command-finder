@@ -77,4 +77,16 @@ databases:
       teardown: |-
         ALTER SYSTEM RESET log_statement;
         SELECT pg_reload_conf();
+  tidb:
+    support: partial
+    commands:
+      - cmd: SET GLOBAL tidb_general_log = ON;
+        note:
+          zh: 实例级变量，只对当前这台 tidb-server 生效；语句写进 tidb-server 的日志文件，不能写到表里
+      - cmd: SELECT TIME, INSTANCE, MESSAGE FROM information_schema.CLUSTER_LOG WHERE time BETWEEN '<start_time>' AND '<end_time>' AND message LIKE '%GENERAL_LOG%' LIMIT 20;
+    notes:
+      - zh: 每条语句都记一次，开销很大，只在排查时短时间打开。
+    verify:
+      vars: {start_time: '2026-01-01 00:00:00', end_time: '2026-01-01 01:00:00'}
+      teardown: SET GLOBAL tidb_general_log = OFF;
 related: [slow-query-log, error-log]

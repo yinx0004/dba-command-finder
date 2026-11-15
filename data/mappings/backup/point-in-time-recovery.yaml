@@ -78,4 +78,33 @@ databases:
         skip: {zh: 要用这份备份另外启动一个实例并回放归档，lab 没法在运行中验证}
         note:
           zh: 恢复时写上目标时间，用基础备份启动，回放归档的 WAL 到这个时间点停下
+  tidb:
+    support: full
+    commands:
+      - cmd: tiup br log start --task-name=pitr --pd <pd> --storage 's3://<bucket>/log'
+        shell: true
+        on: [pd]
+        note:
+          zh: 开启日志备份，持续把变更写到外部存储；还要定期做全量备份
+      - cmd: tiup br restore point --pd <pd> --storage 's3://<bucket>/log' --full-backup-storage 's3://<bucket>/full' --restored-ts '2026-01-01 10:00:00+0800'
+        shell: true
+        on: [pd]
+        note:
+          zh: 恢复到一个空集群
+      - cmd: SELECT * FROM <table> AS OF TIMESTAMP NOW() - INTERVAL 10 SECOND;
+        note:
+          zh: 只是查看：在 tidb_gc_life_time（默认 10 分钟）之内，可以直接读到过去某个时刻的数据
+      - cmd: FLASHBACK TABLE <table> TO <table>_restored;
+        on: [tikv]
+        note:
+          zh: 找回 GC 保留时间之内 DROP 或 TRUNCATE 掉的表
+      - cmd: FLASHBACK CLUSTER TO TIMESTAMP '2026-01-01 10:00:00';
+        on: [tikv]
+        note:
+          zh: 把整个集群回退到 GC 保留时间之内的某个时刻
+    notes:
+      - zh: 没有 binlog。日志备份加全量备份才能恢复到任意时刻；只是误删误改不久，用 AS OF TIMESTAMP 读回旧数据、或者用 FLASHBACK TABLE 找回删掉的表，就够了。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY); DO SLEEP(11);
+      vars: {table: t}
 related: [logical-backup, logical-restore]

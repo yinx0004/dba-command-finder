@@ -94,4 +94,14 @@ databases:
       source: {name: sender_host, skip: {zh: 在备库的 pg_stat_wal_receiver 里，lab 只跑主库}}
     notes:
       - zh: 复制断了不会报“错误信息”字段，原因看备库日志；复制本身不会因为某条语句出错而停下。
+  tidb:
+    support: partial
+    commands:
+      - cmd: cdc cli changefeed query -s --server=http://<ticdc>:8300 --changefeed-id=<id>
+        shell: true
+        on: [ticdc]
+        note:
+          zh: state 是同步任务的状态，checkpoint 是已经同步到下游的时间点，和当前时间的差就是延迟
+    notes:
+      - zh: 不支持 SHOW SLAVE STATUS。集群内部的 Raft 复制是自动的，副本健康情况看 PD 和 Grafana；延迟一般指 TiCDC 同步到下游的延迟。
 related: [server-status]

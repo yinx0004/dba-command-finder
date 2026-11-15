@@ -65,4 +65,19 @@ databases:
     alternatives:
       - title: {zh: 按时间分区，删掉旧分区}
         see: partitioning
+  tidb:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> TTL = created_at + INTERVAL 30 DAY TTL_JOB_INTERVAL = '1h';
+        note:
+          zh: 建表时也可以直接写 TTL = ...；过期时间列要是 DATETIME 或 TIMESTAMP
+      - cmd: SELECT table_schema, table_name, status, expired_rows, deleted_rows FROM mysql.tidb_ttl_job_history ORDER BY create_time DESC LIMIT 5;
+        note:
+          zh: 后台清理任务的执行记录
+      - cmd: ALTER TABLE <table> TTL_ENABLE = 'OFF';
+    notes:
+      - zh: 不支持 CREATE EVENT。TTL 是后台任务，按 TTL_JOB_INTERVAL 定期扫描删除，过期的行不会马上消失，查询时要自己再加时间条件。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, created_at DATETIME);
+      vars: {table: t}
 related: [batch-delete, partitioning]

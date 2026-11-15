@@ -75,4 +75,17 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT VARIABLE_NAME, VARIABLE_VALUE FROM mysql.tidb WHERE VARIABLE_NAME IN ('tikv_gc_life_time', 'tikv_gc_last_run_time', 'tikv_gc_safe_point');
+        note:
+          zh: GC 多久跑一次、上次什么时候跑的；删掉的旧版本要等 GC 之后才会被清理
+      - cmd: tiup ctl:v<version> tikv --host <tikv>:20160 compact -d kv
+        shell: true
+        on: [tikv]
+        note:
+          zh: 手动对一个 TiKV 做 compaction，立即回收空间；会占用大量 IO
+    notes:
+      - zh: 不支持 OPTIMIZE TABLE，ALTER TABLE ... ENGINE=InnoDB 只为兼容、什么也不做。空间由 GC 和 RocksDB 的 compaction 自动回收，一般不用手动处理。
 related: [table-size, check-table]

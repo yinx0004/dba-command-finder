@@ -46,4 +46,12 @@ databases:
     support: none
     notes:
       - zh: 没有内置的分片和路由层；分片要靠 Citus 这类扩展，连接池用 pgbouncer、pgpool 这类外部组件。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SHOW CONFIG WHERE type = 'tidb' AND name = 'tikv-client.grpc-connection-count';
+        note:
+          zh: 每台 tidb-server 到每个 TiKV 保持的 gRPC 连接数
+    notes:
+      - zh: 分片和路由由 TiDB 自己完成，不需要 mongos 那样的路由层连接池。连接数只有一个固定值，没有最小、最大之分，改了要重启 tidb-server。
 related: [max-connections, connection-usage]

@@ -62,4 +62,14 @@ databases:
       setup: CREATE ROLE app_lock LOGIN PASSWORD 'Lab#Pass123';
       vars: {user: app_lock}
       teardown: DROP ROLE app_lock;
+  tidb:
+    support: full
+    commands:
+      - cmd: ALTER USER '<user>'@'<host>' ACCOUNT LOCK;
+      - cmd: ALTER USER '<user>'@'<host>' ACCOUNT UNLOCK;
+    notes:
+      - zh: 锁定后新连接会被拒绝，已经连着的会话不受影响，需要的话再 KILL。
+    verify:
+      setup: CREATE USER 'app_lock'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {user: app_lock, host: '%'}
 related: [drop-user, kill-session]

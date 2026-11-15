@@ -5,7 +5,7 @@ title: {zh: 查看长事务、未提交的事务}
 summary: {zh: 一个忘了提交的事务会一直持有锁、拖住清理，是很多「突然变慢」的根源；找出开了多久、是谁开的。}
 keywords:
   zh: [长事务, 未提交事务, 事务没提交, 大事务]
-  en: [innodb_trx, long transaction, open transaction, transactionlifetimelimitseconds]
+  en: [innodb_trx, long transaction, open transaction, transactionlifetimelimitseconds, tidb_trx, cluster_tidb_trx]
 fields:
   - {id: started, name: {zh: 事务开始时间或已开多久}}
   - {id: session, name: {zh: 所属会话}}
@@ -57,4 +57,17 @@ databases:
     fields:
       started: xact_start
       session: pid
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT INSTANCE, ID, START_TIME, TIMESTAMPDIFF(SECOND, START_TIME, NOW()) AS seconds, SESSION_ID, USER, DB, STATE, CURRENT_SQL_DIGEST_TEXT FROM information_schema.CLUSTER_TIDB_TRX ORDER BY START_TIME;
+        note:
+          zh: 所有 tidb-server 上正在进行的事务；只看本机用 TIDB_TRX
+    fields:
+      started: START_TIME
+      session: SESSION_ID
+    notes:
+      - zh: 长事务会挡住 GC，旧版本数据清不掉，扫描变慢。超过 tidb_gc_life_time 还没结束的事务，GC 会一直等它。
+    verify:
+      skip_fields: {zh: 需要另一个连接上有未提交的事务}
 related: [list-active-sessions, lock-waits, kill-session]

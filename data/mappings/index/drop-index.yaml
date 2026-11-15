@@ -58,4 +58,14 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         CREATE INDEX idx_a ON t (a);
       vars: {index: idx_a}
+  tidb:
+    support: full
+    commands:
+      - cmd: DROP INDEX <index> ON <table>;
+      - cmd: ALTER TABLE <table> DROP INDEX <index2>;
+    notes:
+      - zh: 删除很快，空间等 GC 后回收。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b));
+      vars: {table: t, index: idx_a, index2: idx_b}
 related: [index-usage, invisible-index]

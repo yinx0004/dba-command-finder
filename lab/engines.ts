@@ -197,4 +197,55 @@ export function postgresql(version: string): Engine {
   };
 }
 
-export const ENGINES: Record<string, (version: string) => Engine> = { mysql, mongodb, redis, postgresql };
+/**
+ * TiDB images are tagged by patch release only (v8.5.8, no v8.5): the newest patch of the line, from Docker Hub.
+ */
+async function latestTidbTag(line: string): Promise<string> {
+  const url = `https://hub.docker.com/v2/repositories/pingcap/tidb/tags?page_size=100&name=v${line}.`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`could not list pingcap/tidb tags: HTTP ${res.status}`);
+  const body = (await res.json()) as { results: { name: string }[] };
+  const exact = new RegExp(`^v${line.replace('.', '\\.')}\\.(\\d+)$`);
+  const patches = body.results.map((t) => exact.exec(t.name)?.[1]).filter((x): x is string => x !== undefined).map(Number);
+  if (!patches.length) throw new Error(`no pingcap/tidb image for ${line}`);
+  return `v${line}.${Math.max(...patches)}`;
+}
+
+export function tidb(version: string): Engine {
+  const name = `dbalab-tidb-${version}`;
+  // TiDB's image has no client, so a MySQL 8.4 container shares its network and runs mysql, mysqldump and friends.
+  const clientName = `${name}-client`;
+  let image = `pingcap/tidb:v${version}.x`;
+  const client = (database?: string) => ['exec', clientName, 'mysql', ...(database ? ['-D', database] : [])];
+  return {
+    get image() {
+      return image;
+    },
+    async start() {
+      image = `pingcap/tidb:${await latestTidbTag(version)}`;
+      // One tidb-server on its built-in storage (unistore): SQL, information_schema and the CLUSTER_* tables work;
+      // commands for PD, TiKV or TiFlash, and the cluster tools, are marked by role and skipped.
+      await startContainer(name, [image]);
+      await sh(['rm', '-fv', clientName]);
+      const c = await sh(['run', '-d', '--name', clientName, '--network', `container:${name}`, '--entrypoint', 'sleep', 'mysql:8.4', 'infinity'], 600_000);
+      if (!c.ok) throw new Error(`client container failed: ${c.out}`);
+      // Lets mysql and mysqldump run as the page shows them, without connection flags; LOAD DATA LOCAL INFILE
+      // reads files from this container, which the client only allows with local-infile on.
+      const cnf = await sh(['exec', clientName, 'bash', '-c', `printf '[client]\\nuser=root\\nhost=127.0.0.1\\nport=4000\\n[mysql]\\nlocal-infile=1\\n' > ~/.my.cnf`]);
+      if (!cnf.ok) throw new Error(`could not write ~/.my.cnf: ${cnf.out}`);
+      await waitFor(name, async () => (await sh([...client(), '-e', 'SELECT 1'])).ok, 120_000);
+    },
+    async serverVersion() {
+      const r = await sh([...client(), '-N', '-s', '-e', 'SELECT tidb_version()']);
+      const v = /Release Version: v(\d+\.\d+\.\d+)/.exec(r.out)?.[1];
+      if (!r.ok || !v) throw new Error(r.out);
+      return v;
+    },
+    createDatabase: (db) => sh([...client(), '-e', `CREATE DATABASE IF NOT EXISTS \`${db}\``]),
+    exec: (text, db) => sh([...client(db), '-e', text]),
+    shell: (text) => inShell(clientName, text),
+    stop: async () => void (await sh(['rm', '-fv', clientName, name])),
+  };
+}
+
+export const ENGINES: Record<string, (version: string) => Engine> = { mysql, mongodb, redis, postgresql, tidb };

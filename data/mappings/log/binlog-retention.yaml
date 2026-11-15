@@ -56,4 +56,13 @@ databases:
           zh: 每个复制槽还能保留多少 WAL，wal_status 为 lost 表示已经保不住了
     notes:
       - zh: WAL 没有按时间保留的设置；要长期保留得配归档（archive_command），归档的保留期由备份工具管。
+  tidb:
+    support: none
+    notes:
+      - zh: 没有 binlog。旧版本数据保留多久由 GC 决定；开启了日志备份时，增量日志保留在外部存储里，保留多久由自己的清理策略决定。
+    alternatives:
+      - title: {zh: 查看旧版本数据的保留时间}
+        cmd: SELECT @@tidb_gc_life_time;
+      - title: {zh: 查看日志备份任务和它覆盖的时间范围}
+        cmd: tiup br log status --task-name=pitr --pd <pd>
 related: [binlog-events, replication-status, point-in-time-recovery]

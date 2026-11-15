@@ -58,4 +58,11 @@ databases:
         CREATE SCHEMA archive;
       vars: {table: t, new_table: t_old}
       teardown: DROP SCHEMA archive CASCADE;
+  tidb:
+    support: full
+    commands:
+      - cmd: RENAME TABLE <table> TO <new_table>;
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t, new_table: t_new}
 related: [drop-table]

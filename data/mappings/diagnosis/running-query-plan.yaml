@@ -44,4 +44,13 @@ databases:
           zh: 之后这个连接里超过 1 秒的语句，执行计划会写进服务器日志
     notes:
       - zh: 看不到别的连接正在执行的语句用的计划；auto_explain 只能事后从日志里看，要对所有连接生效，把它加进 session_preload_libraries。
+  tidb:
+    support: full
+    commands:
+      - cmd: EXPLAIN FOR CONNECTION <processlist_id>;
+        skip: {zh: 需要另一个连接上正好有一条在执行的查询}
+        note:
+          zh: 连接 id 从 SHOW PROCESSLIST 看，要在那条连接所在的 tidb-server 上执行
+    notes:
+      - zh: 已经结束的慢查询，执行计划在 SLOW_QUERY 的 Plan 列里，用 SELECT tidb_decode_plan(Plan) 解开。
 related: [list-active-sessions, explain]

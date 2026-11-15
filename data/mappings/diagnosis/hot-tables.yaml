@@ -75,4 +75,21 @@ databases:
       table: relname
     notes:
       - zh: 只有次数和块数，没有按表统计的耗时。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT TABLE_NAMES, SUM(EXEC_COUNT) AS exec_count, SUM(SUM_LATENCY) AS total_latency FROM information_schema.CLUSTER_STATEMENTS_SUMMARY GROUP BY TABLE_NAMES ORDER BY total_latency DESC LIMIT 10;
+        note:
+          zh: 按语句涉及的表汇总执行次数和总耗时（纳秒）
+      - cmd: SELECT DB_NAME, TABLE_NAME, INDEX_NAME, TYPE, MAX_HOT_DEGREE, FLOW_BYTES FROM information_schema.TIDB_HOT_REGIONS ORDER BY FLOW_BYTES DESC LIMIT 10;
+        on: [pd]
+        note:
+          zh: 读写流量最大的 Region 属于哪张表、哪个索引；TYPE 是 read 或 write
+    fields:
+      table: TABLE_NAMES
+      total_time: total_latency
+    notes:
+      - zh: 写入集中在一张表的同一段主键上（自增主键、时间戳）会形成写热点，可以改用 AUTO_RANDOM 或 SHARD_ROW_ID_BITS 打散。图形化的热点分布看 TiDB Dashboard 的流量可视化。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1;
 related: [live-throughput, top-statements, table-size]

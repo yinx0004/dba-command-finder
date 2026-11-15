@@ -58,4 +58,16 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t, column: a}
+  tidb:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> MODIFY COLUMN <column> BIGINT NOT NULL;
+      - cmd: ALTER TABLE <table> MODIFY COLUMN <column2> VARCHAR(60), ALGORITHM=INPLACE, LOCK=NONE;
+        note:
+          zh: ALGORITHM、LOCK 子句只为兼容；DDL 本身都是在线的
+    notes:
+      - zh: 只放宽类型（INT 改 BIGINT、VARCHAR 改长）时只改元数据；收窄类型或改字符集会重写整张表，大表要很久，进度看 ADMIN SHOW DDL JOBS。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 VARCHAR(20));
+      vars: {table: t, column: c1, column2: c2}
 related: [add-column, rename-column, auto-increment-exhaustion]

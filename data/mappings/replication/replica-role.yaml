@@ -48,4 +48,12 @@ databases:
       - cmd: SELECT pg_is_in_recovery();
         note:
           zh: true 是备库，false 是主库
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT @@tidb_super_read_only, @@tidb_restricted_read_only;
+        note:
+          zh: 主备集群里，备集群通常设成 tidb_super_read_only = ON
+    notes:
+      - zh: 集群里的 tidb-server 没有主从之分，连哪台都能读写。用 TiCDC 搭的主备集群，要靠只读开关和 TiCDC 的同步方向来区分。
 related: [replication-status, list-replicas, set-read-only]

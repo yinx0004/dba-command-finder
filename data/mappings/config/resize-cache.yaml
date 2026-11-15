@@ -65,4 +65,19 @@ databases:
       - zh: 改 shared_buffers 必须重启，不能在线调整。读数据还大量依赖操作系统的页缓存，effective_cache_size 告诉优化器大约有多少可用。
     verify:
       teardown: ALTER SYSTEM RESET shared_buffers;
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT @@tidb_server_memory_limit;
+        note:
+          zh: tidb-server 的内存上限，可以写百分比或字节数
+      - cmd: SET GLOBAL tidb_server_memory_limit = '70%';
+      - cmd: SET CONFIG tikv `storage.block-cache.capacity` = '8GiB';
+        on: [tikv]
+        note:
+          zh: 数据缓存在 TiKV 的 block cache 里，可以在线调大调小
+    notes:
+      - zh: tidb-server 不缓存数据，innodb_buffer_pool_size 只为兼容保留，设了不起作用。
+    verify:
+      teardown: SET GLOBAL tidb_server_memory_limit = '80%';
 related: [cache-hit-ratio, set-variable]

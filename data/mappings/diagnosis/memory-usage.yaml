@@ -63,4 +63,17 @@ databases:
       total: total
     notes:
       - zh: 每个连接是一个独立进程，排序、哈希另外按 work_mem 申请内存；没有一个视图能看全实例所有进程的内存。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT * FROM information_schema.CLUSTER_MEMORY_USAGE;
+        note:
+          zh: 每台 tidb-server 的内存上限、当前用量和历史最高
+      - cmd: SELECT INSTANCE, ID, USER, MEM, DISK, INFO FROM information_schema.CLUSTER_PROCESSLIST ORDER BY MEM DESC LIMIT 10;
+        note:
+          zh: 哪些会话占用内存最多
+    fields:
+      total: MEMORY_CURRENT
+    notes:
+      - zh: 超过 tidb_server_memory_limit 时，tidb-server 会取消占用内存最多的语句。TiKV 的内存看 Grafana。
 related: [cache-hit-ratio, server-status]

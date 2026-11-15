@@ -62,4 +62,14 @@ databases:
       conn_id: pid
     notes:
       - zh: 只有程序自己在连接串里写了 application_name 才看得出来；驱动名和版本不会报给服务器。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT PROCESSLIST_ID, ATTR_NAME, ATTR_VALUE FROM performance_schema.session_connect_attrs WHERE ATTR_NAME IN ('program_name', '_client_name', '_client_version');
+    fields:
+      program: program_name
+      driver: _client_name
+      conn_id: PROCESSLIST_ID
+    notes:
+      - zh: 只列出当前这台 tidb-server 上的连接；经过负载均衡连进来时，要在每台 tidb-server 上各查一次。
 related: [connection-usage, list-active-sessions]

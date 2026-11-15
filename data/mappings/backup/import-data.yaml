@@ -68,4 +68,20 @@ databases:
       setup: CREATE TABLE t (id int, a int);
       setup_shell: printf 'id,a\n1,10\n2,20\n' > /tmp/t_import.csv
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: LOAD DATA LOCAL INFILE '/tmp/<table>.csv' INTO TABLE <table> FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+        note:
+          zh: 读的是客户端机器上的文件；不支持不带 LOCAL 从 tidb-server 所在机器读文件。mysql 客户端要带 --local-infile=1
+      - cmd: IMPORT INTO <table> FROM '/tmp/<table>.csv';
+        on: [tikv]
+        note:
+          zh: 读 tidb-server 所在机器或 S3 上的文件，直接写入 TiKV，比 LOAD DATA 快得多；导入期间这张表不能读写
+    notes:
+      - zh: 几百 GB 以上的数据用 TiDB Lightning 导入。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10));
+      setup_shell: printf '1,"x"\n2,"y"\n' > /tmp/t.csv
+      vars: {table: t}
 related: [export-data, logical-restore]

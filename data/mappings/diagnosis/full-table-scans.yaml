@@ -64,4 +64,17 @@ databases:
       rows_examined: seq_tup_read
     notes:
       - zh: 只能看到哪张表被全表扫描得多，看不到是哪条语句；要定位语句，用 pg_stat_statements 找出耗时的再 EXPLAIN。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT DIGEST_TEXT, EXEC_COUNT, AVG_PROCESSED_KEYS FROM information_schema.CLUSTER_STATEMENTS_SUMMARY WHERE PLAN LIKE '%TableFullScan%' ORDER BY EXEC_COUNT DESC LIMIT 10;
+        note:
+          zh: 执行计划里有 TableFullScan 的语句
+    fields:
+      statement: DIGEST_TEXT
+      rows_examined: AVG_PROCESSED_KEYS
+    notes:
+      - zh: 语句汇总按时间窗口（默认 30 分钟）统计，更早的在 CLUSTER_STATEMENTS_SUMMARY_HISTORY 里。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1;
 related: [top-statements, create-index, explain]

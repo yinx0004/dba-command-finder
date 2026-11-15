@@ -47,4 +47,14 @@ databases:
           zh: 逻辑复制的订阅端遇到冲突停下时，跳过出错的那个事务；lsn 从订阅端日志里看
     notes:
       - zh: 物理复制（流复制）是按字节回放 WAL，不会因为某条语句出错而停下，也就没有可跳过的错误。
+  tidb:
+    support: partial
+    commands:
+      - cmd: cdc cli changefeed resume --server=http://<ticdc>:8300 --changefeed-id=<id> --overwrite-checkpoint-ts=<ts>
+        shell: true
+        on: [ticdc]
+        note:
+          zh: 从新的时间点继续同步，跳过这之间的所有变更
+    notes:
+      - zh: 只针对 TiCDC 同步任务。只想跳过某一个出错的事务时，在同步任务的配置里写 filter.ignore-txn-start-ts，再 cdc cli changefeed update。
 related: [replication-status, pause-replication]

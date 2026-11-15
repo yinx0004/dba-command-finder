@@ -41,4 +41,11 @@ databases:
           zh: 开着 logging_collector 时切换到新文件；没开时只给一条警告
     notes:
       - zh: 也可以按时间、按大小自动切换：log_rotation_age、log_rotation_size。
+  tidb:
+    support: none
+    notes:
+      - zh: 日志文件按大小自动切分（log.file.max-size，默认 300MB），保留的天数和个数由 log.file.max-days、log.file.max-backups 控制，不能手动切换。FLUSH LOGS 只为兼容，什么也不做。
+    alternatives:
+      - title: {zh: 查看日志切分和保留的配置}
+        cmd: SHOW CONFIG WHERE type = 'tidb' AND name LIKE 'log.file.%';
 related: [error-log, binlog-retention]

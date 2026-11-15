@@ -53,4 +53,18 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t, column: b, column2: c}
+  tidb:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> ADD COLUMN <column> INT NULL;
+        note:
+          zh: 只改元数据，不重写数据，表再大也很快完成
+      - cmd: ALTER TABLE <table> ADD COLUMN <column2> INT NULL, ALGORITHM=INSTANT;
+        note:
+          zh: ALGORITHM 子句只为兼容，写不写都一样
+    notes:
+      - zh: DDL 是在线的，执行期间读写不受影响；进度用 ADMIN SHOW DDL JOBS 看。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t, column: c1, column2: c2}
 related: [show-create-table]
