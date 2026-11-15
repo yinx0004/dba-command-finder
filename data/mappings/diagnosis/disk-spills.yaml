@@ -53,6 +53,8 @@ databases:
     alternatives:
       - title: {zh: 看内存是否接近上限、有没有在淘汰键（evicted_keys）}
         cmd: INFO stats
+    refs:
+      - {title: 'Redis: Key eviction', url: 'https://redis.io/docs/latest/develop/reference/eviction/'}
   postgresql:
     support: full
     commands:
@@ -68,6 +70,9 @@ databases:
       sort_spill: temp_bytes
     notes:
       - zh: 具体某条语句有没有落盘，看 EXPLAIN ANALYZE 里的 Sort Method 是不是 external merge。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_database', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-DATABASE-VIEW'}
+      - {title: 'PostgreSQL: log_temp_files', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-TEMP-FILES'}
   tidb:
     support: partial
     commands:
@@ -77,4 +82,7 @@ databases:
       - cmd: SELECT Time, Query_time, Mem_max, Disk_max, Query FROM information_schema.SLOW_QUERY WHERE Disk_max > 0 ORDER BY Time DESC LIMIT 10;
     notes:
       - zh: 内存额度是 tidb_mem_quota_query；超出后能不能落盘由 tidb_enable_tmp_storage_on_oom 决定，落盘的位置是配置文件里的 tmp-storage-path。
+    refs:
+      - {title: 'TiDB: Statement Summary Tables', url: 'https://docs.pingcap.com/tidb/stable/statement-summary-tables/'}
+      - {title: 'TiDB: SLOW_QUERY', url: 'https://docs.pingcap.com/tidb/stable/information-schema-slow-query/'}
 related: [top-statements, explain]

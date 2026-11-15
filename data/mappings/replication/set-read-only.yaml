@@ -46,6 +46,9 @@ databases:
         since: '6.2'
     notes:
       - zh: 主库没有只读开关。要长期禁止写入，用 ACL 去掉写权限（-@write）；临时停住写入用 CLIENT PAUSE，到时间自动恢复。
+    refs:
+      - {title: 'Redis: Replication (read-only replica)', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/replication/'}
+      - {title: 'Redis: CLIENT PAUSE', url: 'https://redis.io/docs/latest/commands/client-pause/'}
   postgresql:
     support: partial
     commands:
@@ -55,6 +58,8 @@ databases:
           zh: 之后新开的事务默认只读
     notes:
       - zh: 这只是默认值，用户可以自己 SET 回可写，挡不住有意的写入；真正只读的是备库。
+    refs:
+      - {title: 'PostgreSQL: default_transaction_read_only', url: 'https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY'}
     verify:
       teardown: |-
         ALTER SYSTEM RESET default_transaction_read_only;
@@ -67,6 +72,8 @@ databases:
           zh: 所有用户都不能写，包括有 SUPER 权限的；对整个集群生效
     notes:
       - zh: read_only、super_read_only 只为兼容保留，设了也不起作用；还有更严格的 tidb_restricted_read_only，常用于备集群。已经开始的事务不受影响，提交时才报错。
+    refs:
+      - {title: 'TiDB: tidb_super_read_only', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_super_read_only-span-classversion-marknew-in-v531span'}
     verify:
       teardown: SET GLOBAL tidb_super_read_only = OFF;
 related: [global-read-lock, replica-role]

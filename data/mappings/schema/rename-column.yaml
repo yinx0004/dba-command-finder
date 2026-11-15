@@ -45,6 +45,9 @@ databases:
       - cmd: ALTER TABLE <table> RENAME COLUMN <column> TO <new_column>;
         note:
           zh: 只改元数据，瞬间完成；引用它的视图会自动跟着改
+    refs:
+      - {title: 'PostgreSQL: ALTER TABLE', url: 'https://www.postgresql.org/docs/current/sql-altertable.html'}
+      - {title: 'PostgreSQL: Renaming a Column', url: 'https://www.postgresql.org/docs/current/ddl-alter.html#DDL-ALTER-RENAMING-COLUMN'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -55,6 +58,9 @@ databases:
     commands:
       - cmd: ALTER TABLE <table> RENAME COLUMN <column> TO <new_column>;
       - cmd: ALTER TABLE <table> CHANGE COLUMN <column2> <new_column2> INT NOT NULL;
+    refs:
+      - {title: 'TiDB: ALTER TABLE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-alter-table/'}
+      - {title: 'TiDB: CHANGE COLUMN', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-change-column/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 INT NOT NULL, KEY idx_c1 (c1));
       vars: {table: t, column: c1, new_column: c1_new, column2: c2, new_column2: c2_new}

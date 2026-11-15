@@ -56,6 +56,8 @@ databases:
       disk_total: Size
     notes:
       - zh: 数据都在内存里，磁盘只放快照和 AOF；但 BGSAVE 和 AOF 重写时会临时多出一份文件，要留够空间。
+    refs:
+      - {title: 'Redis: Persistence', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
   postgresql:
     support: full
     commands:
@@ -70,6 +72,9 @@ databases:
       disk_total: Size
     notes:
       - zh: WAL 在数据目录下的 pg_wal 里，表空间可以放在别的磁盘上。
+    refs:
+      - {title: 'PostgreSQL: data_directory', url: 'https://www.postgresql.org/docs/current/runtime-config-file-locations.html#GUC-DATA-DIRECTORY'}
+      - {title: 'PostgreSQL: Database File Layout', url: 'https://www.postgresql.org/docs/current/storage-file-layout.html'}
   tidb:
     support: full
     commands:
@@ -88,4 +93,7 @@ databases:
       disk_total: {name: CAPACITY, skip: {zh: 来自 TIKV_STORE_STATUS，需要 PD}}
     notes:
       - zh: tidb-server 本身不存数据，@@datadir 显示的是 PD 的地址，不是数据目录。
+    refs:
+      - {title: 'TiDB: TIKV_STORE_STATUS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tikv-store-status/'}
+      - {title: 'TiDB: CLUSTER_HARDWARE', url: 'https://docs.pingcap.com/tidb/stable/information-schema-cluster-hardware/'}
 related: [database-size, table-size]

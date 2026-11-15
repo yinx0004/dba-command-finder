@@ -59,6 +59,9 @@ databases:
       conn_id: id
       user: user
       client: addr
+    refs:
+      - {title: 'Redis: CLIENT INFO', url: 'https://redis.io/docs/latest/commands/client-info/'}
+      - {title: 'Redis: ACL WHOAMI', url: 'https://redis.io/docs/latest/commands/acl-whoami/'}
   postgresql:
     support: full
     commands:
@@ -67,6 +70,8 @@ databases:
       conn_id: pid
       user: current_user
       client: client_addr
+    refs:
+      - {title: 'PostgreSQL: System Information Functions', url: 'https://www.postgresql.org/docs/current/functions-info.html'}
   tidb:
     support: full
     commands:
@@ -78,4 +83,6 @@ databases:
       conn_id: connection_id
       user: account
       client: login
+    refs:
+      - {title: 'TiDB: Information Functions', url: 'https://docs.pingcap.com/tidb/stable/information-functions/'}
 related: [list-active-sessions, show-grants, server-version]

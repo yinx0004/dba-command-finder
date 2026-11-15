@@ -57,6 +57,9 @@ databases:
           zh: 让内存分配器把空闲的内存页还给操作系统
     notes:
       - zh: 删掉的数据占的内存会被复用，但碎片多时进程占用的内存降不下来；主动碎片整理会占用一些 CPU。
+    refs:
+      - {title: 'Redis: MEMORY PURGE', url: 'https://redis.io/docs/latest/commands/memory-purge/'}
+      - {title: 'Redis: Memory optimization', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/memory-optimization/'}
     verify:
       teardown: CONFIG SET activedefrag no
   postgresql:
@@ -70,6 +73,9 @@ databases:
           zh: 重写整张表，文件变小，但期间拿 ACCESS EXCLUSIVE 锁，读写都被挡住
     notes:
       - zh: 生产上要在线缩小表，常用 pg_repack 扩展；平时靠 autovacuum 让空间及时复用。
+    refs:
+      - {title: 'PostgreSQL: VACUUM', url: 'https://www.postgresql.org/docs/current/sql-vacuum.html'}
+      - {title: 'PostgreSQL: Routine Vacuuming', url: 'https://www.postgresql.org/docs/current/routine-vacuuming.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -88,4 +94,7 @@ databases:
           zh: 手动对一个 TiKV 做 compaction，立即回收空间；会占用大量 IO
     notes:
       - zh: 不支持 OPTIMIZE TABLE，ALTER TABLE ... ENGINE=InnoDB 只为兼容、什么也不做。空间由 GC 和 RocksDB 的 compaction 自动回收，一般不用手动处理。
+    refs:
+      - {title: 'TiDB: Garbage Collection', url: 'https://docs.pingcap.com/tidb/stable/garbage-collection-overview/'}
+      - {title: 'TiDB: TiKV Control', url: 'https://docs.pingcap.com/tidb/stable/tikv-control/'}
 related: [table-size, check-table]

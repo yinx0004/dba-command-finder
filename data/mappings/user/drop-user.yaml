@@ -36,6 +36,8 @@ databases:
       - cmd: ACL DELUSER <user>
         note:
           zh: 用这个用户登录的连接会被一起断开
+    refs:
+      - {title: 'Redis: ACL DELUSER', url: 'https://redis.io/docs/latest/commands/acl-deluser/'}
     verify:
       setup: 'ACL SETUSER app_drop on >Lab#Pass123 ~* +@all'
       vars: {user: app_drop}
@@ -51,6 +53,9 @@ databases:
       - cmd: DROP ROLE <user>;
     notes:
       - zh: 角色还拥有对象或被授过权限时 DROP ROLE 会失败；前两步要在每个库里各执行一次。
+    refs:
+      - {title: 'PostgreSQL: DROP ROLE', url: 'https://www.postgresql.org/docs/current/sql-droprole.html'}
+      - {title: 'PostgreSQL: DROP OWNED', url: 'https://www.postgresql.org/docs/current/sql-drop-owned.html'}
     verify:
       setup: CREATE ROLE app_drop LOGIN PASSWORD 'Lab#Pass123';
       vars: {user: app_drop}
@@ -59,6 +64,8 @@ databases:
     commands:
       - cmd: DROP USER '<user>'@'<host>';
       - cmd: DROP USER IF EXISTS '<user>'@'<host>';
+    refs:
+      - {title: 'TiDB: DROP USER', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-drop-user/'}
     verify:
       setup: CREATE USER 'app_drop'@'%' IDENTIFIED BY 'Lab#Pass123';
       vars: {user: app_drop, host: '%'}

@@ -42,6 +42,9 @@ databases:
         on: [cluster]
     notes:
       - zh: 没有分区表。Redis Cluster 把键按哈希分到 16384 个槽位，再分给各个节点；键名里用 {} 包住的部分决定槽位，可以让相关的键落在同一个节点上。
+    refs:
+      - {title: 'Redis: CLUSTER KEYSLOT', url: 'https://redis.io/docs/latest/commands/cluster-keyslot/'}
+      - {title: 'Redis: Cluster specification', url: 'https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/'}
   postgresql:
     support: full
     commands:
@@ -51,6 +54,8 @@ databases:
           zh: 每个分区是一张普通的表，要提前建好；DROP TABLE 删掉旧分区就是清理旧数据
     notes:
       - zh: 主键和唯一约束必须包含分区键。
+    refs:
+      - {title: 'PostgreSQL: Table Partitioning', url: 'https://www.postgresql.org/docs/current/ddl-partitioning.html'}
     verify:
       vars: {table: events}
       teardown: DROP TABLE events;
@@ -62,6 +67,9 @@ databases:
       - cmd: SELECT PARTITION_NAME, TABLE_ROWS FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = '<db>' AND TABLE_NAME = '<table>';
     notes:
       - zh: 和 MySQL 一样，主键和唯一键必须包含分区列。分区不是为了分散写入，数据本来就按 Region 分布在各个 TiKV 上；分区的主要用处是按时间整块删除旧数据。
+    refs:
+      - {title: 'TiDB: Partitioning', url: 'https://docs.pingcap.com/tidb/stable/partitioned-table/'}
+      - {title: 'TiDB: PARTITIONS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-partitions/'}
     verify:
       vars: {table: t_part}
 related: [ttl-expiry, batch-delete]

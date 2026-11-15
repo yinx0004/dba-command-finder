@@ -76,6 +76,9 @@ databases:
       source: master_host / master_port
     notes:
       - zh: 没有复制错误这一说：从库只是按顺序重放主库发来的命令，连接断了就重连续传，续不上就全量同步。
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
+      - {title: 'Redis: ROLE', url: 'https://redis.io/docs/latest/commands/role/'}
     verify:
       skip_fields: {zh: 这些字段只在从库上出现}
   postgresql:
@@ -94,6 +97,9 @@ databases:
       source: {name: sender_host, skip: {zh: 在备库的 pg_stat_wal_receiver 里，lab 只跑主库}}
     notes:
       - zh: 复制断了不会报“错误信息”字段，原因看备库日志；复制本身不会因为某条语句出错而停下。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_replication', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-REPLICATION-VIEW'}
+      - {title: 'PostgreSQL: pg_stat_wal_receiver', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-WAL-RECEIVER-VIEW'}
   tidb:
     support: partial
     commands:
@@ -104,4 +110,6 @@ databases:
           zh: state 是同步任务的状态，checkpoint 是已经同步到下游的时间点，和当前时间的差就是延迟
     notes:
       - zh: 不支持 SHOW SLAVE STATUS。集群内部的 Raft 复制是自动的，副本健康情况看 PD 和 Grafana；延迟一般指 TiCDC 同步到下游的延迟。
+    refs:
+      - {title: 'TiDB: Manage Changefeeds', url: 'https://docs.pingcap.com/tidb/stable/ticdc-manage-changefeed/'}
 related: [server-status]

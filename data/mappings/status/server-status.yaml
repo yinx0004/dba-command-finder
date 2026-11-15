@@ -70,6 +70,8 @@ databases:
       operations: total_commands_processed
       network_bytes: total_net_input_bytes / total_net_output_bytes
       cache: {name: keyspace_hits / keyspace_misses, note: {zh: 数据都在内存里，这里是读到和没读到键的次数}}
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
   postgresql:
     support: partial
     commands:
@@ -84,6 +86,9 @@ databases:
       cache: blks_hit / blks_read
     notes:
       - zh: 没有网络流量计数；统计分散在 pg_stat_database、pg_stat_bgwriter、pg_stat_wal 等多张视图里。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_database', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-DATABASE-VIEW'}
+      - {title: 'PostgreSQL: System Information Functions', url: 'https://www.postgresql.org/docs/current/functions-info.html'}
   tidb:
     support: partial
     commands:
@@ -97,4 +102,7 @@ databases:
       uptime: Uptime
     notes:
       - zh: QPS、连接数、网络流量这些计数都在 Prometheus 里，看 Grafana 的 TiDB 面板；单台 tidb-server 也可以 curl http://<tidb>:10080/status 和 /metrics。
+    refs:
+      - {title: 'TiDB: SHOW STATUS', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-status/'}
+      - {title: 'TiDB: CLUSTER_INFO', url: 'https://docs.pingcap.com/tidb/stable/information-schema-cluster-info/'}
 related: [list-active-sessions, show-variables]

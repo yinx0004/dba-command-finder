@@ -54,6 +54,9 @@ databases:
       collation: datcollate
     notes:
       - zh: 列和表达式还可以单独指定 COLLATE；换操作系统或 glibc 版本时排序规则可能变，索引要重建。
+    refs:
+      - {title: 'PostgreSQL: Character Set Support', url: 'https://www.postgresql.org/docs/current/multibyte.html'}
+      - {title: 'PostgreSQL: pg_database', url: 'https://www.postgresql.org/docs/current/catalog-pg-database.html'}
   tidb:
     support: full
     commands:
@@ -66,6 +69,8 @@ databases:
       collation: TABLE_COLLATION
     notes:
       - zh: 默认排序规则是 utf8mb4_bin，和 MySQL 8.0 的 utf8mb4_0900_ai_ci 不同；从 MySQL 迁过来时比较、排序和唯一索引的行为可能变。新排序规则框架只能在集群第一次启动前决定，之后改不了。
+    refs:
+      - {title: 'TiDB: Character Set and Collation', url: 'https://docs.pingcap.com/tidb/stable/character-set-and-collation/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, name VARCHAR(20)) DEFAULT CHARSET = utf8mb4;
 related: [show-create-table, time-zone]

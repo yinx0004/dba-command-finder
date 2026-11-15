@@ -63,6 +63,9 @@ databases:
       total: used_memory
     notes:
       - zh: 只能看到整个实例的内存占用，看不到每个库各占多少内存；库只有编号（默认 16 个），没有名字。
+    refs:
+      - {title: 'Redis: DBSIZE', url: 'https://redis.io/docs/latest/commands/dbsize/'}
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
     verify:
       setup: |-
         SET app:1 a
@@ -82,6 +85,8 @@ databases:
       data: data_size
       index: index_size
       total: total_size
+    refs:
+      - {title: 'PostgreSQL: Database Object Size Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-DBSIZE'}
   tidb:
     support: partial
     commands:
@@ -99,6 +104,9 @@ databases:
       total: total_bytes
     notes:
       - zh: 磁盘上的实际占用要乘上副本数（默认 3），再考虑压缩，以 Grafana 或 TIKV_STORE_STATUS 为准。
+    refs:
+      - {title: 'TiDB: TABLES', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tables/'}
+      - {title: 'TiDB: TABLE_STORAGE_STATS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-table-storage-stats/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1);
 related: [table-size, list-databases]

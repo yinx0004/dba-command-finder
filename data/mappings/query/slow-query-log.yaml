@@ -76,6 +76,9 @@ databases:
     notes:
       - zh: 慢日志只记命令本身的执行时间，不含排队和网络往返；记录保存在内存里，条数由 slowlog-max-len 决定，重启就没了。
       - zh: 没有扫描行数、返回行数这类统计。
+    refs:
+      - {title: 'Redis: SLOWLOG GET', url: 'https://redis.io/docs/latest/commands/slowlog-get/'}
+      - {title: 'Redis: LATENCY HISTOGRAM', url: 'https://redis.io/docs/latest/commands/latency-histogram/'}
   postgresql:
     support: full
     commands:
@@ -91,6 +94,9 @@ databases:
       statement: query
     notes:
       - zh: auto_explain 可以把慢语句的执行计划也一起记下来。
+    refs:
+      - {title: 'PostgreSQL: log_min_duration_statement', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-MIN-DURATION-STATEMENT'}
+      - {title: 'PostgreSQL: pg_stat_statements', url: 'https://www.postgresql.org/docs/current/pgstatstatements.html'}
     verify:
       setup: CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
       teardown: |-
@@ -113,6 +119,9 @@ databases:
       rows_examined: Process_keys
       rows_returned: Result_rows
       statement: Query
+    refs:
+      - {title: 'TiDB: Identify Slow Queries', url: 'https://docs.pingcap.com/tidb/stable/identify-slow-queries/'}
+      - {title: 'TiDB: SLOW_QUERY', url: 'https://docs.pingcap.com/tidb/stable/information-schema-slow-query/'}
     verify:
       setup: DO SLEEP(0.5);
       teardown: SET GLOBAL tidb_slow_log_threshold = 300;

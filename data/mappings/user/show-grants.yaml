@@ -52,6 +52,9 @@ databases:
           zh: 不真正执行，只检查这个用户能不能执行这条命令
     fields:
       privileges: commands
+    refs:
+      - {title: 'Redis: ACL GETUSER', url: 'https://redis.io/docs/latest/commands/acl-getuser/'}
+      - {title: 'Redis: ACL DRYRUN', url: 'https://redis.io/docs/latest/commands/acl-dryrun/'}
     verify:
       setup: 'ACL SETUSER app_show on >Lab#Pass123 ~* +@all'
       vars: {user: app_show}
@@ -71,6 +74,9 @@ databases:
     fields:
       roles: rolname
       privileges: privilege_type
+    refs:
+      - {title: 'PostgreSQL: role_table_grants', url: 'https://www.postgresql.org/docs/current/infoschema-role-table-grants.html'}
+      - {title: 'PostgreSQL: psql', url: 'https://www.postgresql.org/docs/current/app-psql.html'}
     verify:
       setup: |-
         CREATE ROLE app_show LOGIN;
@@ -87,6 +93,8 @@ databases:
     commands:
       - cmd: SHOW GRANTS FOR '<user>'@'<host>';
       - cmd: SHOW GRANTS;
+    refs:
+      - {title: 'TiDB: SHOW GRANTS', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-grants/'}
     verify:
       setup: CREATE USER 'app_show'@'%' IDENTIFIED BY 'Lab#Pass123'; GRANT SELECT ON *.* TO 'app_show'@'%';
       vars: {user: app_show, host: '%'}

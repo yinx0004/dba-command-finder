@@ -50,6 +50,8 @@ databases:
           zh: 按模式导出键名，用 SCAN 遍历，不会挡住其他命令
     notes:
       - zh: 没有表，也没有导出成 CSV 的命令；要导出成文本，得按键遍历，再按类型用 GET、HGETALL 等取值。
+    refs:
+      - {title: 'Redis: redis-cli', url: 'https://redis.io/docs/latest/develop/tools/cli/'}
   postgresql:
     support: full
     commands:
@@ -60,6 +62,9 @@ databases:
         shell: true
         note:
           zh: 由 psql 写文件，文件在执行 psql 的机器上，不需要特殊权限
+    refs:
+      - {title: 'PostgreSQL: COPY', url: 'https://www.postgresql.org/docs/current/sql-copy.html'}
+      - {title: 'PostgreSQL: psql \copy', url: 'https://www.postgresql.org/docs/current/app-psql.html#APP-PSQL-META-COMMANDS-COPY'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -80,6 +85,9 @@ databases:
         skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
         note:
           zh: 数据量大时用 Dumpling，多线程导出，还可以按行数切成多个文件
+    refs:
+      - {title: 'TiDB: SELECT ... INTO OUTFILE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-select/'}
+      - {title: 'TiDB: Dumpling', url: 'https://docs.pingcap.com/tidb/stable/dumpling-overview/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10)); INSERT INTO t VALUES (1, 'x'), (2, 'y');
       vars: {table: t}

@@ -50,6 +50,8 @@ databases:
     alternatives:
       - title: {zh: 用 WATCH 做乐观锁：被监视的键在 EXEC 前被改过，整个事务就不执行}
         cmd: WATCH <key>
+    refs:
+      - {title: 'Redis: Transactions', url: 'https://redis.io/docs/latest/develop/using-commands/transactions/'}
   postgresql:
     support: full
     commands:
@@ -65,6 +67,9 @@ databases:
       level: transaction_isolation
     notes:
       - zh: 默认是读已提交，和 MySQL 的可重复读不同；可重复读和可串行化下遇到冲突会直接报错，程序要能重试。
+    refs:
+      - {title: 'PostgreSQL: Transaction Isolation', url: 'https://www.postgresql.org/docs/current/transaction-iso.html'}
+      - {title: 'PostgreSQL: SET TRANSACTION', url: 'https://www.postgresql.org/docs/current/sql-set-transaction.html'}
   tidb:
     support: full
     commands:
@@ -75,6 +80,9 @@ databases:
       level: transaction_isolation
     notes:
       - zh: 默认的 REPEATABLE-READ 实际是快照隔离，没有间隙锁，和 MySQL 的可重复读不完全一样。READ-COMMITTED 只在悲观事务（默认）下生效；SERIALIZABLE 不支持，会报错。
+    refs:
+      - {title: 'TiDB: Transaction Isolation Levels', url: 'https://docs.pingcap.com/tidb/stable/transaction-isolation-levels/'}
+      - {title: 'TiDB: SET TRANSACTION', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-set-transaction/'}
     verify:
       teardown: SET GLOBAL transaction_isolation = 'REPEATABLE-READ';
 related: [default-rw-concern, long-transactions, lock-waits]

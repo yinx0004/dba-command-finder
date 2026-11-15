@@ -60,6 +60,8 @@ databases:
       statement: {name: MONITOR 每行后面的命令和参数}
     notes:
       - zh: MONITOR 只在连接期间输出，不落盘，而且会明显拖慢实例，只适合短时间排查；没有能一直开着的语句日志。
+    refs:
+      - {title: 'Redis: MONITOR', url: 'https://redis.io/docs/latest/commands/monitor/'}
   postgresql:
     support: full
     commands:
@@ -73,6 +75,8 @@ databases:
       statement: {name: 日志里 statement 后面的语句}
     notes:
       - zh: 记录所有语句会产生大量日志；排查慢语句更常用 log_min_duration_statement。
+    refs:
+      - {title: 'PostgreSQL: log_statement', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-STATEMENT'}
     verify:
       teardown: |-
         ALTER SYSTEM RESET log_statement;
@@ -86,6 +90,8 @@ databases:
       - cmd: SELECT TIME, INSTANCE, MESSAGE FROM information_schema.CLUSTER_LOG WHERE time BETWEEN '<start_time>' AND '<end_time>' AND message LIKE '%GENERAL_LOG%' LIMIT 20;
     notes:
       - zh: 每条语句都记一次，开销很大，只在排查时短时间打开。
+    refs:
+      - {title: 'TiDB: tidb_general_log', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_general_log'}
     verify:
       vars: {start_time: '2026-01-01 00:00:00', end_time: '2026-01-01 01:00:00'}
       teardown: SET GLOBAL tidb_general_log = OFF;

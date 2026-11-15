@@ -51,12 +51,17 @@ databases:
           zh: 单个连接发来的、还没处理完的请求最多占多少内存，默认 1gb
     fields:
       limit: proto-max-bulk-len
+    refs:
+      - {title: 'Redis: Protocol spec (bulk strings)', url: 'https://redis.io/docs/latest/develop/reference/protocol-spec/'}
+      - {title: 'Redis: Client handling (query buffer)', url: 'https://redis.io/docs/latest/develop/reference/clients/'}
     verify:
       teardown: CONFIG SET proto-max-bulk-len 512mb
   postgresql:
     support: none
     notes:
       - zh: 没有单条消息大小的参数；单个字段值最大 1GB，超过就报错。
+    refs:
+      - {title: 'PostgreSQL: Limits', url: 'https://www.postgresql.org/docs/current/limits.html'}
   tidb:
     support: full
     commands:
@@ -66,6 +71,8 @@ databases:
       limit: max_allowed_packet
     notes:
       - zh: 单行数据还受 txn-entry-size-limit（默认 6MB）限制，比 max_allowed_packet 小得多；超过时报 entry too large。
+    refs:
+      - {title: 'TiDB: max_allowed_packet', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#max_allowed_packet-span-classversion-marknew-in-v610span'}
     verify:
       teardown: SET GLOBAL max_allowed_packet = DEFAULT;
 related: [import-data, set-variable]

@@ -52,6 +52,8 @@ databases:
       total: loading_total_bytes
     notes:
       - zh: 没有 DDL，也没有建索引的过程；会跑一阵的后台任务是快照、AOF 重写和启动时加载数据。
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
     verify:
       skip_fields: {zh: 只在启动加载数据时出现}
   postgresql:
@@ -66,6 +68,8 @@ databases:
     fields:
       done: blocks_done
       total: blocks_total
+    refs:
+      - {title: 'PostgreSQL: Progress Reporting', url: 'https://www.postgresql.org/docs/current/progress-reporting.html'}
   tidb:
     support: full
     commands:
@@ -79,4 +83,7 @@ databases:
       done: ROW_COUNT
     notes:
       - zh: 没有总行数，进度要拿 ROW_COUNT 和表的行数比。DDL 在整个集群里排队执行，一个慢的 DDL 会挡住后面的。
+    refs:
+      - {title: 'TiDB: ADMIN SHOW DDL', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-admin-show-ddl/'}
+      - {title: 'TiDB: ADMIN CANCEL DDL', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-admin-cancel-ddl/'}
 related: [create-index, list-active-sessions]

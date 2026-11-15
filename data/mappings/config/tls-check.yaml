@@ -37,6 +37,8 @@ databases:
           zh: 是否要求客户端出示证书
     notes:
       - zh: 只能看服务器有没有开 TLS，看不出某个连接是不是走的 TLS；开了 tls-port 后，可以把 port 设成 0，只留加密端口。
+    refs:
+      - {title: 'Redis: TLS', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/security/encryption/'}
   postgresql:
     support: full
     commands:
@@ -48,6 +50,9 @@ databases:
           zh: 当前这个连接是不是加密的、用的什么协议和算法
     notes:
       - zh: pg_hba.conf 里写 hostssl 的规则只接受加密连接。
+    refs:
+      - {title: 'PostgreSQL: Secure TCP/IP Connections with SSL', url: 'https://www.postgresql.org/docs/current/ssl-tcp.html'}
+      - {title: 'PostgreSQL: pg_stat_ssl', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-SSL-VIEW'}
   tidb:
     support: full
     commands:
@@ -57,4 +62,6 @@ databases:
       - cmd: SELECT @@require_secure_transport;
     notes:
       - zh: 服务端证书在配置文件的 security 段里配置；TiDB 到 TiKV、PD 之间的加密是另一套配置（cluster-ssl-*）。
+    refs:
+      - {title: 'TiDB: Enable TLS between Clients and Servers', url: 'https://docs.pingcap.com/tidb/stable/enable-tls-between-clients-and-servers/'}
 related: [config-file, create-user]

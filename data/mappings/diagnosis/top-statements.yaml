@@ -75,6 +75,9 @@ databases:
       avg_time: usec_per_call
     notes:
       - zh: 只能按命令名统计，不能按具体参数（哪个键）统计；要看具体哪一次慢，用 SLOWLOG GET。
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
+      - {title: 'Redis: LATENCY HISTOGRAM', url: 'https://redis.io/docs/latest/commands/latency-histogram/'}
   postgresql:
     support: full
     commands:
@@ -91,6 +94,8 @@ databases:
       avg_time: mean_exec_time
     notes:
       - zh: 要先在 shared_preload_libraries 里加载 pg_stat_statements 并重启，再在库里 CREATE EXTENSION pg_stat_statements。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_statements', url: 'https://www.postgresql.org/docs/current/pgstatstatements.html'}
     verify:
       setup: CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
   tidb:
@@ -110,6 +115,8 @@ databases:
       rows_examined: AVG_PROCESSED_KEYS
     notes:
       - zh: 默认每 30 分钟一个窗口，只保留在内存里，tidb-server 重启后清空。TiDB Dashboard 的 SQL 语句分析页面看的是同一份数据。
+    refs:
+      - {title: 'TiDB: Statement Summary Tables', url: 'https://docs.pingcap.com/tidb/stable/statement-summary-tables/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1; SELECT * FROM t WHERE a = 2;
 related: [full-table-scans, slow-query-log, explain]

@@ -74,6 +74,9 @@ databases:
       index_type: {name: type, note: {zh: TEXT、NUMERIC、TAG、VECTOR 等}}
     notes:
       - zh: FT.* 是 Redis 8.0 自带的查询引擎；更早的版本要另外装 RediSearch 模块，lab 没有验证模块版本。
+    refs:
+      - {title: 'Redis: FT._LIST', url: 'https://redis.io/docs/latest/commands/ft._list/'}
+      - {title: 'Redis: FT.INFO', url: 'https://redis.io/docs/latest/commands/ft.info/'}
     verify:
       setup: |-
         HSET app:user:1 name alice age 30
@@ -96,6 +99,9 @@ databases:
       key_columns: {name: indexdef, note: {zh: 列写在建索引语句里}}
       unique: indisunique
       index_type: amname
+    refs:
+      - {title: 'PostgreSQL: pg_indexes', url: 'https://www.postgresql.org/docs/current/view-pg-indexes.html'}
+      - {title: 'PostgreSQL: pg_index', url: 'https://www.postgresql.org/docs/current/catalog-pg-index.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -113,6 +119,8 @@ databases:
       index_type: Index_type
     notes:
       - zh: Clustered 列表示主键是不是聚簇索引：聚簇时数据按主键存放，否则按隐藏的 _tidb_rowid 存放，主键只是一个唯一索引。
+    refs:
+      - {title: 'TiDB: SHOW INDEXES', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-indexes/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a));
       vars: {table: t}

@@ -48,6 +48,9 @@ databases:
       position: master_repl_offset
     notes:
       - zh: 位置是复制流里的字节偏移，主从对比 master_repl_offset 和 slave_repl_offset 就知道从库落后多少字节。
+    refs:
+      - {title: 'Redis: ROLE', url: 'https://redis.io/docs/latest/commands/role/'}
+      - {title: 'Redis: Replication', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/replication/'}
   postgresql:
     support: full
     commands:
@@ -60,6 +63,9 @@ databases:
           zh: 备库收到和回放到哪个位置
     fields:
       position: pg_current_wal_lsn
+    refs:
+      - {title: 'PostgreSQL: Backup Control Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-BACKUP'}
+      - {title: 'PostgreSQL: Recovery Control Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-RECOVERY-CONTROL'}
   tidb:
     support: partial
     commands:
@@ -75,6 +81,9 @@ databases:
       position: Position
     notes:
       - zh: 没有 GTID。TiCDC 同步任务的进度看它的 checkpoint-ts，用 cdc cli changefeed query 查。
+    refs:
+      - {title: 'TiDB: SHOW MASTER STATUS', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-master-status/'}
+      - {title: 'TiDB: TIDB_PARSE_TSO', url: 'https://docs.pingcap.com/tidb/stable/tidb-functions/'}
     verify:
       vars: {tso: '470474558623449088'}
 related: [replication-status, binlog-retention, point-in-time-recovery]

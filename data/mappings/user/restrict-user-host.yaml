@@ -50,6 +50,8 @@ databases:
     alternatives:
       - title: {zh: 看实例监听了哪些地址}
         cmd: CONFIG GET bind
+    refs:
+      - {title: 'Redis: Security', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/security/'}
   postgresql:
     support: full
     commands:
@@ -63,6 +65,9 @@ databases:
       source: address
     notes:
       - zh: 来源限制写在 pg_hba.conf 里，例如 host app_db app_user 10.0.0.0/8 scram-sha-256；一个用户可以按库、按地址写多条规则，不像 MySQL 那样拆成多个账号。
+    refs:
+      - {title: 'PostgreSQL: pg_hba.conf', url: 'https://www.postgresql.org/docs/current/auth-pg-hba-conf.html'}
+      - {title: 'PostgreSQL: pg_hba_file_rules', url: 'https://www.postgresql.org/docs/current/view-pg-hba-file-rules.html'}
   tidb:
     support: full
     commands:
@@ -73,6 +78,9 @@ databases:
       source: host
     notes:
       - zh: 经过负载均衡（例如 HAProxy）连进来时，TiDB 看到的来源地址是负载均衡的地址；要按真实客户端限制，负载均衡和 TiDB 两边都要开启 PROXY protocol。
+    refs:
+      - {title: 'TiDB: User Account Management', url: 'https://docs.pingcap.com/tidb/stable/user-account-management/'}
+      - {title: 'TiDB: RENAME USER', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-rename-user/'}
     verify:
       vars: {user: app_host, host: '10.0.%', new_host: '192.168.1.%', password: 'Lab#Pass123'}
 related: [create-user, account-lock, list-users]

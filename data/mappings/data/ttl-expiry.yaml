@@ -54,6 +54,9 @@ databases:
           zh: 只让哈希里的某个字段过期
     notes:
       - zh: 过期是按键设置的，过期的键在被访问时或后台定期清理时删除。
+    refs:
+      - {title: 'Redis: EXPIRE', url: 'https://redis.io/docs/latest/commands/expire/'}
+      - {title: 'Redis: HEXPIRE', url: 'https://redis.io/docs/latest/commands/hexpire/'}
     verify:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:session:1', hash_key: 'app:user:1', field: name}
@@ -65,6 +68,8 @@ databases:
     alternatives:
       - title: {zh: 按时间分区，删掉旧分区}
         see: partitioning
+    refs:
+      - {title: 'PostgreSQL: Partition Maintenance', url: 'https://www.postgresql.org/docs/current/ddl-partitioning.html#DDL-PARTITIONING-DECLARATIVE-MAINTENANCE'}
   tidb:
     support: full
     commands:
@@ -77,6 +82,8 @@ databases:
       - cmd: ALTER TABLE <table> TTL_ENABLE = 'OFF';
     notes:
       - zh: 不支持 CREATE EVENT。TTL 是后台任务，按 TTL_JOB_INTERVAL 定期扫描删除，过期的行不会马上消失，查询时要自己再加时间条件。
+    refs:
+      - {title: 'TiDB: Time to Live', url: 'https://docs.pingcap.com/tidb/stable/time-to-live/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, created_at DATETIME);
       vars: {table: t}

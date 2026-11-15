@@ -58,6 +58,9 @@ databases:
       write: min-replicas-to-write
     notes:
       - zh: 复制是异步的，写入在主库上执行完就返回，没有全局的“写到几个节点才算成功”。要等从库确认，得在写完之后按需调用 WAIT；即使 WAIT 返回了，主库故障切换时仍可能丢掉还没复制的写入。
+    refs:
+      - {title: 'Redis: WAIT', url: 'https://redis.io/docs/latest/commands/wait/'}
+      - {title: 'Redis: Replication', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/replication/'}
   postgresql:
     support: partial
     commands:
@@ -71,6 +74,9 @@ databases:
       write: synchronous_commit
     notes:
       - zh: synchronous_commit 可以按会话、甚至按事务改，例如不重要的写入 SET LOCAL synchronous_commit = off。没有对应读关注的设置。
+    refs:
+      - {title: 'PostgreSQL: synchronous_commit', url: 'https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT'}
+      - {title: 'PostgreSQL: synchronous_standby_names', url: 'https://www.postgresql.org/docs/current/runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES'}
   tidb:
     support: partial
     commands:
@@ -81,4 +87,6 @@ databases:
       read: tidb_replica_read
     notes:
       - zh: 写入总是等 Raft 多数副本落盘才返回，不能调低；副本数由 PD 的 max-replicas 决定，默认 3。
+    refs:
+      - {title: 'TiDB: tidb_replica_read', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#tidb_replica_read-span-classversion-marknew-in-v40span'}
 related: [flush-durability, isolation-level, replication-status]

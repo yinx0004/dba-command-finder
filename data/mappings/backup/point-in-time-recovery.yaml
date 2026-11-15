@@ -59,6 +59,8 @@ databases:
           zh: 把 AOF 截到某个时间点，再用它启动
     notes:
       - zh: 只有开着 AOF、并且打开了时间戳记录，才能恢复到某个时间点；只有 RDB 快照时只能回到某次快照。
+    refs:
+      - {title: 'Redis: Persistence', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
     verify:
       teardown: |-
         CONFIG SET aof-timestamp-enabled no
@@ -78,6 +80,9 @@ databases:
         skip: {zh: 要用这份备份另外启动一个实例并回放归档，lab 没法在运行中验证}
         note:
           zh: 恢复时写上目标时间，用基础备份启动，回放归档的 WAL 到这个时间点停下
+    refs:
+      - {title: 'PostgreSQL: Continuous Archiving and PITR', url: 'https://www.postgresql.org/docs/current/continuous-archiving.html'}
+      - {title: 'PostgreSQL: Recovery Target settings', url: 'https://www.postgresql.org/docs/current/runtime-config-wal.html#RUNTIME-CONFIG-WAL-RECOVERY-TARGET'}
   tidb:
     support: full
     commands:
@@ -104,6 +109,9 @@ databases:
           zh: 把整个集群回退到 GC 保留时间之内的某个时刻
     notes:
       - zh: 没有 binlog。日志备份加全量备份才能恢复到任意时刻；只是误删误改不久，用 AS OF TIMESTAMP 读回旧数据、或者用 FLASHBACK TABLE 找回删掉的表，就够了。
+    refs:
+      - {title: 'TiDB: Point-in-Time Recovery', url: 'https://docs.pingcap.com/tidb/stable/br-pitr-guide/'}
+      - {title: 'TiDB: FLASHBACK CLUSTER', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-flashback-cluster/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY); DO SLEEP(11);
       vars: {table: t}

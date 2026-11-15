@@ -53,6 +53,9 @@ databases:
       - cmd: SELECT locktype, relation::regclass, mode, granted, pid FROM pg_locks WHERE NOT granted;
         note:
           zh: 还没拿到的锁
+    refs:
+      - {title: 'PostgreSQL: pg_locks', url: 'https://www.postgresql.org/docs/current/view-pg-locks.html'}
+      - {title: 'PostgreSQL: pg_blocking_pids', url: 'https://www.postgresql.org/docs/current/functions-info.html'}
   tidb:
     support: full
     commands:
@@ -62,4 +65,7 @@ databases:
       - cmd: SELECT INSTANCE, SESSION_ID, USER, WAITING_START_TIME, CURRENT_SQL_DIGEST_TEXT FROM information_schema.CLUSTER_TIDB_TRX WHERE STATE = 'LockWaiting';
     notes:
       - zh: 只有悲观事务（默认）会等锁。要找到持锁的会话，拿 DATA_LOCK_WAITS 的 CURRENT_HOLDING_TRX_ID 去 CLUSTER_TIDB_TRX 里查 ID。
+    refs:
+      - {title: 'TiDB: DATA_LOCK_WAITS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-data-lock-waits/'}
+      - {title: 'TiDB: TIDB_TRX', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tidb-trx/'}
 related: [latest-deadlock, list-active-sessions, global-read-lock]

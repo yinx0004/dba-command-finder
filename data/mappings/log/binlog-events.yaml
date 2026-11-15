@@ -59,6 +59,8 @@ databases:
     alternatives:
       - title: {zh: 实时看实例收到的每条命令（会明显拖慢实例，只能短时间用）}
         cmd: MONITOR
+    refs:
+      - {title: 'Redis: Persistence (AOF)', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
   postgresql:
     support: partial
     commands:
@@ -70,6 +72,9 @@ databases:
       content: data
     notes:
       - zh: 要先有逻辑复制槽（wal_level = logical），只能看到建槽之后的变更；没建槽时，只能用 pg_waldump 读 WAL 文件。
+    refs:
+      - {title: 'PostgreSQL: Logical Decoding', url: 'https://www.postgresql.org/docs/current/logicaldecoding.html'}
+      - {title: 'PostgreSQL: Replication Management Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-REPLICATION'}
     verify:
       setup: |-
         SELECT pg_create_logical_replication_slot('lab_decode', 'test_decoding');
@@ -84,4 +89,6 @@ databases:
     alternatives:
       - title: {zh: 查看某个时刻之前的数据（GC 保留时间之内）}
         cmd: SELECT * FROM <table> AS OF TIMESTAMP '2026-01-01 10:00:00';
+    refs:
+      - {title: 'TiDB: TiCDC', url: 'https://docs.pingcap.com/tidb/stable/ticdc-overview/'}
 related: [binlog-retention, point-in-time-recovery]

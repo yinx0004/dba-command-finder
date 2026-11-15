@@ -44,6 +44,9 @@ databases:
           zh: 把运行中改过的参数写回这个文件
     fields:
       source: config_file
+    refs:
+      - {title: 'Redis: Configuration', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/config/'}
+      - {title: 'Redis: CONFIG REWRITE', url: 'https://redis.io/docs/latest/commands/config-rewrite/'}
   postgresql:
     support: full
     commands:
@@ -58,6 +61,9 @@ databases:
       source: sourcefile
     notes:
       - zh: ALTER SYSTEM 改的参数写在数据目录下的 postgresql.auto.conf，优先于 postgresql.conf。
+    refs:
+      - {title: 'PostgreSQL: File Locations', url: 'https://www.postgresql.org/docs/current/runtime-config-file-locations.html'}
+      - {title: 'PostgreSQL: pg_settings', url: 'https://www.postgresql.org/docs/current/view-pg-settings.html'}
   tidb:
     support: partial
     commands:
@@ -67,4 +73,7 @@ databases:
       - cmd: SELECT TYPE, INSTANCE, `KEY`, VALUE FROM information_schema.CLUSTER_CONFIG WHERE TYPE = 'tidb' AND `KEY` LIKE 'log.%';
     notes:
       - zh: 看不到配置文件的路径和每个值的来源。配置文件由启动参数 --config 指定；用 TiUP 部署的集群在部署目录的 conf/ 下，改配置用 tiup cluster edit-config 再 reload。
+    refs:
+      - {title: 'TiDB: SHOW CONFIG', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-config/'}
+      - {title: 'TiDB: Configuration File', url: 'https://docs.pingcap.com/tidb/stable/tidb-configuration-file/'}
 related: [show-variables, set-variable]

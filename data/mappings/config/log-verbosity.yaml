@@ -58,6 +58,8 @@ databases:
           zh: 为空表示日志写到标准输出
     fields:
       level: loglevel
+    refs:
+      - {title: 'Redis: CONFIG SET', url: 'https://redis.io/docs/latest/commands/config-set/'}
     verify:
       teardown: CONFIG SET loglevel notice
   postgresql:
@@ -72,6 +74,9 @@ databases:
           zh: 重新加载配置，不用重启
     fields:
       level: log_min_messages
+    refs:
+      - {title: 'PostgreSQL: log_min_messages', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-MIN-MESSAGES'}
+      - {title: 'PostgreSQL: ALTER SYSTEM', url: 'https://www.postgresql.org/docs/current/sql-altersystem.html'}
     verify:
       teardown: |-
         ALTER SYSTEM RESET log_min_messages;
@@ -86,4 +91,7 @@ databases:
           zh: TiKV 和 PD 的日志级别可以在线改；tidb-server 的不行
     notes:
       - zh: tidb-server 的 log.level 只能改配置文件后重启，或者调它的 HTTP 接口：curl -X POST -d log_level=debug http://<tidb>:10080/settings，重启后失效。
+    refs:
+      - {title: 'TiDB: log.level', url: 'https://docs.pingcap.com/tidb/stable/tidb-configuration-file/#level'}
+      - {title: 'TiDB: Modify Configuration Dynamically', url: 'https://docs.pingcap.com/tidb/stable/dynamic-config/'}
 related: [error-log, general-log, slow-query-log]

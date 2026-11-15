@@ -55,6 +55,8 @@ databases:
         note:
           zh: 优化器不再用这个索引，但写入时照常维护；确认没有影响后再删
       - cmd: ALTER TABLE <table> ALTER INDEX <index> VISIBLE;
+    refs:
+      - {title: 'TiDB: ALTER INDEX', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-alter-index/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a));
       vars: {table: t, index: idx_a}

@@ -43,6 +43,9 @@ databases:
       - cmd: CREATE MATERIALIZED VIEW <view>_mv AS SELECT a, count(*) FROM <table> GROUP BY a;
         note:
           zh: 物化视图把结果存下来，REFRESH MATERIALIZED VIEW 才更新
+    refs:
+      - {title: 'PostgreSQL: CREATE VIEW', url: 'https://www.postgresql.org/docs/current/sql-createview.html'}
+      - {title: 'PostgreSQL: CREATE MATERIALIZED VIEW', url: 'https://www.postgresql.org/docs/current/sql-creatematerializedview.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -55,6 +58,8 @@ databases:
       - cmd: SHOW FULL TABLES WHERE Table_type = 'VIEW';
     notes:
       - zh: 视图只读，不能对视图 INSERT、UPDATE、DELETE。
+    refs:
+      - {title: 'TiDB: CREATE VIEW', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-create-view/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT);
       vars: {table: t, view: v}

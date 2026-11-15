@@ -46,6 +46,8 @@ databases:
       - cmd: CONFIG GET repl-backlog-size
     notes:
       - zh: 复制积压缓冲区在内存里，大小固定、循环覆盖；从库断开期间主库写入的量超过它，就只能全量同步。
+    refs:
+      - {title: 'Redis: Replication', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/replication/'}
   postgresql:
     support: partial
     commands:
@@ -56,6 +58,9 @@ databases:
           zh: 每个复制槽还能保留多少 WAL，wal_status 为 lost 表示已经保不住了
     notes:
       - zh: WAL 没有按时间保留的设置；要长期保留得配归档（archive_command），归档的保留期由备份工具管。
+    refs:
+      - {title: 'PostgreSQL: wal_keep_size', url: 'https://www.postgresql.org/docs/current/runtime-config-replication.html#GUC-WAL-KEEP-SIZE'}
+      - {title: 'PostgreSQL: pg_replication_slots', url: 'https://www.postgresql.org/docs/current/view-pg-replication-slots.html'}
   tidb:
     support: none
     notes:
@@ -65,4 +70,6 @@ databases:
         cmd: SELECT @@tidb_gc_life_time;
       - title: {zh: 查看日志备份任务和它覆盖的时间范围}
         cmd: tiup br log status --task-name=pitr --pd <pd>
+    refs:
+      - {title: 'TiDB: Garbage Collection', url: 'https://docs.pingcap.com/tidb/stable/garbage-collection-overview/'}
 related: [binlog-events, replication-status, point-in-time-recovery]

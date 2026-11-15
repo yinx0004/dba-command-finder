@@ -50,6 +50,8 @@ databases:
       connections: connected_clients
     notes:
       - zh: 没有按读写分开的每秒计数；要按命令看，比较两次 INFO commandstats 里各命令 calls 的差值。redis-cli --stat 会一直滚动输出每秒概况，适合在终端里盯着看。
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
   postgresql:
     support: partial
     commands:
@@ -66,6 +68,8 @@ databases:
       connections: numbackends
     notes:
       - zh: 在 psql 里可以用 \watch 1 每秒重跑一次查询。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_database', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-DATABASE-VIEW'}
   tidb:
     support: partial
     commands:
@@ -78,4 +82,7 @@ databases:
           zh: 每台 tidb-server 上正在执行的语句数
     notes:
       - zh: 没有 Com_*、Questions 这类计数，mysqladmin extended-status 看不出吞吐。实时吞吐看 Grafana 的 TiDB → Query Summary 面板。
+    refs:
+      - {title: 'TiDB: Metrics Schema', url: 'https://docs.pingcap.com/tidb/stable/metrics-schema/'}
+      - {title: 'TiDB: PROCESSLIST', url: 'https://docs.pingcap.com/tidb/stable/information-schema-processlist/'}
 related: [server-status, hot-tables]

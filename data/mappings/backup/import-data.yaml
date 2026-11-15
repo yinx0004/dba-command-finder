@@ -52,6 +52,8 @@ databases:
           zh: 批量执行文件里的命令，一行一条，例如 SET app:1 a
     notes:
       - zh: 没有导入 CSV 的命令，要先把数据转成命令（或 Redis 协议格式）再用 --pipe 灌进去。
+    refs:
+      - {title: 'Redis: Bulk loading', url: 'https://redis.io/docs/latest/develop/clients/patterns/bulk-loading/'}
     verify:
       setup_shell: printf 'SET app:1 a\nSET app:2 b\n' > /tmp/data.txt
   postgresql:
@@ -64,6 +66,8 @@ databases:
         shell: true
         note:
           zh: 读执行 psql 那台机器上的文件
+    refs:
+      - {title: 'PostgreSQL: COPY', url: 'https://www.postgresql.org/docs/current/sql-copy.html'}
     verify:
       setup: CREATE TABLE t (id int, a int);
       setup_shell: printf 'id,a\n1,10\n2,20\n' > /tmp/t_import.csv
@@ -80,6 +84,9 @@ databases:
           zh: 读 tidb-server 所在机器或 S3 上的文件，直接写入 TiKV，比 LOAD DATA 快得多；导入期间这张表不能读写
     notes:
       - zh: 几百 GB 以上的数据用 TiDB Lightning 导入。
+    refs:
+      - {title: 'TiDB: LOAD DATA', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-load-data/'}
+      - {title: 'TiDB: IMPORT INTO', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-import-into/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a VARCHAR(10));
       setup_shell: printf '1,"x"\n2,"y"\n' > /tmp/t.csv

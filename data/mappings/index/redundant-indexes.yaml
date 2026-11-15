@@ -48,6 +48,8 @@ databases:
       dominant: dominant
     notes:
       - zh: 没有现成的视图，要自己比较；唯一索引和用作约束的索引，即使是前缀也可能要保留。
+    refs:
+      - {title: 'PostgreSQL: pg_index', url: 'https://www.postgresql.org/docs/current/catalog-pg-index.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -61,6 +63,8 @@ databases:
           zh: 列出每个索引的列和顺序，一个索引的列是另一个索引的前缀时，前者通常是冗余的
     notes:
       - zh: 没有 sys.schema_redundant_indexes，要自己对比。
+    refs:
+      - {title: 'TiDB: TIDB_INDEXES', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tidb-indexes/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_ab (a, b));
 related: [index-usage, drop-index]

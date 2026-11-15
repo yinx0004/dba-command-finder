@@ -57,6 +57,8 @@ databases:
           zh: 反过来，不用索引扫描
     notes:
       - zh: 没有 FORCE INDEX 这样的提示；enable_* 参数只能整体关掉某种扫描方式。要按语句指定索引，用 pg_hint_plan 扩展。
+    refs:
+      - {title: 'PostgreSQL: Planner Method Configuration', url: 'https://www.postgresql.org/docs/current/runtime-config-query.html#RUNTIME-CONFIG-QUERY-ENABLE'}
   tidb:
     support: full
     commands:
@@ -70,6 +72,9 @@ databases:
           zh: 执行计划绑定：不改应用的 SQL，让同一类语句都走指定的索引
     notes:
       - zh: 已有的绑定用 SHOW GLOBAL BINDINGS 查看，DROP GLOBAL BINDING FOR ... 删除。
+    refs:
+      - {title: 'TiDB: Optimizer Hints', url: 'https://docs.pingcap.com/tidb/stable/optimizer-hints/'}
+      - {title: 'TiDB: CREATE BINDING', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-create-binding/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b)); INSERT INTO t VALUES (1, 1, 1), (2, 1, 2);
       vars: {table: t, index: idx_a}

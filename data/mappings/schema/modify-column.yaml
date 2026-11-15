@@ -53,6 +53,9 @@ databases:
           zh: 不能自动转换时，用 USING 写转换表达式
     notes:
       - zh: 加长 varchar 的长度、去掉长度限制这类变化不用重写表。
+    refs:
+      - {title: 'PostgreSQL: ALTER TABLE', url: 'https://www.postgresql.org/docs/current/sql-altertable.html'}
+      - {title: 'PostgreSQL: Changing a Column''s Data Type', url: 'https://www.postgresql.org/docs/current/ddl-alter.html#DDL-ALTER-COLUMN-TYPE'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -67,6 +70,8 @@ databases:
           zh: ALGORITHM、LOCK 子句只为兼容；DDL 本身都是在线的
     notes:
       - zh: 只放宽类型（INT 改 BIGINT、VARCHAR 改长）时只改元数据；收窄类型或改字符集会重写整张表，大表要很久，进度看 ADMIN SHOW DDL JOBS。
+    refs:
+      - {title: 'TiDB: MODIFY COLUMN', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-modify-column/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 VARCHAR(20));
       vars: {table: t, column: c1, column2: c2}

@@ -42,6 +42,9 @@ databases:
           zh: 等锁多久之后检查一次有没有死锁，默认 1 秒
     notes:
       - zh: 做 DDL 前常先 SET lock_timeout，免得排在一个长事务后面，又把后面所有查询挡住。
+    refs:
+      - {title: 'PostgreSQL: lock_timeout', url: 'https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-LOCK-TIMEOUT'}
+      - {title: 'PostgreSQL: deadlock_timeout', url: 'https://www.postgresql.org/docs/current/runtime-config-locks.html#GUC-DEADLOCK-TIMEOUT'}
   tidb:
     support: full
     commands:
@@ -49,6 +52,9 @@ databases:
       - cmd: SET GLOBAL innodb_lock_wait_timeout = 10;
     notes:
       - zh: innodb_lock_wait_timeout 在悲观事务（默认）下生效，单位秒。乐观事务不等锁，提交时发现冲突直接报错。
+    refs:
+      - {title: 'TiDB: innodb_lock_wait_timeout', url: 'https://docs.pingcap.com/tidb/stable/system-variables/#innodb_lock_wait_timeout'}
+      - {title: 'TiDB: Pessimistic Transaction Mode', url: 'https://docs.pingcap.com/tidb/stable/pessimistic-transaction/'}
     verify:
       teardown: SET GLOBAL innodb_lock_wait_timeout = 50;
 related: [lock-waits, long-transactions]

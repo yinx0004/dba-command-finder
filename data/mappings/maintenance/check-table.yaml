@@ -67,6 +67,8 @@ databases:
       result: {name: RDB looks OK 之类的检查结论}
     notes:
       - zh: 内存里的数据没有“损坏”一说，要检查的是磁盘上的快照和 AOF 文件。
+    refs:
+      - {title: 'Redis: Persistence', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/'}
     verify:
       setup_shell: redis-cli SAVE
   postgresql:
@@ -81,6 +83,9 @@ databases:
           zh: 检查整个库的表和索引，有问题才输出
     fields:
       result: {name: 没有输出就是没发现问题}
+    refs:
+      - {title: 'PostgreSQL: amcheck', url: 'https://www.postgresql.org/docs/current/amcheck.html'}
+      - {title: 'PostgreSQL: pg_amcheck', url: 'https://www.postgresql.org/docs/current/app-pgamcheck.html'}
     verify:
       setup: |-
         CREATE EXTENSION IF NOT EXISTS amcheck;
@@ -96,6 +101,8 @@ databases:
       - cmd: ADMIN CHECK INDEX <table> <index>;
     notes:
       - zh: 不支持 CHECK TABLE。数据的物理完整性由 TiKV 的校验和多副本保证，这里检查的是表数据和索引之间的一致性。
+    refs:
+      - {title: 'TiDB: ADMIN CHECK [TABLE|INDEX]', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-admin-check-table-index/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1);
       vars: {table: t, index: idx_a}

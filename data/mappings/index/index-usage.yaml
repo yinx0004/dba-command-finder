@@ -66,6 +66,8 @@ databases:
       since: {name: last_idx_scan, since: '16'}
     notes:
       - zh: 统计只在本机，备库上的使用不算进主库；判断没用之前，主备都要看。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_all_indexes', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ALL-INDEXES-VIEW'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -86,6 +88,9 @@ databases:
       usage: QUERY_TOTAL
     notes:
       - zh: 统计只在内存里，tidb-server 重启后从零开始；多台 tidb-server 时，一个索引在某台上没用过不代表没人用。
+    refs:
+      - {title: 'TiDB: TIDB_INDEX_USAGE', url: 'https://docs.pingcap.com/tidb/stable/information-schema-tidb-index-usage/'}
+      - {title: 'TiDB: schema_unused_indexes', url: 'https://docs.pingcap.com/tidb/stable/sys-schema-unused-indexes/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b)); INSERT INTO t VALUES (1, 1, 1); SELECT * FROM t FORCE INDEX (idx_a) WHERE a = 1;
 related: [show-indexes, drop-index, invisible-index]

@@ -39,6 +39,9 @@ databases:
     alternatives:
       - title: {zh: 用一个键做锁：不存在才设置成功，30 秒后自动过期}
         cmd: SET lock:<name> <token> NX PX 30000
+    refs:
+      - {title: 'Redis: Transactions (WATCH)', url: 'https://redis.io/docs/latest/develop/using-commands/transactions/'}
+      - {title: 'Redis: Distributed locks', url: 'https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/'}
   postgresql:
     support: full
     commands:
@@ -47,6 +50,9 @@ databases:
           zh: 锁只在事务里有效，COMMIT 或 ROLLBACK 就释放；SHARE 模式挡住写入，ACCESS EXCLUSIVE 连读也挡住
     notes:
       - zh: 没有单独的解锁命令，事务结束就解锁。
+    refs:
+      - {title: 'PostgreSQL: LOCK', url: 'https://www.postgresql.org/docs/current/sql-lock.html'}
+      - {title: 'PostgreSQL: Explicit Locking', url: 'https://www.postgresql.org/docs/current/explicit-locking.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -60,6 +66,8 @@ databases:
       - cmd: UNLOCK TABLES;
     notes:
       - zh: 默认配置下 LOCK TABLES 只为兼容，不报错也不真正加锁；要在配置文件里设 enable-table-lock = true 才生效。需要阻止写入时，用 tidb_super_read_only 或者在事务里 SELECT ... FOR UPDATE 锁住要改的行。
+    refs:
+      - {title: 'TiDB: LOCK TABLES and UNLOCK TABLES', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-lock-tables-and-unlock-tables/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY);
       vars: {table: t}

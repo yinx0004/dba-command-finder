@@ -46,6 +46,9 @@ databases:
           zh: 只清掉某个前缀的键
     notes:
       - zh: 没有表，清空的是整个库（FLUSHDB）或整个实例（FLUSHALL）；只想清一类数据，按键名前缀删。
+    refs:
+      - {title: 'Redis: FLUSHDB', url: 'https://redis.io/docs/latest/commands/flushdb/'}
+      - {title: 'Redis: UNLINK', url: 'https://redis.io/docs/latest/commands/unlink/'}
     verify:
       setup: SET app:1 a
   postgresql:
@@ -57,6 +60,8 @@ databases:
           zh: 同时把自增序列重置
     notes:
       - zh: TRUNCATE 可以在事务里回滚；有外键引用时要加 CASCADE，把引用它的表一起清空。
+    refs:
+      - {title: 'PostgreSQL: TRUNCATE', url: 'https://www.postgresql.org/docs/current/sql-truncate.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, a int);
@@ -68,6 +73,8 @@ databases:
       - cmd: TRUNCATE TABLE <table>;
     notes:
       - zh: 空间等 GC 后才回收；在这之前可以用 FLASHBACK TABLE 找回清空前的表。
+    refs:
+      - {title: 'TiDB: TRUNCATE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-truncate/'}
     verify:
       setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY); INSERT INTO t VALUES (), (), ();
       vars: {table: t}

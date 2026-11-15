@@ -49,6 +49,9 @@ databases:
     fields:
       user: user
       auth: {name: nopass 或以井号开头的密码哈希, note: {zh: nopass 表示不需要密码}}
+    refs:
+      - {title: 'Redis: ACL LIST', url: 'https://redis.io/docs/latest/commands/acl-list/'}
+      - {title: 'Redis: ACL USERS', url: 'https://redis.io/docs/latest/commands/acl-users/'}
   postgresql:
     support: full
     commands:
@@ -61,6 +64,9 @@ databases:
       auth: auth
     notes:
       - zh: pg_roles 里也有不能登录的角色（rolcanlogin 为 false），它们只是用来分组授权的。
+    refs:
+      - {title: 'PostgreSQL: pg_roles', url: 'https://www.postgresql.org/docs/current/view-pg-roles.html'}
+      - {title: 'PostgreSQL: pg_authid', url: 'https://www.postgresql.org/docs/current/catalog-pg-authid.html'}
   tidb:
     support: full
     commands:
@@ -68,6 +74,9 @@ databases:
     fields:
       user: user
       auth: plugin
+    refs:
+      - {title: 'TiDB: mysql.user', url: 'https://docs.pingcap.com/tidb/stable/mysql-schema-user/'}
+      - {title: 'TiDB: User Account Management', url: 'https://docs.pingcap.com/tidb/stable/user-account-management/'}
     verify:
       setup: CREATE USER 'app_list'@'%' IDENTIFIED BY 'Lab#Pass123';
 related: [create-user, drop-user]

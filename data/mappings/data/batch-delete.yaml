@@ -40,6 +40,9 @@ databases:
           zh: 用 SCAN 按模式找出键，每 100 个一批用 UNLINK 删除，不会长时间挡住其他命令
     notes:
       - zh: 没有按条件删除的命令，只能按键名模式找；按时间清理的数据，更好的做法是写入时就设置过期时间。
+    refs:
+      - {title: 'Redis: UNLINK', url: 'https://redis.io/docs/latest/commands/unlink/'}
+      - {title: 'Redis: SCAN', url: 'https://redis.io/docs/latest/commands/scan/'}
     verify:
       setup: |-
         SET app:old:1 a
@@ -52,6 +55,8 @@ databases:
           zh: DELETE 没有 LIMIT，用子查询每次删 1000 行，重复执行到没有可删的为止
     notes:
       - zh: 每批之间提交，并留出时间让 VACUUM 回收空间；按时间清理的数据，用分区表直接删掉旧分区最快。
+    refs:
+      - {title: 'PostgreSQL: DELETE', url: 'https://www.postgresql.org/docs/current/sql-delete.html'}
     verify:
       setup: |-
         CREATE TABLE t (id int PRIMARY KEY, created_at timestamptz);
@@ -66,6 +71,9 @@ databases:
           zh: 非事务 DML：按 id 自动切成每批 1000 行，一条语句删完；中途失败时已经删掉的不会回滚
     notes:
       - zh: 单个事务有大小限制（txn-total-size-limit，默认 100MB），一次删太多会报 transaction too large，所以要分批。删掉的空间等 GC 后才回收。
+    refs:
+      - {title: 'TiDB: BATCH', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-batch/'}
+      - {title: 'TiDB: Non-Transactional DML', url: 'https://docs.pingcap.com/tidb/stable/non-transactional-dml/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, created_at DATETIME); INSERT INTO t VALUES (1, NOW() - INTERVAL 40 DAY), (2, NOW());
       vars: {table: t}

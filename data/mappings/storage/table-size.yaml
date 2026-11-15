@@ -67,6 +67,9 @@ databases:
       data: {name: MEMORY USAGE 返回的字节数}
     notes:
       - zh: 没有表，对应的是单个大键；没有单独的索引和空闲空间。
+    refs:
+      - {title: 'Redis: MEMORY USAGE', url: 'https://redis.io/docs/latest/commands/memory-usage/'}
+      - {title: 'Redis: redis-cli', url: 'https://redis.io/docs/latest/develop/tools/cli/'}
     verify:
       setup: HSET app:user:1 name a age 1
       vars: {key: 'app:user:1'}
@@ -86,6 +89,9 @@ databases:
       data: data_size
       index: index_size
       free: free_space
+    refs:
+      - {title: 'PostgreSQL: Database Object Size Functions', url: 'https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-DBSIZE'}
+      - {title: 'PostgreSQL: pgstattuple', url: 'https://www.postgresql.org/docs/current/pgstattuple.html'}
     verify:
       setup: |-
         CREATE EXTENSION IF NOT EXISTS pgstattuple;
@@ -109,6 +115,9 @@ databases:
       index: INDEX_LENGTH
     notes:
       - zh: 没有「碎片」的概念，删除的数据等 GC 和 compaction 之后自动回收。
+    refs:
+      - {title: 'TiDB: TABLE_STORAGE_STATS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-table-storage-stats/'}
+      - {title: 'TiDB: SHOW TABLE STATUS', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-table-status/'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
       vars: {table: t}

@@ -47,6 +47,9 @@ databases:
           zh: 打开后，等锁超过 deadlock_timeout 会写日志，方便排查
     notes:
       - zh: 死锁的详情（双方的语句和锁）写在服务器日志里，没有视图可以查。
+    refs:
+      - {title: 'PostgreSQL: pg_stat_database', url: 'https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-DATABASE-VIEW'}
+      - {title: 'PostgreSQL: log_lock_waits', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-LOCK-WAITS'}
   tidb:
     support: full
     commands:
@@ -58,4 +61,6 @@ databases:
           zh: 每台 tidb-server 保留最近多少次死锁，默认 10
     notes:
       - zh: 只记录悲观事务（默认）的死锁。乐观事务不等锁，冲突在提交时报错，不算死锁。
+    refs:
+      - {title: 'TiDB: DEADLOCKS', url: 'https://docs.pingcap.com/tidb/stable/information-schema-deadlocks/'}
 related: [lock-waits]
