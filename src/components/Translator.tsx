@@ -16,8 +16,8 @@ interface Db {
   id: string;
   name: string;
   vers: string[];
-  /** color: source blue, target green, then a third and a fourth color */
-  role: 'source' | 'target' | 'third' | 'fourth';
+  /** color: source blue, target green, then a third, fourth and fifth color */
+  role: 'source' | 'target' | 'third' | 'fourth' | 'fifth';
 }
 
 interface Props {
