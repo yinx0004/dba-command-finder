@@ -2,7 +2,7 @@
 // One database's commands for a task, each with what the lab saw on every version it ran.
 import type { Verification } from '../../lab/plan';
 import { t, UI, type Lang } from '../lib/i18n';
-import { commandRuns } from '../lib/proof';
+import { cmdOnLine, commandRuns } from '../lib/proof';
 import { labSkip, roleNames } from '../lib/roles';
 import type { Command, Database, DatabaseEntry } from '../lib/schema';
 
@@ -40,7 +40,18 @@ function versionLabel(c: Command): string {
   {
     commands.map((c) => {
       const skip = labSkip(c, database);
-      const runs = skip ? [] : commandRuns(verification, entryId, db, c).filter((r) => r.outcome === 'ok' || r.outcome === 'fails-as-expected');
+      // Every version the lab covers, so the panel alone says where the command works: what the lab saw on each,
+      // read as the reader would (works, not there yet, removed), or that a version has not been run yet.
+      const seen = skip ? [] : commandRuns(verification, entryId, db, c);
+      const runs = skip
+        ? []
+        : (database?.lab_versions ?? []).map((line) => {
+            const r = seen.find((x) => x.line === line);
+            const on = cmdOnLine(c, line);
+            if (!r || (r.outcome !== 'ok' && r.outcome !== 'fails-as-expected')) return { line, kind: 'unproven', text: p.runNotRun(line) };
+            if (r.outcome === 'ok') return on.state === 'deprecated' ? { line, kind: 'dep', text: p.runDeprecated(r.server) } : { line, kind: 'ok', text: p.runOk(r.server) };
+            return on.state === 'removed' ? { line, kind: 'removed', text: p.runRemoved(r.server) } : { line, kind: 'notyet', text: p.runNotYet(r.server) };
+          });
       const names = roleNames(c, database);
       const range = versionLabel(c);
       return (
@@ -69,8 +80,8 @@ function versionLabel(c: Command): string {
                 <span class="run run-skip">{ui.notRunByLab(t(skip, lang))}</span>
               ) : (
                 runs.map((r) => (
-                  <span class:list={['run', r.outcome === 'ok' ? 'run-ok' : 'run-fail']} data-verified data-db={db} data-v={r.line}>
-                    {r.outcome === 'ok' ? p.runOk(r.server) : p.runFails(r.server)}
+                  <span class:list={['run', `run-${r.kind}`]} data-verified data-db={db} data-v={r.line}>
+                    {r.text}
                   </span>
                 ))
               )}

@@ -64,9 +64,10 @@ export const UI = {
       support: { full: '支持', partial: '部分支持', none: '不支持' },
       runsLabel: 'lab 实测记录',
       runOk: (server: string) => `✓ ${server}`,
-      runFails: (server: string) => `✕ ${server} 按预期报错`,
-      availTitle: '各版本能不能用',
-      availFoot: '蓝框是你选的版本，列头下面是 lab 实际跑的服务器版本。「已移除」「还没有」表示在那个版本上执行会报错，lab 也确认过。虚线框是 lab 没有在那个版本上验证的。',
+      runNotYet: (server: string) => `— ${server} 还没有`,
+      runRemoved: (server: string) => `✕ ${server} 已移除`,
+      runDeprecated: (server: string) => `⚠ ${server} 已废弃`,
+      runNotRun: (line: string) => `${line} 未实测`,
       avail: {
         ok: '✓ 可用',
         deprecated: '⚠ 已废弃',
