@@ -403,3 +403,16 @@
 - {q: 删字段, top: drop-column}
 - {q: mysqldump --no-data, top: schema-only-dump}
 - {q: 只导出表结构, top: schema-only-dump}
+
+# Batch 3: roles, convert a table's charset, index size, audit log
+- {q: CREATE ROLE, top: roles}
+- {q: 角色, top: roles}
+- {q: grantRolesToUser, top_any: [grant-privileges, roles]}
+- {q: CONVERT TO CHARACTER SET, top: convert-charset}
+- {q: 改字符集, top: convert-charset}
+- {q: 索引大小, top: index-size}
+- {q: pg_indexes_size, top: index-size}
+- {q: totalIndexSize, top: index-size}
+- {q: 审计日志, top: audit-log}
+- {q: pgaudit, top: audit-log}
+- {q: ACL LOG, top: audit-log}

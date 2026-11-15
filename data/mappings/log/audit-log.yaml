@@ -1,0 +1,70 @@
+schema_version: 2
+id: audit-log
+category: log
+title: {zh: 审计日志：谁在什么时候做了什么}
+summary: {zh: 合规要求记录登录和操作，或者事后追查是谁删了数据。}
+keywords:
+  zh: [审计, 审计日志, 操作日志, 谁删的数据, 合规审计, 登录记录]
+  en: [audit log, audit_log, pgaudit, auditlog, server_audit, acl log]
+databases:
+  mysql:
+    support: partial
+    commands:
+      - cmd: SELECT PLUGIN_NAME, PLUGIN_STATUS FROM information_schema.PLUGINS WHERE PLUGIN_NAME LIKE '%audit%';
+        note: {zh: 看有没有装审计插件}
+    notes:
+      - zh: 社区版没有审计功能。MySQL 企业版有 audit_log 插件；用 Percona Server 时有免费的 audit_log 插件。没有插件时，只能临时打开通用日志（general_log），开销很大。
+    alternatives:
+      - title: {zh: 临时记录所有语句}
+        see: general-log
+    refs:
+      - {title: 'MySQL Enterprise Audit', url: 'https://dev.mysql.com/doc/refman/8.4/en/audit-log.html'}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.adminCommand({ getCmdLineOpts: 1 }).parsed.auditLog'
+        note: {zh: 有没有配置审计，以及写到哪里；没配置时为空}
+    notes:
+      - zh: 审计只有企业版和 Atlas 有，在配置文件的 auditLog 段打开，可以按操作类型和用户过滤。社区版只能用数据库分析器（profiler）记录慢操作或全部操作。
+    alternatives:
+      - title: {zh: 用分析器记录操作}
+        see: general-log
+    refs:
+      - {title: 'MongoDB: Auditing', url: 'https://www.mongodb.com/docs/manual/core/auditing/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: ACL LOG
+        note:
+          zh: 最近被拒绝的命令和失败的登录，包括是谁、从哪个地址
+      - cmd: CONFIG GET acllog-max-len
+    notes:
+      - zh: 没有完整的审计日志，ACL LOG 只记录被拒绝的操作，而且只在内存里保留最近的若干条。要看所有命令，只能短时间开 MONITOR，它会明显拖慢服务器。
+    refs:
+      - {title: 'Redis: ACL LOG', url: 'https://redis.io/docs/latest/commands/acl-log/'}
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SHOW log_statement;
+        note:
+          zh: none、ddl、mod、all；设成 ddl 就记录所有结构变更
+      - cmd: ALTER SYSTEM SET log_statement = 'ddl';
+      - cmd: SELECT pg_reload_conf();
+      - cmd: CREATE EXTENSION pgaudit;
+        skip: {zh: pgaudit 不在官方镜像里，要另外安装}
+        note:
+          zh: 专门的审计扩展，可以按对象和操作类型记录，输出格式适合审计
+    notes:
+      - zh: 内置的 log_statement、log_connections、log_disconnections 只是把语句写进服务器日志，没有审计专用的格式；正式的审计一般用 pgaudit。
+    refs:
+      - {title: 'PostgreSQL: Error Reporting and Logging', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html'}
+    verify:
+      teardown: ALTER SYSTEM RESET log_statement; SELECT pg_reload_conf();
+  tidb:
+    support: none
+    notes:
+      - zh: 社区版没有审计日志，审计是企业版和 TiDB Cloud 的功能。社区版只能临时打开 tidb_general_log，把所有语句写进 tidb-server 的日志。
+    alternatives:
+      - title: {zh: 临时记录所有语句}
+        see: general-log
+related: [general-log, slow-query-log, list-users]
