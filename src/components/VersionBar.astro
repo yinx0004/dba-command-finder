@@ -24,8 +24,10 @@ const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
         <>
           {i > 0 && <span class="version-sep" aria-hidden="true" />}
           <span class="version-pick">
-            <span class:list={['version-db', `side-${sides[i].role}`]}>{d.name}</span>
-            <span class="seg" role="group" aria-label={ui.ver.groupLabel(d.name)}>
+            <button type="button" class:list={['version-db', `side-${sides[i].role}`]} data-toggle-db={d.id} aria-pressed="true" title={ui.ver.toggleTitle(d.name)}>
+              {d.name}
+            </button>
+            <span class="seg" role="group" aria-label={ui.ver.groupLabel(d.name)} data-dbx={d.id}>
               {['', ...d.lab_versions].map((v) => (
                 <button type="button" data-db={d.id} data-line={v} aria-pressed={v === '' ? 'true' : 'false'}>
                   {v || ui.ver.allShort}
@@ -42,7 +44,7 @@ const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
 
 <script>
   import { firstUsable, onLine, type VersionRange } from '../lib/version';
-  import { fmt, onPrefChange, readPref, writePref, type Pref } from '../lib/version-pref';
+  import { fmt, onHiddenChange, onPrefChange, readHidden, readPref, writeHidden, writePref, type Pref } from '../lib/version-pref';
 
   const bar = document.querySelector<HTMLElement>('.version-bar');
   if (bar) {
@@ -95,6 +97,30 @@ const options = Object.fromEntries(dbs.map((d) => [d.id, d.lab_versions]));
       });
     }
     onPrefChange(apply);
+
+    // Database names: click to hide that database on entry and category pages, click again to bring it back.
+    const ids = Object.keys(options);
+    const toggles = [...bar.querySelectorAll<HTMLButtonElement>('button[data-toggle-db]')];
+    const showToggles = (hidden: string[]) => {
+      for (const t of toggles) {
+        const off = hidden.includes(t.dataset.toggleDb!);
+        t.setAttribute('aria-pressed', String(!off));
+        // The last database shown stays: hiding everything would leave an empty page.
+        t.disabled = !off && hidden.length === ids.length - 1;
+      }
+    };
+    for (const t of toggles) {
+      t.addEventListener('click', () => {
+        const id = t.dataset.toggleDb!;
+        const hidden = readHidden(ids);
+        const next = hidden.includes(id) ? hidden.filter((x) => x !== id) : [...hidden, id];
+        if (next.length < ids.length) writeHidden(next, ids);
+      });
+    }
+    onHiddenChange(showToggles);
+    const hiddenNow = readHidden(ids);
+    // A ?hide= from a shared link sticks, like a choice made here.
+    writeHidden(hiddenNow, ids);
 
     const initial = readPref(options);
     // A version from a shared link sticks, like a choice made here.

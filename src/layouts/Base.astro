@@ -13,6 +13,7 @@ import { UI, type Lang } from '../lib/i18n';
 import { ciRunUrl, GITHUB, href, langHome, newIssueUrl } from '../lib/site';
 import { loadVerification } from '../lib/verification';
 import VersionBar from '../components/VersionBar.astro';
+import { siteDbs } from '../lib/docs';
 
 interface Props {
   lang: Lang;
@@ -31,6 +32,9 @@ const ui = UI[lang];
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 // Only a clean lab run earns the badge; CI deploys only after every lab job passed.
 const lab = labStatus(loadDataset(), loadVerification());
+// Databases a reader can hide: everything marked data-dbx="<id>" disappears while <html data-hide> lists the id.
+const dbIds = siteDbs(loadDataset()).map((x) => x.def.id);
+const hideCss = dbIds.map((id) => `html[data-hide~='${id}'] [data-dbx='${id}'] { display: none !important; }`).join('\n');
 ---
 <!doctype html>
 <html lang={lang === 'zh' ? 'zh-CN' : lang}>
@@ -38,6 +42,21 @@ const lab = labStatus(loadDataset(), loadVerification());
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
+    <script is:inline define:vars={{ dbIds }}>
+      // Same rules as readHidden in src/lib/version-pref.ts, run before the body is drawn.
+      (function () {
+        var hidden = [];
+        try { hidden = JSON.parse(localStorage.getItem('dba-hidden') || '[]'); } catch (e) {}
+        try { var q = new URLSearchParams(location.search).get('hide'); if (q !== null) hidden = q ? q.split(',') : []; } catch (e) {}
+        hidden = dbIds.filter(function (id) { return hidden.indexOf(id) >= 0; });
+        if (hidden.length >= dbIds.length) hidden = [];
+        var root = document.documentElement;
+        root.dataset.hide = hidden.join(' ');
+        root.dataset.shown = String(dbIds.length - hidden.length);
+        root.style.setProperty('--shown', String(dbIds.length - hidden.length));
+      })();
+    </script>
+    <style set:html={hideCss}></style>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={canonical} />}
     <meta property="og:type" content="website" />

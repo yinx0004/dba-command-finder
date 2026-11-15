@@ -17,18 +17,19 @@ const { lang, dbs, rows, commands = false } = Astro.props;
 const ui = UI[lang];
 const h = ui.homePage;
 ---
-<div class:list={['cov', { 'cov-cmds': commands }]} style={`--n: ${dbs.length}`}>
+<!-- Category pages follow the databases the reader hides in the 我的版本 bar; --shown is set before the first paint. -->
+<div class:list={['cov', { 'cov-cmds': commands }]} style={`--n: var(--shown, ${dbs.length})`}>
   <div class="cov-row cov-header" aria-hidden="true">
     <span>{h.matrixTask}</span>
     {
       dbs.map((db) => (
-        <span>
+        <span data-dbx={db.id}>
           <b>{db.name}</b>
           <small>{db.lab_versions.join(' · ')}</small>
         </span>
       ))
     }
   </div>
-  {rows.map((row) => <CoverageRowView lang={lang} row={row} commands={commands} />)}
+  {rows.map((row) => <CoverageRowView lang={lang} row={row} commands={commands} hideable />)}
 </div>
 
