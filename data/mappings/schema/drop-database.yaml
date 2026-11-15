@@ -1,0 +1,89 @@
+schema_version: 2
+id: drop-database
+category: schema
+title: {zh: 删除数据库}
+summary: {zh: 应用下线时删掉整个库。删除不能回滚，先确认没有连接在用，并且有备份。}
+keywords:
+  zh: [删库, 删除库, 删掉数据库, 下线数据库]
+  en: [drop database, dropdatabase, drop schema]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: DROP DATABASE <name>;
+      - cmd: DROP DATABASE IF EXISTS <name2>;
+        note: {zh: 库不存在时只给警告，不报错}
+      - cmd: SELECT ID, USER, HOST, COMMAND FROM information_schema.PROCESSLIST WHERE DB = '<name>';
+        note: {zh: 删之前先看还有没有连接在用这个库}
+    notes:
+      - zh: DROP DATABASE 会隐式提交当前事务，也没有回收站；表多的库删起来会持续一段时间，期间这些表都被锁住。
+    refs:
+      - {title: 'MySQL: DROP DATABASE', url: 'https://dev.mysql.com/doc/refman/8.4/en/drop-database.html'}
+    verify:
+      setup: CREATE DATABASE lab_drop_db; CREATE DATABASE lab_drop_db2;
+      vars: {name: lab_drop_db, name2: lab_drop_db2}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.getSiblingDB("<name>").dropDatabase()
+        note: {zh: 删除库和它所有的集合、索引}
+    notes:
+      - zh: 在副本集上会等写关注（默认 majority）确认后才返回。库不存在时也返回 ok，不报错。
+    refs:
+      - {title: 'MongoDB: db.dropDatabase()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.dropdatabase/'}
+    verify:
+      setup: 'db.getSiblingDB("lab_drop_db").t.insertOne({ a: 1 })'
+      vars: {name: lab_drop_db}
+  redis:
+    support: partial
+    commands:
+      - cmd: FLUSHDB ASYNC
+        note:
+          zh: 清空当前编号库里的所有键；要清别的库，先 SELECT 到那个库
+      - cmd: FLUSHALL ASYNC
+        note:
+          zh: 清空实例里所有编号库
+    notes:
+      - zh: 编号库（0 到 databases-1）是固定的，不能删除，只能清空。集群模式只有 0 号库。
+    refs:
+      - {title: 'Redis: FLUSHDB', url: 'https://redis.io/docs/latest/commands/flushdb/'}
+      - {title: 'Redis: FLUSHALL', url: 'https://redis.io/docs/latest/commands/flushall/'}
+    verify:
+      setup: SET app:1 a
+  postgresql:
+    support: full
+    commands:
+      - cmd: DROP DATABASE <name>;
+        note:
+          zh: 要连到别的库（例如 postgres）上执行，不能删除自己连着的库；还有其他连接时会报错
+      - cmd: DROP DATABASE <name2> WITH (FORCE);
+        note:
+          zh: 先断开连着这个库的会话再删除
+      - cmd: SELECT pid, usename, client_addr FROM pg_stat_activity WHERE datname = '<name>';
+        note:
+          zh: 删之前看还有谁连着
+    notes:
+      - zh: DROP DATABASE 不能在事务块里执行，也不能回滚。
+    refs:
+      - {title: 'PostgreSQL: DROP DATABASE', url: 'https://www.postgresql.org/docs/current/sql-dropdatabase.html'}
+    verify:
+      setup: CREATE DATABASE lab_drop_db; CREATE DATABASE lab_drop_db2;
+      vars: {name: lab_drop_db, name2: lab_drop_db2}
+  tidb:
+    support: full
+    commands:
+      - cmd: DROP DATABASE <name>;
+      - cmd: DROP DATABASE IF EXISTS <name2>;
+      - cmd: FLASHBACK DATABASE <name> TO <name>_restored;
+        on: [tikv]
+        note:
+          zh: 在 GC 保留时间（tidb_gc_life_time）之内，可以找回删掉的库
+    notes:
+      - zh: 删除本身很快，空间要等 GC 之后才回收。
+    refs:
+      - {title: 'TiDB: DROP DATABASE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-drop-database/'}
+      - {title: 'TiDB: FLASHBACK DATABASE', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-flashback-database/'}
+    verify:
+      setup: CREATE DATABASE lab_drop_db; CREATE DATABASE lab_drop_db2;
+      vars: {name: lab_drop_db, name2: lab_drop_db2}
+related: [create-database, drop-table, logical-backup]
