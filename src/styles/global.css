@@ -291,8 +291,18 @@ button.version-db:disabled { cursor: default; }
 .tr-head .badge, .tr-swap { margin-left: auto; }
 .tr-swap { min-height: 32px; padding: 0 12px; font: inherit; font-size: 13px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
 .tr-swap:hover { color: var(--ink); border-color: var(--border-strong); }
-.tr-input { width: 100%; min-height: 104px; padding: 16px; border: 0; resize: none; background: transparent; color: var(--ink); font-family: var(--mono); font-size: 16px; line-height: 1.6; }
-.tr-input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--focus); }
+/* the input is a field of its own: framed, a shade off the card, lit up on focus like the search box */
+.tr-label-row { display: flex; align-items: baseline; gap: 8px; margin: 14px 16px 6px; }
+.tr-label { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.tr-example { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; }
+.tr-inbox { position: relative; margin: 0 16px 12px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--bg); }
+.tr-inbox:hover { border-color: var(--muted); }
+.tr-inbox:focus-within { border-color: var(--link); box-shadow: 0 0 0 3px var(--focus); }
+.tr-input { display: block; width: 100%; min-height: 96px; padding: 12px 14px; padding-right: 84px; border: 0; border-radius: 6px; resize: none; background: transparent; color: var(--ink); font-family: var(--mono); font-size: 16px; line-height: 1.6; }
+.tr-input:focus { outline: none; }
+.tr-input::placeholder { color: var(--muted); }
+.tr-clear { position: absolute; top: 8px; right: 8px; min-height: 28px; padding: 0 8px; border: 0; border-radius: 4px; background: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+.tr-clear:hover { color: var(--ink); background: var(--surface-2); }
 .tr-below { display: flex; flex-direction: column; gap: 10px; padding: 0 16px 16px; }
 .tr-recog { margin: 0; font-size: 14px; color: var(--exact-fg); }
 .tr-recog-ok { color: var(--muted); }

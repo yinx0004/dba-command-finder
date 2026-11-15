@@ -146,7 +146,9 @@ export const UI = {
     },
     // The translator's labels; {x} slots are filled in the browser.
     tr: {
-      inputLabel: '输入命令或要做的事',
+      inputLabel: '粘贴命令，或写要做的事',
+      example: '示例',
+      clear: '✕ 清空',
       fromDb: '从哪个数据库',
       toDb: '换成哪个数据库',
       placeholder: '粘贴一条命令，或者写要做的事，例如「锁等待」',
