@@ -40,15 +40,15 @@ const sides = siteDbs(ds).map(({ def, role }) => ({ def, role, id: def.id, name:
 const doing = sides.filter((x) => x.d && x.d.support !== 'none');
 
 // A side that cannot do the task explains why in its own panel, not in the notes list.
-const notes = doing.flatMap((x) => x.d!.notes.map((n) => ({ db: x.name, text: n })));
-const alternatives = sides.filter((x) => x.d?.support === 'none' && x.d.alternatives.length).map((x) => ({ name: x.name, alts: x.d!.alternatives }));
-const refs = sides.flatMap((x) => x.d?.refs ?? []);
+const notes = doing.flatMap((x) => x.d!.notes.map((n) => ({ id: x.id, db: x.name, text: n })));
+const alternatives = sides.filter((x) => x.d?.support === 'none' && x.d.alternatives.length).map((x) => ({ id: x.id, name: x.name, alts: x.d!.alternatives }));
+const refs = sides.flatMap((x) => (x.d?.refs ?? []).map((r) => ({ ...r, db: x.id })));
 
 // Lab results: "MySQL 5.7 · 8.0 ／ MongoDB 6.0 · 7.0 ／ Redis …", or unverified when the lab has not run.
 const verifiedParts = sides
-  .map((x) => [x.name, entryVerification(m.id, x.id)] as const)
+  .map((x) => [x, entryVerification(m.id, x.id)] as const)
   .filter(([, v]) => v && v.versions.length)
-  .map(([name, v]) => `${name} ${v!.versions.join(' · ')}`);
+  .map(([x, v]) => ({ id: x.id, text: `${x.name} ${v!.versions.join(' · ')}` }));
 const verification = loadVerification();
 const p = ui.proof;
 // How the lab checked each side's name for a field. A reason shared by every field of a side
@@ -78,7 +78,7 @@ const fields = m.fields
   })
   .filter((r) => r.cells.some((c) => c.name));
 const anySkipped = sides.some((x) => x.d?.commands.some((c) => labSkip(c, x.def)));
-const verifiedLabel = verifiedParts.length ? ui.verifiedOn(verifiedParts.join(' ／ ')) : ui.unverified;
+const verifiedLead = verifiedParts.length ? ui.verifiedOn('') : ui.unverified;
 
 // Titles read better without statement terminators: "SHOW SLAVE STATUS", not "SHOW SLAVE STATUS\G".
 const bare = (cmd: string) => cmd.replace(/\s*(\\G|;)\s*$/, '');
@@ -122,7 +122,12 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
       <div class="meta">
         <span class:list={{ 'verified-label': verifiedParts.length > 0 }}>
           {verifiedParts.length > 0 && <span class="lab-dot" aria-hidden="true" />}
-          {verifiedLabel}
+          {verifiedLead}
+          {verifiedParts.map((v) => (
+            <span class="verified-part" data-dbx={v.id}>
+              {v.text}
+            </span>
+          ))}
         </span>
         {anySkipped && <span>（{ui.someSkipped}）</span>}
         {updated && <span>· 更新于 {updated}</span>}
@@ -133,7 +138,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
       {
         sides.map((x) =>
           !x.d ? (
-            <div class="card panel panel-missing">
+            <div class="card panel panel-missing" data-dbx={x.id}>
               <div class="panel-head">
                 <span class={`dot dot-${x.role}`} />
                 <span class={`side side-${x.role}`}>{x.name}</span>
@@ -144,7 +149,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
               </div>
             </div>
           ) : x.d.support === 'none' ? (
-            <NonePanel lang={lang} role={x.role} dbName={x.name} notes={x.d.notes} />
+            <NonePanel lang={lang} role={x.role} db={x.id} dbName={x.name} notes={x.d.notes} />
           ) : (
             <CommandPanel lang={lang} role={x.role} db={x.id} dbName={x.name} database={x.def} support={x.d.support} commands={x.d.commands} entryId={m.id} verification={verification} />
           ),
@@ -162,7 +167,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
                 <tr>
                   <th scope="col">{ui.fieldName}</th>
                   {sides.map((x) => (
-                    <th scope="col" class={`side-${x.role}`}>
+                    <th scope="col" class={`side-${x.role}`} data-dbx={x.id}>
                       {x.name}
                     </th>
                   ))}
@@ -176,7 +181,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
                     {f.cells.map((c) => {
                       const mark = c.name ? fieldMark(c.side.id, c.side.d, f.id) : undefined;
                       return (
-                        <td class="mono">
+                        <td class="mono" data-dbx={c.side.id}>
                           {c.name ?? '—'}
                           {mark && (
                             <span class:list={[mark.ok ? 'field-ok' : 'field-mark']} title={mark.title} aria-label={mark.title}>
@@ -205,7 +210,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
           <h2>{ui.differences}</h2>
           <ul class="notes">
             {notes.map((n) => (
-              <li>
+              <li data-dbx={n.id}>
                 <Fragment set:html={noteIcon} />
                 <span>
                   <span class="tag" style="margin-right: 8px">{n.db}</span>
@@ -220,7 +225,7 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
 
     {
       alternatives.map((group) => (
-        <section class="section">
+        <section class="section" data-dbx={group.id}>
           <h2 style="margin-bottom: 6px">{ui.alternatives(group.name)}</h2>
           <p class="muted" style="margin: 0 0 14px; font-size: 14px">{ui.alternativesSub}</p>
           <div class="alts">
@@ -259,7 +264,9 @@ const noteIcon = `<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24
               <h2>{ui.docs}</h2>
               <div class="link-list">
                 {refs.map((r) => (
-                  <a href={r.url} rel="noopener">{r.title}</a>
+                  <a href={r.url} rel="noopener" data-dbx={r.db}>
+                    {r.title}
+                  </a>
                 ))}
               </div>
             </div>

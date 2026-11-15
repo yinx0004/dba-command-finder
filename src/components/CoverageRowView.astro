@@ -11,8 +11,10 @@ interface Props {
   row: CoverageRow;
   /** show each side's command under its strip */
   commands?: boolean;
+  /** cells follow the databases the reader hides (category pages; the home overview keeps them all) */
+  hideable?: boolean;
 }
-const { lang, row, commands = false } = Astro.props;
+const { lang, row, commands = false, hideable = false } = Astro.props;
 const ui = UI[lang];
 const h = ui.homePage;
 const missing = eqLabels(lang, '').missing;
@@ -24,7 +26,7 @@ const missing = eqLabels(lang, '').missing;
   </span>
   {
     row.cells.map((c) => (
-      <span class="cov-cell">
+      <span class="cov-cell" data-dbx={hideable ? c.db : undefined}>
         <span class="cov-line">
           <span class="cov-db">{c.name}</span>
           <span class="strip" role="img" aria-label={`${c.name}：${c.segs.map((s) => h.support[s]).join(' / ')}`}>

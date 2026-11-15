@@ -60,3 +60,58 @@ export function onPrefChange(fn: (pref: Pref) => void): () => void {
 export function fmt(template: string, values: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => values[k] ?? '');
 }
+
+// --- Databases the reader hides on entry and category pages ---
+// Kept apart from the version choice. The <head> of every page applies it before the first paint (see Base.astro),
+// by listing the hidden ids in <html data-hide>, so hidden parts never flash.
+
+const HIDDEN_KEY = 'dba-hidden';
+const HIDDEN_EVENT = 'dba:hidden';
+
+/** Saved choice, overridden by ?hide=redis,tidb in the URL; never every database. */
+export function readHidden(ids: string[]): string[] {
+  let hidden: string[] = [];
+  try {
+    hidden = JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? '[]') as string[];
+  } catch {
+    /* storage unavailable */
+  }
+  try {
+    const q = new URLSearchParams(window.location.search).get('hide');
+    if (q !== null) hidden = q ? q.split(',') : [];
+  } catch {
+    /* no URL */
+  }
+  hidden = ids.filter((id) => hidden.includes(id));
+  return hidden.length >= ids.length ? [] : hidden;
+}
+
+/** Saves the choice, keeps ?hide= in the URL in step if it is there, and applies it to the page. */
+export function writeHidden(hidden: string[], ids: string[]): void {
+  try {
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
+  } catch {
+    /* storage unavailable */
+  }
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('hide')) {
+      if (hidden.length) url.searchParams.set('hide', hidden.join(','));
+      else url.searchParams.delete('hide');
+      window.history.replaceState(null, '', url);
+    }
+  } catch {
+    /* history unavailable */
+  }
+  const root = document.documentElement;
+  root.dataset.hide = hidden.join(' ');
+  root.dataset.shown = String(ids.length - hidden.length);
+  root.style.setProperty('--shown', String(ids.length - hidden.length));
+  window.dispatchEvent(new CustomEvent<string[]>(HIDDEN_EVENT, { detail: hidden }));
+}
+
+export function onHiddenChange(fn: (hidden: string[]) => void): () => void {
+  const handler = (e: Event) => fn((e as CustomEvent<string[]>).detail);
+  window.addEventListener(HIDDEN_EVENT, handler);
+  return () => window.removeEventListener(HIDDEN_EVENT, handler);
+}

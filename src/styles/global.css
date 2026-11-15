@@ -228,6 +228,11 @@ td.mono { overflow-wrap: anywhere; }
 .version-bar-title { font-weight: 600; color: var(--ink-2); }
 .version-pick { display: inline-flex; align-items: center; gap: 8px; }
 .version-db { font-weight: 600; }
+button.version-db { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline dotted transparent; text-underline-offset: 3px; }
+button.version-db:hover { text-decoration-color: currentColor; }
+button.version-db[aria-pressed='false'] { color: var(--muted); text-decoration: line-through; opacity: 0.7; }
+button.version-db:disabled { cursor: default; }
+.verified-part + .verified-part { margin-left: 12px; }
 .version-db.side-source { color: var(--source); }
 .version-db.side-target { color: var(--target); }
 .side-third { color: var(--third); }
@@ -451,7 +456,7 @@ td.mono { overflow-wrap: anywhere; }
 }
 
 /* ---------- entry page: proof next to every command ---------- */
-.intent .panel { border-color: var(--ink); }
+.intent .panel { border-color: var(--border-strong); }
 .panel-head .side { font-size: 14px; }
 .panel-support { margin-left: auto; font-size: 12px; color: var(--muted); }
 .cmd { padding: 16px 18px; }
@@ -475,9 +480,10 @@ td.mono { overflow-wrap: anywhere; }
 
 /* "各版本能不能用" */
 /* four or more databases: two per row, so long commands keep room */
-.panels[data-n='4'], .panels[data-n='5'] { grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); }
+/* every database has a panel, so how many show is how many the reader has not hidden (<html data-shown>) */
+html[data-shown='4'] .panels, html[data-shown='5'] .panels { grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); }
 /* an odd one out takes the whole last row rather than leaving a hole beside it */
-.panels[data-n='5'] > :last-child { grid-column: 1 / -1; }
+html[data-shown='5'] .panels > :last-child { grid-column: 1 / -1; }
 .side-fourth { color: var(--fourth); }
 .side-third { color: var(--third); }
 .side-fourth { color: var(--fourth); }

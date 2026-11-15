@@ -7,12 +7,14 @@ interface Props {
   lang: Lang;
   /** source is drawn blue, target green */
   role: 'source' | 'target' | 'third' | 'fourth' | 'fifth';
+  /** database id, so the reader can hide it */
+  db: string;
   dbName: string;
   notes: Text[];
 }
-const { lang, role, dbName, notes } = Astro.props;
+const { lang, role, db, dbName, notes } = Astro.props;
 ---
-<div class="card panel panel-none">
+<div class="card panel panel-none" data-dbx={db}>
   <div class="panel-head">
     <span class={`dot dot-${role}`} />
     <span class={`side side-${role}`} style="font-size: 13px">{dbName}</span>
