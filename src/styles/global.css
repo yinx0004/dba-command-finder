@@ -459,9 +459,12 @@ td.mono { overflow-wrap: anywhere; }
 .runs { display: flex; flex-wrap: wrap; gap: 6px; }
 .run { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; font-family: var(--mono); font-size: 12px; line-height: 1.6; }
 .run-ok { color: var(--exact-fg); background: var(--exact-bg); }
-.run-fail { color: var(--muted); background: var(--surface-2); }
+.run-notyet { color: var(--muted); background: var(--surface-2); }
+.run-removed { color: var(--none-fg); background: var(--none-bg); }
+.run-dep { color: var(--approx-fg); background: var(--approx-bg); }
+.run-unproven { color: var(--muted); background: transparent; box-shadow: inset 0 0 0 1px var(--border-strong); }
 .run-skip { font-family: var(--sans); color: var(--muted); border: 1px dashed var(--border-strong); }
-.run.ver-mine { box-shadow: inset 0 0 0 1.5px var(--link); text-decoration: none; }
+.run.ver-mine { box-shadow: inset 0 0 0 1.5px var(--link); text-decoration: none; font-weight: 600; }
 .cmd-note { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
 .verified-label { display: inline-flex; align-items: center; gap: 6px; }
 .section h2 { padding-bottom: 10px; border-bottom: 1px solid var(--ink); font-size: 20px; letter-spacing: -0.01em; }
@@ -471,32 +474,13 @@ td.mono { overflow-wrap: anywhere; }
 .field-mark { margin-left: 6px; font-family: var(--sans); font-size: 12px; color: var(--muted); cursor: help; }
 
 /* "各版本能不能用" */
-.avail-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 24px 32px; }
-.avail { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.avail-db { font-size: 13px; font-weight: 600; }
-.avail-db.side-source { color: var(--source); }
-.avail-db.side-target { color: var(--target); }
-.avail-db.side-third { color: var(--third); }
-.avail-db.side-fourth { color: var(--fourth); }
-.avail-db.side-fifth { color: var(--fifth); }
 /* four or more databases: two per row, so long commands keep room */
 .panels[data-n='4'], .panels[data-n='5'] { grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); }
+/* an odd one out takes the whole last row rather than leaving a hole beside it */
+.panels[data-n='5'] > :last-child { grid-column: 1 / -1; }
 .side-fourth { color: var(--fourth); }
 .side-third { color: var(--third); }
 .side-fourth { color: var(--fourth); }
-.avail-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(var(--cols), minmax(0, 1fr)); gap: 4px; }
-.avail-head { display: flex; flex-direction: column; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.avail-head span { font-size: 11px; opacity: 0.8; }
-.avail-head.ver-mine { color: var(--link); font-weight: 600; text-decoration: none; }
-.avail-cmd { align-self: center; font-size: 12px; overflow-wrap: anywhere; padding-right: 4px; }
-.avail-cell { display: flex; flex-direction: column; justify-content: center; gap: 1px; min-height: 42px; padding: 4px 8px; border-radius: 4px; font-size: 12px; line-height: 1.3; }
-.avail-cell span { font-size: 11px; opacity: 0.85; }
-.avail-ok { color: var(--exact-fg); background: var(--exact-bg); }
-.avail-deprecated { color: var(--approx-fg); background: var(--approx-bg); }
-.avail-not-yet { color: var(--muted); background: var(--surface-2); }
-.avail-removed { color: var(--none-fg); background: var(--none-bg); }
-.avail-unproven { background: transparent; border: 1px dashed currentColor; }
-.avail-cell.ver-mine { box-shadow: inset 0 0 0 1.5px var(--link); text-decoration: none; font-weight: 400; }
 
 /* ---------- category page and 404 ---------- */
 .cat-nav a { display: flex; justify-content: space-between; gap: 8px; }
