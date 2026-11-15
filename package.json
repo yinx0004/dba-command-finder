@@ -1,7 +1,7 @@
 {
   "name": "dba-command-finder",
   "version": "0.1.0",
-  "description": "DBA Command Finder: MySQL to MongoDB DBA command lookup",
+  "description": "Cross-database DBA command lookup (MySQL, MongoDB, Redis, PostgreSQL), every command verified per version",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
