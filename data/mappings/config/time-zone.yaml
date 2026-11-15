@@ -10,7 +10,7 @@ databases:
   mysql:
     support: full
     commands:
-      - cmd: SELECT @@global.time_zone, @@session.time_zone, @@system_time_zone, NOW(), UTC_TIMESTAMP();
+      - cmd: SELECT @@GLOBAL.time_zone, @@SESSION.time_zone, @@system_time_zone, NOW(), UTC_TIMESTAMP();
         note: {zh: SYSTEM 表示跟随操作系统时区}
       - cmd: SET time_zone = '+08:00';
         note: {zh: 只改当前会话}
