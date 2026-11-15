@@ -59,4 +59,14 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: DROP TABLE <table>;
+      - cmd: DROP TABLE IF EXISTS <table>;
+    notes:
+      - zh: 删表很快，但空间要等 GC（tidb_gc_life_time 之后）才真正回收；在这之前可以用 FLASHBACK TABLE 找回。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t}
 related: [rename-table]

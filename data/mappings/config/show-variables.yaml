@@ -52,4 +52,14 @@ databases:
       - cmd: SELECT name, setting, unit, context, source FROM pg_settings WHERE name LIKE 'work_mem%';
         note:
           zh: context 说明改了要不要重启，source 说明是从哪设置的
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW VARIABLES;
+      - cmd: SHOW VARIABLES LIKE 'max_connections';
+      - cmd: SHOW CONFIG WHERE type = 'tidb' AND name LIKE 'performance.%';
+        note:
+          zh: 配置文件里的配置项是另一套，用 SHOW CONFIG 看
+    notes:
+      - zh: 有些 MySQL 变量只为兼容保留、设了不起作用，可以查 information_schema.VARIABLES_INFO 的 IS_NOOP 列。
 related: [set-variable, persist-parameters, server-status]

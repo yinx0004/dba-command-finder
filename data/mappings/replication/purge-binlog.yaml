@@ -62,4 +62,13 @@ databases:
     verify:
       setup: SELECT pg_create_physical_replication_slot('lab_slot', true);
       vars: {slot: lab_slot}
+  tidb:
+    support: none
+    notes:
+      - zh: 没有 binlog 文件。TiCDC 直接读 TiKV 的变更；旧版本数据保留多久由 GC 决定，同步任务没跟上时会挡住 GC。
+    alternatives:
+      - title: {zh: 查看和调整旧版本数据的保留时间}
+        cmd: SET GLOBAL tidb_gc_life_time = '24h';
+      - title: {zh: 删掉不再需要的同步任务，让 GC 继续}
+        cmd: cdc cli changefeed remove --server=http://<ticdc>:8300 --changefeed-id=<id>
 related: [binlog-retention, rotate-logs]

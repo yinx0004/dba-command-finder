@@ -96,4 +96,24 @@ databases:
       teardown: |-
         ALTER SYSTEM RESET log_min_duration_statement;
         SELECT pg_reload_conf();
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT @@tidb_slow_log_threshold;
+        note:
+          zh: 慢查询日志默认开启，阈值单位毫秒，默认 300
+      - cmd: SET GLOBAL tidb_slow_log_threshold = 1000;
+        note:
+          zh: 实例级变量，只改当前这台 tidb-server
+      - cmd: SELECT Time, Query_time, Process_keys, Result_rows, Query FROM information_schema.SLOW_QUERY ORDER BY Query_time DESC LIMIT 10;
+        note:
+          zh: 用 SQL 直接查慢日志；所有节点的用 CLUSTER_SLOW_QUERY，要带上时间范围
+    fields:
+      elapsed: Query_time
+      rows_examined: Process_keys
+      rows_returned: Result_rows
+      statement: Query
+    verify:
+      setup: DO SLEEP(0.5);
+      teardown: SET GLOBAL tidb_slow_log_threshold = 300;
 related: [explain, list-active-sessions]

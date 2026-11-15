@@ -87,4 +87,16 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {index: t_pkey}
+  tidb:
+    support: full
+    commands:
+      - cmd: ADMIN CHECK TABLE <table>;
+        note:
+          zh: 检查数据和所有索引是否一致；一致时没有输出，不一致时报错
+      - cmd: ADMIN CHECK INDEX <table> <index>;
+    notes:
+      - zh: 不支持 CHECK TABLE。数据的物理完整性由 TiKV 的校验和多副本保证，这里检查的是表数据和索引之间的一致性。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1);
+      vars: {table: t, index: idx_a}
 related: [reclaim-space]

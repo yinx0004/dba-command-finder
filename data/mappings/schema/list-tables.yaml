@@ -55,4 +55,9 @@ databases:
           zh: psql 的快捷命令，只列当前 search_path 里的表；\dt *.* 列所有模式
     verify:
       setup: CREATE TABLE t (id int);
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW TABLES;
+      - cmd: SHOW FULL TABLES;
 related: [list-databases, show-indexes]

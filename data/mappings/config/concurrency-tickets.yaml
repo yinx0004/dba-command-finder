@@ -71,4 +71,22 @@ databases:
       running: running
     notes:
       - zh: 每个连接是一个进程，没有并发执行的票数可调，同时执行的语句数只受连接数限制；连接多时用 pgbouncer 之类的连接池控制。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT @@tidb_executor_concurrency AS tidb_executor_concurrency, @@tidb_distsql_scan_concurrency AS tidb_distsql_scan_concurrency;
+        note:
+          zh: 一条 SQL 内部用几个并发去执行和扫描，不是整个实例的并发上限
+      - cmd: SELECT COUNT(*) AS running FROM information_schema.CLUSTER_PROCESSLIST WHERE COMMAND <> 'Sleep';
+      - cmd: SELECT NAME, RU_PER_SEC, PRIORITY, BURSTABLE FROM information_schema.RESOURCE_GROUPS;
+        note:
+          zh: 资源管控：按资源组限制每秒能用的资源，是限制整体负载的办法
+      - cmd: SET GLOBAL tidb_executor_concurrency = 8;
+    fields:
+      limit: tidb_executor_concurrency
+      running: running
+    notes:
+      - zh: innodb_thread_concurrency 只为兼容保留，设了也不起作用。没有实例级的并发闸门，整体限流用资源管控（RESOURCE GROUP）。
+    verify:
+      teardown: SET GLOBAL tidb_executor_concurrency = 5;
 related: [live-throughput, list-active-sessions, lock-waits]

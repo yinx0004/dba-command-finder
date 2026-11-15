@@ -72,4 +72,19 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT @@tidb_enable_prepared_plan_cache, @@tidb_prepared_plan_cache_size, @@tidb_enable_non_prepared_plan_cache;
+        note:
+          zh: 预处理语句的计划缓存默认开启；普通语句的计划缓存默认关闭
+      - cmd: SELECT @@last_plan_from_cache;
+        note:
+          zh: 上一条语句的计划是不是从缓存里取的
+      - cmd: ADMIN FLUSH SESSION PLAN_CACHE;
+      - cmd: ADMIN FLUSH INSTANCE PLAN_CACHE;
+        note:
+          zh: 清空这台 tidb-server 上的计划缓存
+    notes:
+      - zh: 缓存是每个会话各自一份，看不到缓存里具体有哪些语句。
 related: [explain, force-index, analyze-table]

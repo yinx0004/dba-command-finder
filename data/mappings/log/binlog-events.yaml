@@ -77,4 +77,11 @@ databases:
         INSERT INTO t VALUES (1, 10);
       vars: {slot: lab_decode}
       teardown: SELECT pg_drop_replication_slot('lab_decode');
+  tidb:
+    support: none
+    notes:
+      - zh: 没有 binlog。要拿到变更内容，用 TiCDC 把变更同步到 Kafka（Canal-JSON、Debezium 等格式）或存储服务，再在那里看。
+    alternatives:
+      - title: {zh: 查看某个时刻之前的数据（GC 保留时间之内）}
+        cmd: SELECT * FROM <table> AS OF TIMESTAMP '2026-01-01 10:00:00';
 related: [binlog-retention, point-in-time-recovery]

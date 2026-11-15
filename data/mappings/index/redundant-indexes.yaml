@@ -53,4 +53,14 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         CREATE INDEX idx_a ON t (a);
         CREATE INDEX idx_a_id ON t (a, id);
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT TABLE_NAME, KEY_NAME, SEQ_IN_INDEX, COLUMN_NAME FROM information_schema.TIDB_INDEXES WHERE TABLE_SCHEMA = '<db>' ORDER BY TABLE_NAME, KEY_NAME, SEQ_IN_INDEX;
+        note:
+          zh: 列出每个索引的列和顺序，一个索引的列是另一个索引的前缀时，前者通常是冗余的
+    notes:
+      - zh: 没有 sys.schema_redundant_indexes，要自己对比。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_ab (a, b));
 related: [index-usage, drop-index]

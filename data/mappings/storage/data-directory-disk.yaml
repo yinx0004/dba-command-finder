@@ -70,4 +70,22 @@ databases:
       disk_total: Size
     notes:
       - zh: WAL 在数据目录下的 pg_wal 里，表空间可以放在别的磁盘上。
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW CONFIG WHERE type = 'tikv' AND name = 'storage.data-dir';
+        on: [tikv]
+        note:
+          zh: 数据存在 TiKV 上，每个 TiKV 有自己的数据目录
+      - cmd: SELECT ADDRESS, CAPACITY, AVAILABLE, STORE_STATE_NAME FROM information_schema.TIKV_STORE_STATUS;
+        on: [pd]
+        note:
+          zh: 每个 TiKV 的磁盘容量和剩余空间
+      - cmd: SELECT INSTANCE, DEVICE_NAME, NAME, VALUE FROM information_schema.CLUSTER_HARDWARE WHERE DEVICE_TYPE = 'disk' AND NAME IN ('path', 'total', 'used', 'free-percent');
+        note:
+          zh: 集群里各个节点的磁盘使用情况
+    fields:
+      disk_total: {name: CAPACITY, skip: {zh: 来自 TIKV_STORE_STATUS，需要 PD}}
+    notes:
+      - zh: tidb-server 本身不存数据，@@datadir 显示的是 PD 的地址，不是数据目录。
 related: [database-size, table-size]

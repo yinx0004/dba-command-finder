@@ -53,4 +53,13 @@ databases:
       - cmd: SELECT locktype, relation::regclass, mode, granted, pid FROM pg_locks WHERE NOT granted;
         note:
           zh: 还没拿到的锁
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT * FROM information_schema.DATA_LOCK_WAITS;
+        note:
+          zh: 谁在等谁：等锁事务和持锁事务的 start_ts，以及等的是哪个 key
+      - cmd: SELECT INSTANCE, SESSION_ID, USER, WAITING_START_TIME, CURRENT_SQL_DIGEST_TEXT FROM information_schema.CLUSTER_TIDB_TRX WHERE STATE = 'LockWaiting';
+    notes:
+      - zh: 只有悲观事务（默认）会等锁。要找到持锁的会话，拿 DATA_LOCK_WAITS 的 CURRENT_HOLDING_TRX_ID 去 CLUSTER_TIDB_TRX 里查 ID。
 related: [latest-deadlock, list-active-sessions, global-read-lock]

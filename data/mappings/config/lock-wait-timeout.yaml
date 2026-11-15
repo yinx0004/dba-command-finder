@@ -42,4 +42,13 @@ databases:
           zh: 等锁多久之后检查一次有没有死锁，默认 1 秒
     notes:
       - zh: 做 DDL 前常先 SET lock_timeout，免得排在一个长事务后面，又把后面所有查询挡住。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT @@innodb_lock_wait_timeout, @@lock_wait_timeout;
+      - cmd: SET GLOBAL innodb_lock_wait_timeout = 10;
+    notes:
+      - zh: innodb_lock_wait_timeout 在悲观事务（默认）下生效，单位秒。乐观事务不等锁，提交时发现冲突直接报错。
+    verify:
+      teardown: SET GLOBAL innodb_lock_wait_timeout = 50;
 related: [lock-waits, long-transactions]

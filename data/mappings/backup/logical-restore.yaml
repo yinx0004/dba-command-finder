@@ -68,4 +68,17 @@ databases:
     verify:
       setup: CREATE TABLE t (id int PRIMARY KEY);
       setup_shell: pg_dump -Fc -d lab_logical_restore -f /tmp/lab_logical_restore.dump
+  tidb:
+    support: full
+    commands:
+      - cmd: mysql <db> < <db>.sql
+        shell: true
+      - cmd: tiup tidb-lightning -config tidb-lightning.toml
+        shell: true
+        skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
+        note:
+          zh: 导入 Dumpling 的备份，大数据量用它
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
+      setup_shell: mysqldump <db> > <db>.sql
 related: [logical-backup, point-in-time-recovery]

@@ -45,4 +45,15 @@ databases:
           zh: 只对当前连接生效
     notes:
       - zh: timestamptz 按 UTC 存储，显示时按连接的时区换算；timestamp 不带时区，原样存取。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT @@GLOBAL.time_zone, @@SESSION.time_zone, @@system_time_zone, NOW(), UTC_TIMESTAMP();
+        note:
+          zh: system_time_zone 是集群第一次启动时 tidb-server 所在机器的时区
+      - cmd: SET time_zone = '+08:00';
+        note:
+          zh: 只改当前会话
+    notes:
+      - zh: TIMESTAMP 和 DATETIME 的行为和 MySQL 一样：TIMESTAMP 按会话时区换算后显示，DATETIME 原样存原样取。
 related: [charset-collation, show-variables]

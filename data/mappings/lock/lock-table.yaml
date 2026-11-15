@@ -52,4 +52,15 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: partial
+    commands:
+      - cmd: LOCK TABLES <table> READ;
+      - cmd: LOCK TABLES <table> WRITE;
+      - cmd: UNLOCK TABLES;
+    notes:
+      - zh: 默认配置下 LOCK TABLES 只为兼容，不报错也不真正加锁；要在配置文件里设 enable-table-lock = true 才生效。需要阻止写入时，用 tidb_super_read_only 或者在事务里 SELECT ... FOR UPDATE 锁住要改的行。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY);
+      vars: {table: t}
 related: [global-read-lock, lock-waits]

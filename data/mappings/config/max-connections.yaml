@@ -88,4 +88,17 @@ databases:
       - zh: 改了要重启；也没有“因为连接满被拒绝”的计数，只能在日志里看 too many clients。每个连接是一个进程，连接数很多时用 pgbouncer 之类的连接池。
     verify:
       teardown: ALTER SYSTEM RESET max_connections;
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT @@max_connections AS max_connections;
+        note:
+          zh: 0 表示不限制
+      - cmd: SET GLOBAL max_connections = 2000;
+    fields:
+      limit: max_connections
+    notes:
+      - zh: max_connections 是每台 tidb-server 各自的上限，SET GLOBAL 只改当前连着的这一台，也不会保留到重启后；要持久生效，改配置文件里的 instance.max_connections。
+    verify:
+      teardown: SET GLOBAL max_connections = 0;
 related: [connection-usage, sharding-conn-pool, set-variable]

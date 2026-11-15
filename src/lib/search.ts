@@ -98,6 +98,9 @@ const FUSE_OPTIONS: IFuseOptions<SearchDoc> = {
   ],
 };
 
+// Enough to settle near-ties between entries that all match a common phrase, small next to a real difference in match.
+const KEYWORD_BONUS = 0.05;
+
 export interface Searcher {
   search(q: string, limit?: number): SearchDoc[];
 }
@@ -126,7 +129,10 @@ export function createSearcher(docs: SearchDoc[]): Searcher {
       return [...scores.entries()]
         .map(([slug, score]) => {
           const doc = bySlug.get(slug)!;
-          return { doc, score: doc.deprecated ? score / 2 : score };
+          // A keyword is a curated name for the task: typing one exactly says which task is meant, however many
+          // other entries happen to contain the same words in their commands (e.g. "set global").
+          const named = phrase && doc.n_keywords.includes(phrase) ? KEYWORD_BONUS : 0;
+          return { doc, score: (doc.deprecated ? score / 2 : score) + named };
         })
         .filter((x) => x.score >= 0.35)
         .sort((a, b) => b.score - a.score || a.doc.slug.localeCompare(b.doc.slug))

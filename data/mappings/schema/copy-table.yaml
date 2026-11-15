@@ -67,4 +67,16 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t, new_table: t_copy, new_table2: t_copy2}
+  tidb:
+    support: partial
+    commands:
+      - cmd: CREATE TABLE <new_table> LIKE <table>;
+      - cmd: INSERT INTO <new_table> SELECT * FROM <table>;
+        note:
+          zh: 大表会超过单个事务的大小限制，用 BATCH ON id LIMIT 10000 INSERT INTO ... 分批写
+    notes:
+      - zh: 不支持 CREATE TABLE ... AS SELECT，要先 CREATE TABLE ... LIKE 再 INSERT ... SELECT。
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t (a) VALUES (1), (2);
+      vars: {table: t, new_table: t_copy}
 related: [show-create-table, export-data, rename-table]

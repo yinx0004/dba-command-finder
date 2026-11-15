@@ -48,4 +48,13 @@ databases:
           zh: 当前这个连接是不是加密的、用的什么协议和算法
     notes:
       - zh: pg_hba.conf 里写 hostssl 的规则只接受加密连接。
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW SESSION STATUS LIKE 'Ssl_cipher';
+        note:
+          zh: 值为空表示当前连接没有加密
+      - cmd: SELECT @@require_secure_transport;
+    notes:
+      - zh: 服务端证书在配置文件的 security 段里配置；TiDB 到 TiKV、PD 之间的加密是另一套配置（cluster-ssl-*）。
 related: [config-file, create-user]

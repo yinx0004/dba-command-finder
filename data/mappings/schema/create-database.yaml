@@ -55,4 +55,11 @@ databases:
     verify:
       vars: {name: lab_new_db}
       teardown: DROP DATABASE lab_new_db;
+  tidb:
+    support: full
+    commands:
+      - cmd: CREATE DATABASE <name> DEFAULT CHARACTER SET utf8mb4;
+      - cmd: CREATE DATABASE IF NOT EXISTS <name>;
+    verify:
+      vars: {name: lab_new_db}
 related: [list-databases]

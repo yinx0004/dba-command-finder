@@ -68,4 +68,16 @@ databases:
       port: port
     notes:
       - zh: 改 listen_addresses 要重启；能不能连进来还要看 pg_hba.conf。
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT @@bind_address AS bind_address, @@port AS port, @@socket AS socket;
+      - cmd: SHOW CONFIG WHERE type = 'tidb' AND name IN ('host', 'port', 'status.status-port');
+        note:
+          zh: status-port（默认 10080）是 HTTP 状态和监控端口
+    fields:
+      address: bind_address
+      port: port
+    notes:
+      - zh: 默认端口是 4000，不是 3306。
 related: [tls-check, config-file, current-connection]

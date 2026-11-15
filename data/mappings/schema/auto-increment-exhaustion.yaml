@@ -58,4 +58,16 @@ databases:
       setup: |-
         CREATE TABLE t (id serial PRIMARY KEY);
         INSERT INTO t DEFAULT VALUES;
+  tidb:
+    support: partial
+    commands:
+      - cmd: SHOW TABLE <table> NEXT_ROW_ID;
+        note:
+          zh: 下一个要分配的 ID；ID_TYPE 为 AUTO_INCREMENT 的一行是自增列
+      - cmd: SELECT TABLE_NAME, AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' AND AUTO_INCREMENT IS NOT NULL;
+    notes:
+      - zh: 没有 sys 库，要自己拿下一个 ID 和列类型的上限比较。每台 tidb-server 会预先分到一段 ID（默认 30000 个），所以 ID 不连续，增长比行数快得多；建表时写 AUTO_ID_CACHE 1 可以让 ID 连续递增。写入量大的表更推荐 AUTO_RANDOM，避免写入集中在一个 Region 上。
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT); INSERT INTO t (a) VALUES (1);
+      vars: {table: t}
 related: [show-create-table]

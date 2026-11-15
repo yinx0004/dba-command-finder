@@ -102,4 +102,18 @@ databases:
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
         CREATE INDEX idx_a ON t (a);
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: SHOW INDEX FROM <table>;
+    fields:
+      index_name: Key_name
+      key_columns: Column_name / Seq_in_index
+      unique: Non_unique
+      index_type: Index_type
+    notes:
+      - zh: Clustered 列表示主键是不是聚簇索引：聚簇时数据按主键存放，否则按隐藏的 _tidb_rowid 存放，主键只是一个唯一索引。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a));
+      vars: {table: t}
 related: [list-tables, explain]

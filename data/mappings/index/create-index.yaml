@@ -70,4 +70,16 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t, index: idx_a, column: a}
+  tidb:
+    support: full
+    commands:
+      - cmd: CREATE INDEX <index> ON <table> (<column>);
+      - cmd: ALTER TABLE <table> ADD UNIQUE INDEX <index2> (<column2>), ALGORITHM=INPLACE, LOCK=NONE;
+        note:
+          zh: ALGORITHM、LOCK 子句只为兼容；建索引本身就是在线的
+    notes:
+      - zh: 建索引要回填已有数据，大表要很久；进度看 ADMIN SHOW DDL JOBS 的 ROW_COUNT。回填速度受 tidb_ddl_reorg_worker_cnt 和 tidb_ddl_reorg_batch_size 控制。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT);
+      vars: {table: t, index: idx_a, column: a, index2: uk_b, column2: b}
 related: [show-indexes, drop-index, explain]

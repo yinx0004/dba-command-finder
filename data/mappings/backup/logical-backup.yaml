@@ -5,7 +5,7 @@ title: {zh: 逻辑备份}
 summary: {zh: 把一个库或整个实例导出成文件，用于迁移、留档或小库的日常备份。}
 keywords:
   zh: [备份, 导出备份, 全量备份, 逻辑备份]
-  en: [mysqldump, mysqlpump, mongodump, backup, dump]
+  en: [mysqldump, mysqlpump, mongodump, backup, dump, dumpling]
 databases:
   mysql:
     support: full
@@ -76,4 +76,24 @@ databases:
           zh: 用户、角色和表空间不属于任何库，要单独导出
     verify:
       setup: CREATE TABLE t (id int PRIMARY KEY);
+  tidb:
+    support: full
+    commands:
+      - cmd: tiup dumpling -h <host> -P 4000 -u root -B <db> -o /tmp/<db>
+        shell: true
+        skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
+        note:
+          zh: 官方推荐的逻辑备份工具，多线程导出，用 TSO 保证一致性
+      - cmd: mysqldump <db> > <db>.sql
+        shell: true
+        note:
+          zh: 小库可以用；不要加 --single-transaction（会报 SAVEPOINT 不存在），也不能用 --all-databases（会去导出 METRICS_SCHEMA 而失败）
+      - cmd: BACKUP DATABASE <db> TO 's3://<bucket>/backup';
+        on: [tikv]
+        note:
+          zh: 用 BR 做物理备份，速度快得多，恢复用 RESTORE DATABASE
+    notes:
+      - zh: 导出大表前先调大 tidb_gc_life_time，否则导出时间超过它时旧版本数据会被 GC，导出失败。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2);
 related: [logical-restore, global-read-lock, point-in-time-recovery]

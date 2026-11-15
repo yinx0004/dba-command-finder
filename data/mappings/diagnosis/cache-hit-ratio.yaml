@@ -68,4 +68,11 @@ databases:
     fields:
       requests: {name: blks_hit / blks_read, note: {zh: 两者相加是读请求总数}}
       misses: blks_read
+  tidb:
+    support: none
+    notes:
+      - zh: tidb-server 不缓存数据，没有 InnoDB 缓冲池。数据缓存在每个 TiKV 的 block cache 里，命中率看 Grafana 的 TiKV-Details → RocksDB KV 面板。
+    alternatives:
+      - title: {zh: 查看 TiKV block cache 的大小}
+        cmd: SHOW CONFIG WHERE type = 'tikv' AND name = 'storage.block-cache.capacity';
 related: [memory-usage, server-status]

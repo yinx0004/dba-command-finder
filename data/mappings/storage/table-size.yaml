@@ -92,4 +92,24 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT TABLE_NAME, TABLE_ROWS, DATA_LENGTH, INDEX_LENGTH, DATA_FREE FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' ORDER BY DATA_LENGTH + INDEX_LENGTH DESC;
+        note:
+          zh: 按统计信息估算；DATA_FREE 始终是 0
+      - cmd: SHOW TABLE STATUS LIKE '<table>';
+      - cmd: SELECT TABLE_NAME, TABLE_SIZE, TABLE_KEYS, REGION_COUNT FROM information_schema.TABLE_STORAGE_STATS WHERE TABLE_SCHEMA = '<db>';
+        on: [pd]
+        note:
+          zh: 按 Region 统计，TABLE_SIZE 单位 MB
+    fields:
+      rows: TABLE_ROWS
+      data: DATA_LENGTH
+      index: INDEX_LENGTH
+    notes:
+      - zh: 没有「碎片」的概念，删除的数据等 GC 和 compaction 之后自动回收。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {table: t}
 related: [database-size, row-count]

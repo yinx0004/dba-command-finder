@@ -73,4 +73,16 @@ databases:
     fields:
       sort: work_mem
       tmp: temp_buffers
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT @@tidb_mem_quota_query AS tidb_mem_quota_query, @@tidb_enable_tmp_storage_on_oom AS tidb_enable_tmp_storage_on_oom;
+        note:
+          zh: 单条 SQL 能用的内存，超过后排序、哈希连接等会落盘，落盘也不够时按 tidb_mem_oom_action 取消
+      - cmd: SET SESSION tidb_mem_quota_query = 2147483648;
+      - cmd: SET GLOBAL tidb_mem_quota_query = 2147483648;
+    notes:
+      - zh: 没有按算子分开的 sort_buffer_size、tmp_table_size，它们只为兼容保留，设了不起作用；只有一个按语句计算的总额度。
+    verify:
+      teardown: SET GLOBAL tidb_mem_quota_query = 1073741824;
 related: [disk-spills, memory-usage, set-variable]

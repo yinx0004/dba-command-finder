@@ -64,4 +64,16 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, a int);
         INSERT INTO t SELECT g, g % 10 FROM generate_series(1, 1000) g;
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT COUNT(*) FROM <table>;
+        note:
+          zh: 准确，但大表要全表扫描；会下推到各个 TiKV 并行计算
+      - cmd: SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' AND TABLE_NAME = '<table>';
+        note:
+          zh: 来自统计信息，是估算值；没 ANALYZE 过时可能是 0
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1), (2), (3);
+      vars: {table: t}
 related: [table-size]

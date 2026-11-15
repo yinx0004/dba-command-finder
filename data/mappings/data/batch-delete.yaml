@@ -57,4 +57,16 @@ databases:
         CREATE TABLE t (id int PRIMARY KEY, created_at timestamptz);
         INSERT INTO t SELECT g, now() - g * INTERVAL '1 day' FROM generate_series(1, 100) g;
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: DELETE FROM <table> WHERE created_at < NOW() - INTERVAL 30 DAY LIMIT 1000;
+      - cmd: BATCH ON id LIMIT 1000 DELETE FROM <table> WHERE created_at < NOW() - INTERVAL 30 DAY;
+        note:
+          zh: 非事务 DML：按 id 自动切成每批 1000 行，一条语句删完；中途失败时已经删掉的不会回滚
+    notes:
+      - zh: 单个事务有大小限制（txn-total-size-limit，默认 100MB），一次删太多会报 transaction too large，所以要分批。删掉的空间等 GC 后才回收。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, created_at DATETIME); INSERT INTO t VALUES (1, NOW() - INTERVAL 40 DAY), (2, NOW());
+      vars: {table: t}
 related: [ttl-expiry, drop-table]

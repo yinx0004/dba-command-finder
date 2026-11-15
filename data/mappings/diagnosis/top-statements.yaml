@@ -93,4 +93,23 @@ databases:
       - zh: 要先在 shared_preload_libraries 里加载 pg_stat_statements 并重启，再在库里 CREATE EXTENSION pg_stat_statements。
     verify:
       setup: CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT DIGEST_TEXT, EXEC_COUNT, SUM_LATENCY, AVG_LATENCY, AVG_PROCESSED_KEYS FROM information_schema.CLUSTER_STATEMENTS_SUMMARY ORDER BY SUM_LATENCY DESC LIMIT 10;
+        note:
+          zh: 按语句模板汇总，耗时单位是纳秒
+      - cmd: SELECT SUMMARY_BEGIN_TIME, DIGEST_TEXT, EXEC_COUNT, SUM_LATENCY FROM information_schema.CLUSTER_STATEMENTS_SUMMARY_HISTORY ORDER BY SUM_LATENCY DESC LIMIT 10;
+        note:
+          zh: 之前的时间窗口
+    fields:
+      statement: DIGEST_TEXT
+      count: EXEC_COUNT
+      total_time: SUM_LATENCY
+      avg_time: AVG_LATENCY
+      rows_examined: AVG_PROCESSED_KEYS
+    notes:
+      - zh: 默认每 30 分钟一个窗口，只保留在内存里，tidb-server 重启后清空。TiDB Dashboard 的 SQL 语句分析页面看的是同一份数据。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1, 1), (2, 2); SELECT * FROM t WHERE a = 1; SELECT * FROM t WHERE a = 2;
 related: [full-table-scans, slow-query-log, explain]

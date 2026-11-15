@@ -51,4 +51,13 @@ databases:
     alternatives:
       - title: {zh: 让之后的新事务默认只读（用户可以自己改回来）}
         cmd: ALTER SYSTEM SET default_transaction_read_only = on;
+  tidb:
+    support: none
+    notes:
+      - zh: 不支持 FLUSH TABLES WITH READ LOCK。备份不需要它：Dumpling 和 BR 都按同一个时间点（TSO）读，天然一致。
+    alternatives:
+      - title: {zh: 禁止所有写入}
+        cmd: SET GLOBAL tidb_super_read_only = ON;
+      - title: {zh: 读某个时间点的一致快照}
+        cmd: SET @@tidb_snapshot = '2026-01-01 10:00:00';
 related: [lock-waits]

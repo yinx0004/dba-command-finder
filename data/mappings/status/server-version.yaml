@@ -43,4 +43,14 @@ databases:
       - cmd: SHOW server_version_num;
         note:
           zh: 数字形式，例如 170004，方便在脚本里比较
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT VERSION();
+        note:
+          zh: 形如 8.0.11-TiDB-v8.5.8，前半段是兼容的 MySQL 版本，后半段才是 TiDB 的版本
+      - cmd: SELECT tidb_version();
+        note:
+          zh: 版本、Git 提交和存储引擎
+      - cmd: SHOW VARIABLES LIKE 'version%';
 related: [server-status, show-variables]

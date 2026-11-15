@@ -68,4 +68,13 @@ databases:
       sort_spill: temp_bytes
     notes:
       - zh: 具体某条语句有没有落盘，看 EXPLAIN ANALYZE 里的 Sort Method 是不是 external merge。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT DIGEST_TEXT, EXEC_COUNT, MAX_MEM, MAX_DISK FROM information_schema.CLUSTER_STATEMENTS_SUMMARY WHERE MAX_DISK > 0 ORDER BY MAX_DISK DESC LIMIT 10;
+        note:
+          zh: MAX_DISK 大于 0 的语句用过磁盘，排序、聚合、连接超出内存额度后落盘
+      - cmd: SELECT Time, Query_time, Mem_max, Disk_max, Query FROM information_schema.SLOW_QUERY WHERE Disk_max > 0 ORDER BY Time DESC LIMIT 10;
+    notes:
+      - zh: 内存额度是 tidb_mem_quota_query；超出后能不能落盘由 tidb_enable_tmp_storage_on_oom 决定，落盘的位置是配置文件里的 tmp-storage-path。
 related: [top-statements, explain]

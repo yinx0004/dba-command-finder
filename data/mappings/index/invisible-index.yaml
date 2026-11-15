@@ -48,4 +48,14 @@ databases:
     alternatives:
       - title: {zh: 在事务里试着去掉索引，看计划后回滚（期间锁住这张表）}
         cmd: BEGIN; DROP INDEX <index>; EXPLAIN SELECT * FROM <table> WHERE a = 1; ROLLBACK;
+  tidb:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> ALTER INDEX <index> INVISIBLE;
+        note:
+          zh: 优化器不再用这个索引，但写入时照常维护；确认没有影响后再删
+      - cmd: ALTER TABLE <table> ALTER INDEX <index> VISIBLE;
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a));
+      vars: {table: t, index: idx_a}
 related: [drop-index, index-usage]

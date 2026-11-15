@@ -5,7 +5,7 @@ title: {zh: 修改参数并在重启后保留}
 summary: {zh: 在线改了参数之后，确保重启后还生效，并能查到哪些参数是这样改过的。}
 keywords:
   zh: [参数持久化, 重启后失效, 重启后保留, 永久修改参数]
-  en: [set persist, persist_only, persisted_variables, reset persist, setclusterparameter, getclusterparameter]
+  en: [set persist, config rewrite, persist_only, persisted_variables, reset persist, setclusterparameter, getclusterparameter]
 databases:
   mysql:
     support: full
@@ -81,4 +81,18 @@ databases:
       - zh: 有的参数重新加载就生效，有的要重启，看 pg_settings 的 context 列（sighup 可以重新加载，postmaster 要重启）。
     verify:
       teardown: SELECT pg_reload_conf();
+  tidb:
+    support: full
+    commands:
+      - cmd: SET GLOBAL tidb_gc_life_time = '20m';
+        note:
+          zh: SET GLOBAL 本身就会写进集群，所有 tidb-server 生效，重启后保留
+      - cmd: SELECT VARIABLE_NAME, VARIABLE_VALUE FROM mysql.GLOBAL_VARIABLES WHERE VARIABLE_NAME = 'tidb_gc_life_time';
+      - cmd: SELECT VARIABLE_NAME FROM information_schema.VARIABLES_INFO WHERE VARIABLE_SCOPE = 'INSTANCE';
+        note:
+          zh: 这些是实例级变量，SET GLOBAL 只改当前那台、不保留，要写在配置文件里
+    notes:
+      - zh: 没有 SET PERSIST，也不需要。
+    verify:
+      teardown: SET GLOBAL tidb_gc_life_time = '10m0s';
 related: [set-variable, show-variables, config-file]

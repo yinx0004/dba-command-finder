@@ -58,4 +58,13 @@ databases:
       source: sourcefile
     notes:
       - zh: ALTER SYSTEM 改的参数写在数据目录下的 postgresql.auto.conf，优先于 postgresql.conf。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SHOW CONFIG WHERE type = 'tidb' AND name LIKE 'log.%';
+        note:
+          zh: 各组件实际生效的配置，type 可以是 tidb、tikv、pd、tiflash
+      - cmd: SELECT TYPE, INSTANCE, `KEY`, VALUE FROM information_schema.CLUSTER_CONFIG WHERE TYPE = 'tidb' AND `KEY` LIKE 'log.%';
+    notes:
+      - zh: 看不到配置文件的路径和每个值的来源。配置文件由启动参数 --config 指定；用 TiUP 部署的集群在部署目录的 conf/ 下，改配置用 tiup cluster edit-config 再 reload。
 related: [show-variables, set-variable]

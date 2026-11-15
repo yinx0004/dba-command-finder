@@ -63,4 +63,16 @@ databases:
       source: address
     notes:
       - zh: 来源限制写在 pg_hba.conf 里，例如 host app_db app_user 10.0.0.0/8 scram-sha-256；一个用户可以按库、按地址写多条规则，不像 MySQL 那样拆成多个账号。
+  tidb:
+    support: full
+    commands:
+      - cmd: CREATE USER '<user>'@'<host>' IDENTIFIED BY '<password>';
+      - cmd: RENAME USER '<user>'@'<host>' TO '<user>'@'<new_host>';
+      - cmd: SELECT user, host FROM mysql.user WHERE user = '<user>';
+    fields:
+      source: host
+    notes:
+      - zh: 经过负载均衡（例如 HAProxy）连进来时，TiDB 看到的来源地址是负载均衡的地址；要按真实客户端限制，负载均衡和 TiDB 两边都要开启 PROXY protocol。
+    verify:
+      vars: {user: app_host, host: '10.0.%', new_host: '192.168.1.%', password: 'Lab#Pass123'}
 related: [create-user, account-lock, list-users]

@@ -54,4 +54,12 @@ databases:
     verify:
       setup: CREATE ROLE app_drop LOGIN PASSWORD 'Lab#Pass123';
       vars: {user: app_drop}
+  tidb:
+    support: full
+    commands:
+      - cmd: DROP USER '<user>'@'<host>';
+      - cmd: DROP USER IF EXISTS '<user>'@'<host>';
+    verify:
+      setup: CREATE USER 'app_drop'@'%' IDENTIFIED BY 'Lab#Pass123';
+      vars: {user: app_drop, host: '%'}
 related: [list-users, kill-session]

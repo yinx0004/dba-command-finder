@@ -100,4 +100,24 @@ databases:
         CREATE INDEX idx_a ON t (a);
         ANALYZE t;
       vars: {table: t}
+  tidb:
+    support: full
+    commands:
+      - cmd: EXPLAIN <select>;
+      - cmd: EXPLAIN ANALYZE <select>;
+        note:
+          zh: 真的执行一遍，actRows 是实际行数，execution info 里有每一步的耗时
+      - cmd: EXPLAIN FORMAT = 'verbose' <select>;
+        note:
+          zh: 多出每一步的估算代价
+    fields:
+      full_scan: operator 为 TableFullScan
+      index_used: access object
+      rows_examined: estRows
+      elapsed: execution info（EXPLAIN ANALYZE）
+    notes:
+      - zh: 输出和 MySQL 完全不同，是一棵算子树。task 列为 cop[tikv] 的步骤下推到 TiKV 上执行，root 在 tidb-server 上执行。不支持 FORMAT=JSON。
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, KEY idx_a (a)); INSERT INTO t VALUES (1, 1), (2, 2);
+      vars: {select: SELECT * FROM t WHERE a = 1}
 related: [show-indexes, slow-query-log]
