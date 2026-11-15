@@ -16,11 +16,19 @@ databases:
         note: {zh: 只在列出的索引里选，优化器仍可能选全表扫描}
       - cmd: SELECT * FROM <table> IGNORE INDEX (<index>) WHERE a = 1;
         note: {zh: 排除这个索引}
+      - cmd: SELECT /*+ INDEX(<table> <index>) */ * FROM <table> WHERE a = 1;
+        since: 8.0.20
+        note: {zh: 优化器提示的写法，效果和 FORCE INDEX 相同}
+      - cmd: SELECT /*+ NO_INDEX(<table> <index>) */ * FROM <table> WHERE a = 1;
+        since: 8.0.20
+        note: {zh: 效果和 IGNORE INDEX 相同}
     notes:
-      - zh: 8.0.20 起也可以写成优化器提示，例如 SELECT /*+ INDEX(t idx_a) */ ...，效果和 FORCE INDEX 相同。
+      - zh: 8.0.20 起 MySQL 推荐用优化器提示，官方预计以后会废弃 FORCE INDEX 这类写法。
+      - zh: 5.7 不认识 INDEX、NO_INDEX 提示，只给一个警告并忽略它，不会报错，查询照常执行。
       - zh: 提示写在应用的 SQL 里，索引改名或删除后 FORCE INDEX 会直接报错，要一起维护。
     refs:
       - {title: 'MySQL: Index Hints', url: 'https://dev.mysql.com/doc/refman/8.4/en/index-hints.html'}
+      - {title: 'MySQL: Index-Level Optimizer Hints', url: 'https://dev.mysql.com/doc/refman/8.4/en/optimizer-hints.html#optimizer-hints-index-level'}
     verify:
       setup: CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY idx_a (a), KEY idx_b (b)); INSERT INTO t VALUES (1, 1, 1), (2, 1, 2);
       vars: {table: t, index: idx_a}
@@ -33,15 +41,19 @@ databases:
         note: {zh: 不用任何索引，强制全集合扫描}
       - cmd: 'db.<collection>.aggregate([{ $match: { a: 1 } }], { hint: "<index>" })'
         note: {zh: 聚合在选项里指定}
+      - cmd: 'db.adminCommand({ setQuerySettings: { find: "<collection>", filter: { a: 1 }, $db: "<db>" }, settings: { indexHints: { ns: { db: "<db>", coll: "<collection>" }, allowedIndexes: ["<index>"] } } })'
+        since: '8.0'
+        note: {zh: 不改应用代码，让同一类查询（只看形状，不看具体的值）都只用这个索引}
     notes:
       - zh: 没有「排除某个索引」的写法；可以把那个索引隐藏（db.collection.hideIndex()），所有查询都不会再用它。
-      - zh: 8.0 起可以用 setQuerySettings 给某一类查询固定索引，不用改应用代码。
+      - zh: 已有的查询设置用聚合阶段 $querySettings 查看，用 removeQuerySettings 命令删除。
     refs:
       - {title: 'MongoDB: cursor.hint()', url: 'https://www.mongodb.com/docs/manual/reference/method/cursor.hint/'}
       - {title: 'MongoDB: setQuerySettings', url: 'https://www.mongodb.com/docs/manual/reference/command/setQuerySettings/'}
     verify:
       setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 1, b: 2 }]); db.t.createIndex({ a: 1 }); db.t.createIndex({ b: 1 })'
       vars: {collection: t, index: a_1}
+      teardown: 'db.adminCommand({ removeQuerySettings: { find: "t", filter: { a: 1 }, $db: "<db>" } })'
   redis:
     support: none
     notes:

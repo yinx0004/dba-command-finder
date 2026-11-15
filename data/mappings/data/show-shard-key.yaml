@@ -1,0 +1,72 @@
+schema_version: 2
+id: show-shard-key
+category: data
+title: {zh: 查看表的分片键}
+summary: {zh: 查一张表（集合）按什么分片，以及数据在各个分片上分布得是否均匀。}
+keywords:
+  zh: [分片键, 片键, 查看分片键, 分片分布, 数据分布, 数据倾斜, 在哪个分片, 在哪个节点]
+  en: [shard key, sh.status, getsharddistribution, shardeddatadistribution, config.collections, cluster keyslot, cluster shards, show table regions, tidb_row_id_sharding_info]
+databases:
+  mysql:
+    support: none
+    notes:
+      - zh: 没有内置分片，也就没有分片键。用 Vitess、ShardingSphere 这类中间件时，分片规则在中间件里查看。
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.getSiblingDB("config").collections.findOne({ _id: "<db>.<collection>" }, { key: 1, unique: 1 })'
+        on: [mongos]
+        note: {zh: key 是分片键，unique 表示是否是唯一分片键；没有分片的集合查不到}
+      - cmd: sh.status()
+        on: [mongos]
+        note: {zh: 所有分片集合的分片键，以及 chunk 在各分片上的数量}
+      - cmd: db.<collection>.getShardDistribution()
+        on: [mongos]
+        note: {zh: 这个集合在每个分片上的数据量和文档数，看数据是否倾斜}
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $shardedDataDistribution: {} }, { $match: { ns: "<db>.<collection>" } }])'
+        since: 6.0.3
+        on: [mongos]
+        note: {zh: 和上一条相同的信息，结果是文档，方便在脚本里处理}
+    refs:
+      - {title: 'MongoDB: Find a Shard Key', url: 'https://www.mongodb.com/docs/manual/core/sharding-find-shard-key/'}
+      - {title: 'MongoDB: db.collection.getShardDistribution()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.getsharddistribution/'}
+      - {title: 'MongoDB: $shardedDataDistribution', url: 'https://www.mongodb.com/docs/manual/reference/operator/aggregation/shardeddatadistribution/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: CLUSTER KEYSLOT <key>
+        on: [cluster]
+        note: {zh: 这个键落在哪个槽位（0 到 16383）}
+      - cmd: CLUSTER SHARDS
+        since: '7.0'
+        on: [cluster]
+        note: {zh: 每个分片负责哪些槽位、有哪些节点}
+      - cmd: CLUSTER SLOTS
+        deprecated_in: '7.0'
+        on: [cluster]
+        note: {zh: 7.0 以前查槽位和节点对应关系的写法}
+    notes:
+      - zh: 没有可选的分片键，键名本身就是分片依据；键名里有 {} 时，只按 {} 里的部分计算槽位。
+    refs:
+      - {title: 'Redis: CLUSTER KEYSLOT', url: 'https://redis.io/docs/latest/commands/cluster-keyslot/'}
+      - {title: 'Redis: CLUSTER SHARDS', url: 'https://redis.io/docs/latest/commands/cluster-shards/'}
+  postgresql:
+    support: none
+    notes:
+      - zh: 没有内置分片。用 Citus 扩展时，SELECT * FROM citus_tables 的 distribution_column 列是每张表的分布列。
+  tidb:
+    support: partial
+    commands:
+      - cmd: SELECT TIDB_PK_TYPE, TIDB_ROW_ID_SHARDING_INFO FROM information_schema.TABLES WHERE TABLE_SCHEMA = '<db>' AND TABLE_NAME = '<table>';
+        note: {zh: TIDB_PK_TYPE 是 CLUSTERED 时行键就是主键；否则行键是隐藏的 _tidb_rowid，TIDB_ROW_ID_SHARDING_INFO 写着是否打散}
+      - cmd: SHOW TABLE <table> REGIONS;
+        note: {zh: 这张表被切成了哪些 Region，各自的键范围（START_KEY、END_KEY）和 Leader 在哪个 TiKV 上}
+    notes:
+      - zh: 没有分片键可选，数据按行键范围自动切成 Region。行键由主键决定，所以主键是不是聚簇索引、是不是单调递增，决定了写入会不会集中在一个 Region 上。
+    refs:
+      - {title: 'TiDB: Clustered Indexes', url: 'https://docs.pingcap.com/tidb/stable/clustered-indexes/'}
+      - {title: 'TiDB: SHOW TABLE REGIONS', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-show-table-regions/'}
+    verify:
+      setup: CREATE TABLE t (id BIGINT PRIMARY KEY NONCLUSTERED, a INT) SHARD_ROW_ID_BITS = 4;
+      vars: {table: t}
+related: [shard-table, partitioning, table-size, hot-tables]

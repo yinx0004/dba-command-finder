@@ -1,0 +1,94 @@
+schema_version: 2
+id: shard-table
+category: data
+title: {zh: 把一张表分片、重新分片}
+summary: {zh: 表大到一台机器放不下、或者写入都压在一台机器上时，按分片键把数据分散到多个分片；分片键选得不好时，换一个分片键重新分布。}
+keywords:
+  zh: [分片, 分片表, 重新分片, 换分片键, 修改分片键, 水平拆分, 分库分表, 打散热点, 预切分, 取消分片]
+  en: [shardcollection, reshardcollection, refinecollectionshardkey, unshardcollection, movecollection, sharding, reshard, split table, shard_row_id_bits, auto_random, cluster reshard, rebalance]
+databases:
+  mysql:
+    support: none
+    notes:
+      - zh: 没有内置分片。一般靠中间件或应用自己分库分表，例如 Vitess（用 Reshard 工作流重新分片）、ShardingSphere，分片规则配置在中间件里，不在 MySQL 里。
+      - zh: 只是想在同一个实例里把大表切开，用分区表。
+    alternatives:
+      - title: {zh: 分区表}
+        see: partitioning
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'sh.shardCollection("<db>.<collection>", { user_id: "hashed" })'
+        on: [mongos]
+        note: {zh: '哈希分片键，写入分布均匀；范围查询多时改用 { user_id: 1 } 这样的范围分片键'}
+      - cmd: 'sh.reshardCollection("<db>.<collection>", { tenant_id: 1, order_id: 1 })'
+        on: [mongos]
+        note: {zh: 换一个分片键，在线把整个集合重新分布；最后切换时默认阻塞写入最多 2 秒}
+      - cmd: 'db.adminCommand({ refineCollectionShardKey: "<db>.<collection>", key: { tenant_id: 1, order_id: 1 } })'
+        on: [mongos]
+        note: {zh: 只在原分片键后面加字段，不搬数据，比重新分片快得多；要先建好包含新分片键的索引}
+      - cmd: 'db.getSiblingDB("admin").aggregate([{ $currentOp: { allUsers: true, localOps: false } }, { $match: { type: "op", "originatingCommand.reshardCollection": "<db>.<collection>" } }])'
+        on: [mongos]
+        note: {zh: 重新分片的进度，remainingOperationTimeEstimatedSecs 是预计还要多少秒}
+      - cmd: 'sh.unshardCollection("<db>.<collection>", "<shard>")'
+        since: '8.0'
+        on: [mongos]
+        note: {zh: 取消分片，把整个集合搬到一个分片上}
+      - cmd: 'sh.moveCollection("<db>.<collection>", "<shard>")'
+        since: '8.0'
+        on: [mongos]
+        note: {zh: 把没有分片的集合整个搬到另一个分片}
+    notes:
+      - zh: 6.0 起分片前不用再执行 sh.enableSharding()。
+      - zh: 分片键必须有对应的索引。集合为空时 shardCollection 会自动建；已有数据时要先建好。
+      - zh: 重新分片期间每个分片要有大约 1.2 倍集合大小的空闲磁盘，并且会持续占用 I/O，最好放在低峰期。
+    refs:
+      - {title: 'MongoDB: sh.shardCollection()', url: 'https://www.mongodb.com/docs/manual/reference/method/sh.shardcollection/'}
+      - {title: 'MongoDB: Reshard a Collection', url: 'https://www.mongodb.com/docs/manual/core/sharding-reshard-a-collection/'}
+      - {title: 'MongoDB: refineCollectionShardKey', url: 'https://www.mongodb.com/docs/manual/reference/command/refinecollectionshardkey/'}
+      - {title: 'MongoDB: sh.unshardCollection()', url: 'https://www.mongodb.com/docs/manual/reference/method/sh.unshardcollection/'}
+      - {title: 'MongoDB: sh.moveCollection()', url: 'https://www.mongodb.com/docs/manual/reference/method/sh.movecollection/'}
+  redis:
+    support: partial
+    commands:
+      - cmd: redis-cli --cluster reshard <host>:<port> --cluster-from <from_node_id> --cluster-to <to_node_id> --cluster-slots 1000 --cluster-yes
+        shell: true
+        on: [cluster]
+        note: {zh: 把 1000 个槽位连同里面的键从一个节点搬到另一个节点}
+      - cmd: redis-cli --cluster rebalance <host>:<port> --cluster-use-empty-masters
+        shell: true
+        on: [cluster]
+        note: {zh: 按节点权重自动平衡槽位；--cluster-use-empty-masters 让新加的空节点也分到槽位}
+    notes:
+      - zh: 没有表，也不能选分片键。Redis Cluster 把每个键按 CRC16 哈希分到 16384 个槽位，槽位再分给各个节点；能做的只是在键名里用 {} 包住一部分（哈希标签），让相关的键落在同一个槽位。
+      - zh: 重新分片就是搬槽位，搬的时候集群照常读写。
+    refs:
+      - {title: 'Redis: Scale with Redis Cluster', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/'}
+  postgresql:
+    support: none
+    notes:
+      - zh: 没有内置分片。用 Citus 扩展时，SELECT create_distributed_table('<table>', '<column>') 按某一列把表分布到各个节点，换分布列或分片数用 alter_distributed_table()。
+      - zh: 只是想在同一个实例里把大表切开，用分区表。
+    alternatives:
+      - title: {zh: 分区表}
+        see: partitioning
+  tidb:
+    support: partial
+    commands:
+      - cmd: SPLIT TABLE <table> BETWEEN (0) AND (1000000) REGIONS 16;
+        note: {zh: 按行键范围预先切成 16 个 Region，新表一开始的写入就能分散到多个 TiKV}
+      - cmd: ALTER TABLE <table> SHARD_ROW_ID_BITS = 4;
+        note: {zh: 没有聚簇主键的表用隐藏的 _tidb_rowid 作行键；把它打散成 16 段，连续写入不再集中在末尾。只影响之后写入的行}
+      - cmd: CREATE TABLE <new_table> (id BIGINT AUTO_RANDOM PRIMARY KEY, a INT);
+        note: {zh: 新建表时主键用 AUTO_RANDOM 代替 AUTO_INCREMENT，同样能打散写入}
+    notes:
+      - zh: 数据按行键范围自动切成 Region（默认约 96 MiB 一个），由 PD 在 TiKV 之间调度，不用选分片键，也不用手动重新分片。行键是聚簇主键，没有聚簇主键时是隐藏的 _tidb_rowid。
+      - zh: 要指定某些数据放在哪些节点上，用分区表加 Placement Rules。
+    refs:
+      - {title: 'TiDB: SPLIT REGION', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-split-region/'}
+      - {title: 'TiDB: SHARD_ROW_ID_BITS', url: 'https://docs.pingcap.com/tidb/stable/shard-row-id-bits/'}
+      - {title: 'TiDB: AUTO_RANDOM', url: 'https://docs.pingcap.com/tidb/stable/auto-random/'}
+    verify:
+      setup: CREATE TABLE t (id BIGINT PRIMARY KEY NONCLUSTERED, a INT);
+      vars: {table: t, new_table: t2}
+related: [show-shard-key, partitioning, hot-tables, sharding-conn-pool]

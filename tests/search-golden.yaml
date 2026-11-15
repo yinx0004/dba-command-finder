@@ -340,7 +340,7 @@
 - {q: redis-check-rdb, top: check-table}
 - {q: MEMORY PURGE, top: reclaim-space}
 - {q: SCAN, top_any: [list-tables, full-table-scans]}
-- {q: CLUSTER KEYSLOT, top: partitioning}
+- {q: CLUSTER KEYSLOT, top_any: [show-shard-key, partitioning]}
 - {q: COPY, top: copy-table}
 
 # PostgreSQL
@@ -430,3 +430,20 @@
 - {q: 审计日志, top: audit-log}
 - {q: pgaudit, top: audit-log}
 - {q: ACL LOG, top: audit-log}
+
+# Sharding, and optimizer hints in force-index
+- {q: 分片, top: shard-table}
+- {q: 重新分片, top: shard-table}
+- {q: shardCollection, top: shard-table}
+- {q: reshardCollection, top: shard-table}
+- {q: refineCollectionShardKey, top: shard-table}
+- {q: SPLIT TABLE, top: shard-table}
+- {q: SHARD_ROW_ID_BITS, top: shard-table}
+- {q: cluster reshard, top: shard-table}
+- {q: 分片键, top: show-shard-key}
+- {q: shard key, top: show-shard-key}
+- {q: getShardDistribution, top: show-shard-key}
+- {q: CLUSTER SHARDS, top: show-shard-key}
+- {q: SHOW TABLE REGIONS, top_any: [show-shard-key, index-size]}
+- {q: setQuerySettings, top: force-index}
+- {q: NO_INDEX, top: force-index}
