@@ -1,5 +1,22 @@
 # DBA Command Finder
 
+[![CI](https://img.shields.io/github/actions/workflow/status/yinx0004/dba-command-finder/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/yinx0004/dba-command-finder/actions/workflows/ci.yml)
+[![lab](https://img.shields.io/badge/lab-13%20versions%20verified-2ea44f?logo=docker&logoColor=white)](https://www.solidstack.io/dba-command-finder/zh/#method)
+[![site](https://img.shields.io/website?url=https%3A%2F%2Fwww.solidstack.io%2Fdba-command-finder%2F&label=site&up_message=online)](https://www.solidstack.io/dba-command-finder/)
+[![license](https://img.shields.io/github/license/yinx0004/dba-command-finder?color=blue)](LICENSE)
+[![last commit](https://img.shields.io/github/last-commit/yinx0004/dba-command-finder)](https://github.com/yinx0004/dba-command-finder/commits/main)
+
+[![MySQL](https://img.shields.io/badge/MySQL-5.7%20%7C%208.0%20%7C%208.4-4479A1?logo=mysql&logoColor=white)](https://www.solidstack.io/dba-command-finder/zh/#browse)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0%20%7C%207.0%20%7C%208.0-47A248?logo=mongodb&logoColor=white)](https://www.solidstack.io/dba-command-finder/zh/#browse)
+[![Redis](https://img.shields.io/badge/Redis-6.2%20%7C%207.2%20%7C%208.0-DC382D?logo=redis&logoColor=white)](https://www.solidstack.io/dba-command-finder/zh/#browse)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%20%7C%2016%20%7C%2017%20%7C%2018-4169E1?logo=postgresql&logoColor=white)](https://www.solidstack.io/dba-command-finder/zh/#browse)
+
+[![Astro](https://img.shields.io/badge/Astro-6-BC52EE?logo=astro&logoColor=white)](https://astro.build/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-%E2%89%A522.12-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![中文 first](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-first-red)](https://www.solidstack.io/dba-command-finder/zh/)
+
 同一件运维任务，在 MySQL、MongoDB、Redis、PostgreSQL 里分别怎么做？输入任意一个库的命令或中文关键词，查到其他库的对应写法、输出字段对照、版本差异和注意事项。没有对应命令时会明确说明，并给出可以改看的信号。
 
 网站：<https://www.solidstack.io/dba-command-finder/>
