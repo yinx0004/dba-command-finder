@@ -98,7 +98,12 @@ export function mysql(version: string): Engine {
       return parseServerVersion(r.out);
     },
     createDatabase: (db) => sh([...client(), '-e', `CREATE DATABASE IF NOT EXISTS \`${db}\``]),
-    exec: (text, db) => sh([...client(db), '-e', text]),
+    exec: async (text, db) => {
+      // A server that does not know an optimizer hint (e.g. /*+ INDEX() */ on 5.7) ignores it with a
+      // syntax-error warning instead of failing, so that warning counts as a failure.
+      const r = await sh([...client(db), '--show-warnings', '-e', text]);
+      return r.ok && /Warning \(Code 1064\)/.test(r.out) ? { ...r, ok: false } : r;
+    },
     shell: (text) => inShell(name, text),
     stop: async () => void (await sh(['rm', '-fv', name])),
   };
