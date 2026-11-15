@@ -28,3 +28,12 @@
     - {id: primary, name: primary, lab: true}
     - {id: standby, name: standby}
   roles_unverified: {zh: 只能在备库（standby）上执行，lab 只跑一个主库}
+- id: tidb
+  name: TiDB
+  lab_versions: ['7.5', '8.1', '8.5']
+  roles:
+    - {id: tidb, name: tidb-server, lab: true}
+    - {id: pd, name: PD}
+    - {id: tikv, name: TiKV}
+    - {id: ticdc, name: TiCDC}
+  roles_unverified: {zh: 需要 PD、TiKV 或 TiCDC，lab 只跑一个使用内置存储的 tidb-server}
