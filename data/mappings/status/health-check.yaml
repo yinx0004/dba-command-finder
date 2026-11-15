@@ -1,0 +1,72 @@
+schema_version: 2
+id: health-check
+category: status
+title: {zh: 检查实例是否存活}
+summary: {zh: 监控探活，或者切换、重启前后确认实例能连上、能响应。}
+keywords:
+  zh: [探活, 健康检查, 活着吗, 能不能连上, 心跳检测, 存活检查]
+  en: [ping, health check, alive, liveness, pg_isready, isready, mysqladmin ping]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: mysqladmin ping
+        shell: true
+        note: {zh: 输出 mysqld is alive}
+      - cmd: SELECT 1;
+        note: {zh: 真正执行一条语句，连认证和权限一起确认}
+    notes:
+      - zh: mysqladmin ping 只要服务器有回应就返回 0，连密码错、被拒绝时也一样；要确认能登录并执行，用 SELECT 1。
+    refs:
+      - {title: 'MySQL: mysqladmin', url: 'https://dev.mysql.com/doc/refman/8.4/en/mysqladmin.html'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: 'db.adminCommand({ ping: 1 })'
+        note: {zh: 返回 ok 1 表示存活}
+      - cmd: db.hello()
+        note: {zh: 还能看出它现在是不是主节点（isWritablePrimary）}
+    notes:
+      - zh: ping 不需要认证，开了认证时也能用来探活。
+    refs:
+      - {title: 'MongoDB: ping', url: 'https://www.mongodb.com/docs/manual/reference/command/ping/'}
+      - {title: 'MongoDB: hello', url: 'https://www.mongodb.com/docs/manual/reference/command/hello/'}
+  redis:
+    support: full
+    commands:
+      - cmd: PING
+        note:
+          zh: 返回 PONG
+      - cmd: redis-cli ping
+        shell: true
+    notes:
+      - zh: 开了密码时，没认证的 PING 会返回 NOAUTH 错误；探活脚本要带上 -a 或 --user/--pass。正在从 RDB 加载数据时返回 LOADING 错误，这时进程活着但还不能服务。
+    refs:
+      - {title: 'Redis: PING', url: 'https://redis.io/docs/latest/commands/ping/'}
+  postgresql:
+    support: full
+    commands:
+      - cmd: pg_isready
+        shell: true
+        note:
+          zh: 退出码 0 表示能接受连接，1 表示正在启动或拒绝连接，2 表示没有响应
+      - cmd: SELECT 1;
+    notes:
+      - zh: pg_isready 不需要密码，也不真正登录，只检查服务器能不能接受连接。
+    refs:
+      - {title: 'PostgreSQL: pg_isready', url: 'https://www.postgresql.org/docs/current/app-pg-isready.html'}
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT 1;
+      - cmd: curl http://127.0.0.1:10080/status
+        shell: true
+        note:
+          zh: tidb-server 的状态端口，返回连接数和版本；负载均衡的健康检查一般用它
+      - cmd: mysqladmin ping
+        shell: true
+    notes:
+      - zh: 每台 tidb-server 要各自探活。整个集群是否健康还要看 PD 和 TiKV，例如 curl http://<pd>:2379/pd/api/v1/health。
+    refs:
+      - {title: 'TiDB: HTTP status API', url: 'https://docs.pingcap.com/tidb/stable/tidb-monitoring-api/'}
+related: [uptime, replica-role, connection-usage]

@@ -1,0 +1,83 @@
+schema_version: 2
+id: uptime
+category: status
+title: {zh: 查看实例运行了多久、什么时候启动的}
+summary: {zh: 确认实例有没有重启过、是什么时候重启的。连接突然全断、缓存突然变冷时，先看这个。}
+keywords:
+  zh: [运行时间, 启动时间, 重启时间, 什么时候重启, 运行多久, 有没有重启]
+  en: [uptime, start time, restart, uptime_in_seconds, pg_postmaster_start_time, uptimemillis]
+fields:
+  - {id: uptime, name: {zh: 已运行的时长}}
+  - {id: started, name: {zh: 启动时间}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SHOW GLOBAL STATUS LIKE 'Uptime';
+        note: {zh: mysqld 启动以来的秒数}
+      - cmd: SELECT NOW() - INTERVAL VARIABLE_VALUE SECOND AS started_at FROM performance_schema.global_status WHERE VARIABLE_NAME = 'Uptime';
+        note: {zh: 换算成启动时间}
+      - cmd: mysqladmin status
+        shell: true
+        note: {zh: 一行里同时给出 Uptime、连接数和每秒查询数}
+    fields:
+      uptime: Uptime
+      started: started_at
+    notes:
+      - zh: 为什么重启要看错误日志：正常关闭会记 Shutdown complete，崩溃后会有 InnoDB 的恢复记录。
+    refs:
+      - {title: 'MySQL: Uptime', url: 'https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html#statvar_Uptime'}
+  mongodb:
+    support: full
+    commands:
+      - cmd: db.serverStatus().uptime
+        note: {zh: mongod 启动以来的秒数}
+      - cmd: new Date(Date.now() - db.serverStatus().uptimeMillis)
+        note: {zh: 换算成启动时间}
+      - cmd: 'rs.status().members.map(m => ({ name: m.name, uptime: m.uptime }))'
+        note: {zh: 副本集里每个成员各自运行了多久}
+    fields:
+      uptime: uptime
+    refs:
+      - {title: 'MongoDB: serverStatus', url: 'https://www.mongodb.com/docs/manual/reference/command/serverstatus/'}
+  redis:
+    support: full
+    commands:
+      - cmd: INFO server
+        note:
+          zh: 看 uptime_in_seconds 和 uptime_in_days
+    fields:
+      uptime: uptime_in_seconds
+    notes:
+      - zh: 没有直接给出启动时间，要用当前时间减去 uptime_in_seconds；INFO server 里的 server_time_usec 是服务器的当前时间。
+    refs:
+      - {title: 'Redis: INFO', url: 'https://redis.io/docs/latest/commands/info/'}
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pg_postmaster_start_time() AS started_at, now() - pg_postmaster_start_time() AS uptime;
+      - cmd: SELECT pg_conf_load_time();
+        note:
+          zh: 配置文件最后一次加载的时间；只是 reload 时它会变，启动时间不变
+    fields:
+      uptime: uptime
+      started: started_at
+    refs:
+      - {title: 'PostgreSQL: pg_postmaster_start_time', url: 'https://www.postgresql.org/docs/current/functions-info.html'}
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT TYPE, INSTANCE, START_TIME, UPTIME FROM information_schema.CLUSTER_INFO;
+        note:
+          zh: 集群里每个节点的启动时间和运行时长
+      - cmd: SHOW GLOBAL STATUS LIKE 'Uptime';
+        note:
+          zh: 只是当前连着的这台 tidb-server
+    fields:
+      uptime: UPTIME
+      started: START_TIME
+    notes:
+      - zh: 集群里每个节点各自启动，某台 tidb-server 或 TiKV 重启了，整个集群的服务不一定中断；要看每个节点各自的时间。
+    refs:
+      - {title: 'TiDB: CLUSTER_INFO', url: 'https://docs.pingcap.com/tidb/stable/information-schema-cluster-info/'}
+related: [server-status, health-check, error-log]

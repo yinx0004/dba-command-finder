@@ -1,0 +1,73 @@
+schema_version: 2
+id: drop-column
+category: schema
+title: {zh: 删除列}
+summary: {zh: 去掉不再用的字段。大表上要关注会不会锁表、要跑多久。}
+keywords:
+  zh: [删除列, 删字段, 删除字段, 去掉字段, 去掉一列]
+  en: [drop column, unset field, $unset]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> DROP COLUMN <column>;
+      - cmd: ALTER TABLE <table> DROP COLUMN <column2>, ALGORITHM=INSTANT;
+        since: 8.0.29
+        note: {zh: 只改元数据，不重写表，大表也是瞬间完成}
+    notes:
+      - zh: 8.0.29 之前删列要重建整张表（INPLACE），期间可以读写，但大表要跑很久，还要额外的磁盘空间；从库回放同样要这么久。
+    refs:
+      - {title: 'MySQL: Online DDL Operations', url: 'https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 INT);
+      vars: {table: t, column: c1, column2: c2}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.<collection>.updateMany({}, { $unset: { <field>: "" } })'
+        note: {zh: 从每个文档里去掉这个字段}
+    notes:
+      - zh: 没有表结构，「删列」就是改写每一个文档；大集合要按 _id 范围分批执行，避免一次产生大量 oplog。集合设了 schema validation 时，还要同时修改 validator。
+    refs:
+      - {title: 'MongoDB: $unset', url: 'https://www.mongodb.com/docs/manual/reference/operator/update/unset/'}
+    verify:
+      setup: 'db.t.insertMany([{ a: 1, b: 1 }, { a: 2, b: 2 }])'
+      vars: {collection: t, field: b}
+  redis:
+    support: none
+    notes:
+      - zh: 没有表结构和列。Hash 的字段只能逐个键删除。
+    alternatives:
+      - title: {zh: 删除某个 Hash 键里的一个字段}
+        cmd: HDEL <key> <field>
+  postgresql:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> DROP COLUMN <column>;
+        note:
+          zh: 只把列标记为删除，不重写表，很快
+      - cmd: ALTER TABLE <table> DROP COLUMN IF EXISTS <column2>;
+    notes:
+      - zh: 空间要等行被更新或 VACUUM FULL 重写表之后才回收。依赖这一列的视图会让删除失败，加 CASCADE 会连视图一起删掉。
+    refs:
+      - {title: 'PostgreSQL: ALTER TABLE', url: 'https://www.postgresql.org/docs/current/sql-altertable.html'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 INT);
+      vars: {table: t, column: c1, column2: c2}
+  tidb:
+    support: full
+    commands:
+      - cmd: ALTER TABLE <table> DROP COLUMN <column>;
+        note:
+          zh: 在线执行，只改元数据，旧数据由后台清理
+      - cmd: ALTER TABLE <table> DROP COLUMN <column2>, ALGORITHM=INSTANT;
+        note:
+          zh: ALGORITHM 子句只为兼容
+    notes:
+      - zh: 不能删除主键列，也不能删除被联合索引包含的列，要先删掉索引。
+    refs:
+      - {title: 'TiDB: DROP COLUMN', url: 'https://docs.pingcap.com/tidb/stable/sql-statement-drop-column/'}
+    verify:
+      setup: CREATE TABLE t (id INT PRIMARY KEY, c1 INT, c2 INT);
+      vars: {table: t, column: c1, column2: c2}
+related: [add-column, modify-column, rename-column]
