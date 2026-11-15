@@ -321,8 +321,8 @@
 - {q: ACL GETUSER, top: show-grants}
 - {q: ACL LIST, top: list-users}
 - {q: ACL GENPASS, top: password-policy}
-- {q: BGSAVE, top: logical-backup}
-- {q: REPLICAOF NO ONE, top: pause-replication}
+- {q: BGSAVE, top: physical-backup}
+- {q: REPLICAOF NO ONE, top: failover}
 - {q: ROLE, top: replica-role}
 - {q: CLIENT PAUSE, top_any: [global-read-lock, set-read-only]}
 - {q: DBSIZE, top_any: [database-size, row-count]}
@@ -352,7 +352,7 @@
 - {q: pg_is_in_recovery, top: replica-role}
 - {q: pg_dump, top: logical-backup}
 - {q: pg_restore, top: logical-restore}
-- {q: pg_basebackup, top: point-in-time-recovery}
+- {q: pg_basebackup, top: physical-backup}
 - {q: VACUUM FULL, top: reclaim-space}
 - {q: pg_blocking_pids, top: lock-waits}
 - {q: statement_timeout, top: query-timeout}
@@ -403,6 +403,20 @@
 - {q: 删字段, top: drop-column}
 - {q: mysqldump --no-data, top: schema-only-dump}
 - {q: 只导出表结构, top: schema-only-dump}
+
+# Batch 2: add a replica, failover, physical backup, rebuild an index
+- {q: 搭建从库, top: add-replica}
+- {q: CHANGE REPLICATION SOURCE TO, top: add-replica}
+- {q: rs.add, top: add-replica}
+- {q: 主从切换, top: failover}
+- {q: rs.stepDown, top: failover}
+- {q: pg_promote, top: failover}
+- {q: xtrabackup, top: physical-backup}
+- {q: 物理备份, top: physical-backup}
+- {q: CLONE LOCAL DATA DIRECTORY, top: physical-backup}
+- {q: REINDEX, top: rebuild-index}
+- {q: 重建索引, top: rebuild-index}
+- {q: ADMIN RECOVER INDEX, top: rebuild-index}
 
 # Batch 3: roles, convert a table's charset, index size, audit log
 - {q: CREATE ROLE, top: roles}

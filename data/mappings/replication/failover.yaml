@@ -1,0 +1,97 @@
+schema_version: 2
+id: failover
+category: replication
+title: {zh: 主从切换}
+summary: {zh: 主库要维护或已经挂了，把一个从库提升为新主库，让应用切过去。}
+keywords:
+  zh: [主从切换, 切主, 提升从库, 故障切换, 主备切换, 选主]
+  en: [failover, switchover, promote, stepdown, rs.stepdown, pg_promote, replicaof no one, sentinel failover]
+databases:
+  mysql:
+    support: partial
+    commands:
+      - cmd: SET GLOBAL super_read_only = ON;
+        note: {zh: 第一步，在旧主库上禁止写入，等从库追平}
+      - cmd: STOP REPLICA;
+        since: 8.0.22
+        note: {zh: 在要提升的从库上，确认已经追平后停止复制}
+      - cmd: RESET REPLICA ALL;
+        since: 8.0.22
+        note: {zh: 清掉它的复制配置}
+      - cmd: SET GLOBAL super_read_only = OFF; SET GLOBAL read_only = OFF;
+        note: {zh: 新主库开放写入；然后把其他从库和应用指向它}
+    notes:
+      - zh: 单纯的主从复制没有自动切换，要靠 MHA、Orchestrator 或 InnoDB Cluster（Group Replication）这类工具。手动切换时，先确认从库应用完了所有收到的 binlog（SHOW REPLICA STATUS 里 Seconds_Behind_Source 为 0、Retrieved 和 Executed 的 GTID 一致）。
+    refs:
+      - {title: 'MySQL: Switching Sources During Failover', url: 'https://dev.mysql.com/doc/refman/8.4/en/replication-solutions-switch.html'}
+    verify:
+      teardown: SET GLOBAL super_read_only = OFF; SET GLOBAL read_only = OFF;
+  mongodb:
+    support: full
+    commands:
+      - cmd: rs.stepDown()
+        skip: {zh: lab 的副本集只有一个成员，没有可以接任的从节点}
+        note: {zh: 在主节点上执行，让它退位、触发选举；默认 60 秒内不再参选}
+      - cmd: 'rs.conf().members.map(m => ({ host: m.host, priority: m.priority }))'
+        note: {zh: 看每个成员的优先级，想让谁当主就调高谁的 priority 再 rs.reconfig()}
+    notes:
+      - zh: 副本集会自动故障切换：主节点失联约 10 秒后，其余成员自动选出新主。应用的驱动用副本集连接串时会自动切过去。
+    refs:
+      - {title: 'MongoDB: rs.stepDown()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.stepdown/'}
+      - {title: 'MongoDB: Replica Set Elections', url: 'https://www.mongodb.com/docs/manual/core/replica-set-elections/'}
+  redis:
+    support: full
+    commands:
+      - cmd: REPLICAOF NO ONE
+        note:
+          zh: 在要提升的从库上执行，它变成主库并保留已有的数据
+      - cmd: SENTINEL FAILOVER <master_name>
+        on: [sentinel]
+        note:
+          zh: 用 Sentinel 时，让 Sentinel 主动切换
+      - cmd: CLUSTER FAILOVER
+        on: [cluster]
+        note:
+          zh: 集群模式下在从节点上执行，和主节点协商后接管
+    notes:
+      - zh: 有 Sentinel 或集群模式时，主库挂掉会自动切换；手动 REPLICAOF NO ONE 之后，其他从库和应用要自己改指向。
+    refs:
+      - {title: 'Redis: REPLICAOF', url: 'https://redis.io/docs/latest/commands/replicaof/'}
+      - {title: 'Redis: High availability with Sentinel', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/'}
+  postgresql:
+    support: partial
+    commands:
+      - cmd: SELECT pg_promote();
+        on: [standby]
+        note:
+          zh: 在备库上执行，把它提升为主库
+      - cmd: pg_ctl promote -D "$PGDATA"
+        shell: true
+        on: [standby]
+      - cmd: SELECT pg_is_in_recovery();
+        note:
+          zh: 提升后返回 false 就是主库了
+    notes:
+      - zh: 没有自动故障切换，通常用 Patroni、repmgr 这类工具。旧主库恢复后不能直接当备库，要用 pg_rewind 对齐数据，再配置成新主的备库。
+    refs:
+      - {title: 'PostgreSQL: pg_promote', url: 'https://www.postgresql.org/docs/current/functions-admin.html'}
+      - {title: 'PostgreSQL: Failover', url: 'https://www.postgresql.org/docs/current/warm-standby-failover.html'}
+  tidb:
+    support: full
+    commands:
+      - cmd: tiup ctl:v<version> pd -u http://<pd>:2379 store leader <store_id>
+        shell: true
+        on: [pd]
+        note:
+          zh: 看某个 TiKV 上有多少 Raft leader
+      - cmd: tiup ctl:v<version> pd -u http://<pd>:2379 scheduler add evict-leader-scheduler <store_id>
+        shell: true
+        on: [pd]
+        note:
+          zh: 计划维护某个 TiKV 前，先把它上面的 leader 都迁走
+    notes:
+      - zh: 集群内部的故障切换是自动的：某个 TiKV 挂掉，它上面的 Raft leader 在其他副本上重新选出，几秒内恢复；tidb-server 是无状态的，挂掉一台由负载均衡摘除。主备两个集群之间的切换，要先停写、等 TiCDC 同步完成，再把应用指向备集群。
+    refs:
+      - {title: 'TiDB: PD Control', url: 'https://docs.pingcap.com/tidb/stable/pd-control/'}
+      - {title: 'TiDB: High Availability FAQs', url: 'https://docs.pingcap.com/tidb/stable/high-availability-faq/'}
+related: [replica-role, set-read-only, replication-status, add-replica]

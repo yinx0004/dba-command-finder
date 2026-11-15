@@ -1,0 +1,106 @@
+schema_version: 2
+id: add-replica
+category: replication
+title: {zh: 搭建从库、添加副本成员}
+summary: {zh: 给主库加一个从库，或者给副本集、集群加一个成员：配好复制源，让新实例从主库拷一份数据再持续追上。}
+keywords:
+  zh: [搭建从库, 加从库, 添加副本, 新增副本集成员, 做主从, 配置复制]
+  en: [change replication source, change master to, rs.add, replicaof, pg_basebackup, standby, replica setup, clone]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: CREATE USER 'repl'@'%' IDENTIFIED BY '<password>'; GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
+        note: {zh: 在主库上建复制账号}
+      - cmd: CHANGE REPLICATION SOURCE TO SOURCE_HOST = '<source_host>', SOURCE_PORT = 3306, SOURCE_USER = 'repl', SOURCE_PASSWORD = '<password>', SOURCE_LOG_FILE = '<binlog>', SOURCE_LOG_POS = <pos>;
+        since: 8.0.23
+        note: {zh: 在从库上配置复制源；开了 GTID 时把位点换成 SOURCE_AUTO_POSITION = 1}
+      - cmd: CHANGE MASTER TO MASTER_HOST = '<source_host>', MASTER_PORT = 3306, MASTER_USER = 'repl', MASTER_PASSWORD = '<password>', MASTER_LOG_FILE = '<binlog>', MASTER_LOG_POS = <pos>;
+        deprecated_in: 8.0.23
+        removed_in: '8.4'
+      - cmd: START REPLICA;
+        since: 8.0.22
+        skip: {zh: lab 只有一个实例，复制源连不上}
+      - cmd: CLONE INSTANCE FROM 'repl'@'<source_host>':3306 IDENTIFIED BY '<password>';
+        since: 8.0.17
+        skip: {zh: 需要另一台装了 clone 插件的实例}
+        note: {zh: 用 clone 插件直接从主库拷一份完整数据，省掉先备份再恢复}
+    notes:
+      - zh: 新从库要先有一份和主库一致的数据：用 xtrabackup、mysqldump --source-data 或 clone 插件准备，并记下对应的 binlog 位点。主从的 server_id 必须不同。
+    refs:
+      - {title: 'MySQL: CHANGE REPLICATION SOURCE TO', url: 'https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html'}
+      - {title: 'MySQL: The Clone Plugin', url: 'https://dev.mysql.com/doc/refman/8.4/en/clone-plugin.html'}
+    verify:
+      vars: {password: 'Lab#Repl123', source_host: 10.0.0.1, binlog: binlog.000001, pos: '4'}
+      teardown: RESET REPLICA ALL; DROP USER IF EXISTS 'repl'@'%';
+  mongodb:
+    support: full
+    commands:
+      - cmd: rs.add("<host>:27017")
+        skip: {zh: lab 只有一个成员，新成员的地址连不上}
+        note: {zh: 在主节点上执行；新成员自动做初始同步（initial sync）}
+      - cmd: 'rs.add({ host: "<host>:27017", priority: 0, votes: 0 })'
+        skip: {zh: lab 只有一个成员，新成员的地址连不上}
+        note: {zh: 先以不投票、不能当主的身份加入，同步完再改配置，避免影响选举}
+      - cmd: rs.conf()
+        note: {zh: 看当前的成员列表}
+    notes:
+      - zh: 新成员要先用同样的 --replSet 名称启动，并能访问其他成员。数据量大时初始同步很慢，可以先用文件快照把数据拷过去，再加入副本集。
+    refs:
+      - {title: 'MongoDB: rs.add()', url: 'https://www.mongodb.com/docs/manual/reference/method/rs.add/'}
+      - {title: 'MongoDB: Add Members to a Replica Set', url: 'https://www.mongodb.com/docs/manual/tutorial/expand-replica-set/'}
+  redis:
+    support: full
+    commands:
+      - cmd: REPLICAOF <host> <port>
+        note:
+          zh: 在新实例上执行，立刻成为从库，丢掉自己原有的数据并做全量同步
+      - cmd: INFO replication
+        note:
+          zh: 看 master_link_status 是否为 up
+      - cmd: CLUSTER REPLICATE <node_id>
+        on: [cluster]
+        note:
+          zh: 集群模式下，让这个节点成为指定主节点的从节点
+    notes:
+      - zh: 要持久生效，还要在配置文件里写 replicaof，或执行 CONFIG REWRITE；主库有密码时先设 masterauth。
+    refs:
+      - {title: 'Redis: REPLICAOF', url: 'https://redis.io/docs/latest/commands/replicaof/'}
+      - {title: 'Redis: Replication', url: 'https://redis.io/docs/latest/operate/oss_and_stack/management/replication/'}
+    verify:
+      vars: {host: 127.0.0.1, port: '6390'}
+      teardown: REPLICAOF NO ONE
+  postgresql:
+    support: full
+    commands:
+      - cmd: pg_basebackup -D /tmp/standby -R -X stream -P
+        shell: true
+        note:
+          zh: 从主库拷一份数据目录；-R 写好 standby.signal 和连接主库的参数，拿这个目录启动就是备库。-h 指向主库
+      - cmd: SELECT client_addr, state, sync_state FROM pg_stat_replication;
+        note:
+          zh: 备库连上后，在主库上能看到它
+    notes:
+      - zh: 主库上要有能做复制的账号（REPLICATION 权限），pg_hba.conf 里放行 replication 连接，max_wal_senders 足够。用复制槽（-C -S <slot>）可以避免备库落后太多时需要的 WAL 被清掉。
+    refs:
+      - {title: 'PostgreSQL: pg_basebackup', url: 'https://www.postgresql.org/docs/current/app-pgbasebackup.html'}
+      - {title: 'PostgreSQL: Log-Shipping Standby Servers', url: 'https://www.postgresql.org/docs/current/warm-standby.html'}
+  tidb:
+    support: partial
+    commands:
+      - cmd: tiup cluster scale-out <cluster> scale-out.yaml
+        shell: true
+        skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
+        note:
+          zh: 往集群里加 TiKV 或 tidb-server 节点；数据副本由 PD 自动调度过去
+      - cmd: cdc cli changefeed create --server=http://<ticdc>:8300 --sink-uri="mysql://<user>:<password>@<host>:4000/" --changefeed-id=<id>
+        shell: true
+        on: [ticdc]
+        note:
+          zh: 搭一个下游集群，持续同步到另一个 TiDB 或 MySQL
+    notes:
+      - zh: 集群内部没有「从库」：每份数据默认 3 个 Raft 副本，加节点后自动平衡。要一个独立的只读或灾备集群，用 TiCDC 同步过去。
+    refs:
+      - {title: 'TiDB: Scale a Cluster Using TiUP', url: 'https://docs.pingcap.com/tidb/stable/scale-tidb-using-tiup/'}
+      - {title: 'TiDB: Manage Changefeeds', url: 'https://docs.pingcap.com/tidb/stable/ticdc-manage-changefeed/'}
+related: [replication-status, list-replicas, failover]
