@@ -5,7 +5,7 @@ title: {zh: 判断当前实例是主还是从}
 summary: {zh: 连上一台实例后，先确认它是主库还是从库，再决定能不能在上面写。}
 keywords:
   zh: [主库还是从库, 是不是主库, 当前角色, 主从角色]
-  en: [read_only, ismaster, hello, iswritableprimary, primary or secondary, ROLE]
+  en: [read_only, ismaster, hello, iswritableprimary, primary or secondary, ROLE, pg_is_in_recovery]
 databases:
   mysql:
     support: partial
