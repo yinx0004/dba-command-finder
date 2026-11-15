@@ -3,6 +3,7 @@
 import { fieldPaths, type Verification } from '../../lab/plan';
 import type { Dataset, Entry } from './data';
 import type { Command, Text } from './schema';
+import { labSkip } from './roles';
 import { availableIn, compareVersions, lineOf, onLine } from './version';
 
 // --- Which version lines can run a command ---
@@ -106,6 +107,31 @@ export interface RunTotals {
   commands: number;
   /** output fields found in the output on this version */
   fields: number;
+  /** entries the lab runs on this database that did not behave as expected on this version */
+  mismatches: number;
+}
+
+/** The ledger's rows, one per database: its runs, and their totals. */
+export interface DbTotals {
+  db: string;
+  name: string;
+  runs: RunTotals[];
+  commands: number;
+  fields: number;
+  mismatches: number;
+}
+
+export function totalsByDb(rows: RunTotals[]): DbTotals[] {
+  const out: DbTotals[] = [];
+  for (const r of rows) {
+    let g = out.find((x) => x.db === r.db);
+    if (!g) out.push((g = { db: r.db, name: r.name, runs: [], commands: 0, fields: 0, mismatches: 0 }));
+    g.runs.push(r);
+    g.commands += r.commands;
+    g.fields += r.fields;
+    g.mismatches += r.mismatches;
+  }
+  return out;
 }
 
 /** One row per lab run, in the order of data/databases.yaml and then by version. */
@@ -121,7 +147,13 @@ export function runTotals(ds: Dataset, v: Verification | null): RunTotals[] {
         for (const c of Object.values(ev.commands)) if (c.verified.includes(run.version)) commands++;
         for (const f of Object.values(ev.fields ?? {})) if (f.verified.includes(run.version)) fields++;
       }
-      return { db: d.id, name: d.name, line: run.version, server: run.server, commands, fields };
+      // Same rule as the header's "all as expected", for this one version.
+      const mismatches = ds.mappings.filter((m) => {
+        const side = m.databases[d.id];
+        if (!side || !side.commands.some((c) => !labSkip(c, d))) return false;
+        return !(v.entries[m.id]?.[d.id]?.versions ?? []).includes(run.version);
+      }).length;
+      return { db: d.id, name: d.name, line: run.version, server: run.server, commands, fields, mismatches };
     }),
   );
 }

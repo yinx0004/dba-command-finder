@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Verification } from '../lab/plan';
 import { loadDataset } from '../src/lib/data';
-import { cmdOnLine, commandRuns, fieldCheck, runTotals } from '../src/lib/proof';
+import { cmdOnLine, commandRuns, fieldCheck, runTotals, totalsByDb } from '../src/lib/proof';
 import type { Command } from '../src/lib/schema';
 
 const ds = loadDataset();
@@ -133,5 +133,25 @@ describe('run totals', () => {
 
   it('is empty without lab results', () => {
     expect(runTotals(ds, null)).toEqual([]);
+  });
+
+  it('counts, per version, the entries that did not behave as expected', () => {
+    // Every other entry is missing from the made-up run; replication-status is clean on all three MySQL versions.
+    const clean = runTotals(ds, v);
+    const none = runTotals(ds, { ...v, entries: {} });
+    for (const i of [0, 1, 2]) expect(none[i].mismatches - clean[i].mismatches).toBe(1);
+    expect(none[0].mismatches).toBeGreaterThan(0);
+  });
+
+  it('groups the rows by database and adds them up', () => {
+    const rows = runTotals(ds, v);
+    const groups = totalsByDb(rows);
+    expect(groups.map((g) => `${g.name} ${g.runs.map((r) => r.server).join(' ')}`)).toEqual([
+      'MySQL 5.7.44 8.0.46 8.4.11',
+      'MongoDB 6.0.28 7.0.48',
+    ]);
+    expect(groups[0].commands).toBe(rows[0].commands + rows[1].commands + rows[2].commands);
+    expect(groups[1].fields).toBe(rows[3].fields + rows[4].fields);
+    expect(groups[0].mismatches).toBe(rows[0].mismatches + rows[1].mismatches + rows[2].mismatches);
   });
 });

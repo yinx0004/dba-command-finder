@@ -7,7 +7,7 @@ import { loadDataset } from '../../lib/data';
 import { pairMappings, siteDbs, toSearchDocs } from '../../lib/docs';
 import { homeStats, labStatus } from '../../lib/home';
 import { LANGS, UI, type Lang } from '../../lib/i18n';
-import { runTotals } from '../../lib/proof';
+import { runTotals, totalsByDb } from '../../lib/proof';
 import { ciRunUrl, GITHUB, href } from '../../lib/site';
 import { translateEntries } from '../../lib/translate';
 import { loadVerification } from '../../lib/verification';
@@ -43,7 +43,8 @@ const groups = coverage.rows.map((c) => ({
     .map((m) => coverageRow(m, pairDbs, lang)),
 }));
 
-const ledger = runTotals(ds, v);
+const ledger = totalsByDb(runTotals(ds, v));
+const ledgerSum = { versions: ledger.reduce((n, g) => n + g.runs.length, 0), commands: ledger.reduce((n, g) => n + g.commands, 0), fields: ledger.reduce((n, g) => n + g.fields, 0), mismatches: ledger.reduce((n, g) => n + g.mismatches, 0) };
 ---
 <Base lang={lang} title={`${ui.siteName}：${ui.taglineAll(pairDbs.map((d) => d.name))}`} description={ui.heroSubAll(pairDbs.map((d) => d.name))} variant="home" versionBar={false} footerNote={h.footer(stats.versions)}>
   <main class="wrap home">
@@ -101,31 +102,43 @@ const ledger = runTotals(ds, v);
               <h3>{h.ledgerTitle}</h3>
               {lab && <span>{h.ledgerDate(lab.date)}</span>}
             </div>
-            <div class="table-box">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">{h.ledger.db}</th>
-                    <th scope="col">{h.ledger.server}</th>
-                    <th scope="col" class="num">{h.ledger.commands}</th>
-                    <th scope="col" class="num">{h.ledger.fields}</th>
-                    <th scope="col">{h.ledger.result}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ledger.map((r) => (
-                    <tr>
-                      <td>
-                        {r.name} {r.line}
-                      </td>
-                      <td class="mono">{r.server}</td>
-                      <td class="mono num">{r.commands}</td>
-                      <td class="mono num">{r.fields}</td>
-                      <td class="ledger-ok">{lab?.allAsExpected ? h.ledger.ok : ''}</td>
-                    </tr>
+            <div class="ledger" role="table">
+              <div class="ledger-row ledger-th" role="row">
+                <span role="columnheader">{h.ledger.db}</span>
+                <span role="columnheader">{h.ledger.server}</span>
+                <span role="columnheader" class="num">{h.ledger.commands}</span>
+                <span role="columnheader" class="num">{h.ledger.fields}</span>
+                <span role="columnheader">{h.ledger.result}</span>
+              </div>
+              {ledger.map((g) => (
+                <details class="ledger-db">
+                  <summary class="ledger-row" role="row">
+                    <span role="cell" class="ledger-name">{g.name}</span>
+                    <span role="cell" class="mono ledger-servers">{g.runs.map((r) => <span>{r.server}</span>)}</span>
+                    <span role="cell" class="mono num">{g.commands}</span>
+                    <span role="cell" class="mono num">{g.fields}</span>
+                    <span role="cell" class={g.mismatches ? 'ledger-bad' : 'ledger-ok'}>{g.mismatches ? h.ledger.badShort(g.mismatches) : '✓'}</span>
+                  </summary>
+                  {g.runs.map((r) => (
+                    <div class="ledger-row ledger-run" role="row">
+                      <span role="cell">{r.name} {r.line}</span>
+                      <span role="cell" class="mono">{r.server}</span>
+                      <span role="cell" class="mono num">{r.commands}</span>
+                      <span role="cell" class="mono num">{r.fields}</span>
+                      <span role="cell" class={r.mismatches ? 'ledger-bad' : 'ledger-ok'}>{r.mismatches ? h.ledger.badShort(r.mismatches) : '✓'}</span>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </details>
+              ))}
+              <div class="ledger-row ledger-sum" role="row">
+                <span role="cell" class="ledger-sum-label">
+                  {h.ledger.total(ledgerSum.versions)}
+                  <span class={ledgerSum.mismatches ? 'ledger-bad' : 'ledger-ok'}>{ledgerSum.mismatches ? h.ledger.bad(ledgerSum.mismatches) : h.ledger.ok}</span>
+                </span>
+                <span role="cell" class="mono num">{ledgerSum.commands}</span>
+                <span role="cell" class="mono num">{ledgerSum.fields}</span>
+                <span role="cell" class={ledgerSum.mismatches ? 'ledger-bad' : 'ledger-ok'}>{ledgerSum.mismatches ? h.ledger.badShort(ledgerSum.mismatches) : '✓'}</span>
+              </div>
             </div>
             <p class="section-foot">{h.ledgerNote}</p>
           </div>

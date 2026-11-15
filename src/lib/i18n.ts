@@ -138,8 +138,8 @@ export const UI = {
       methodLinks: { ci: 'CI 运行记录', script: '验证脚本', data: '原始数据' },
       ledgerTitle: '最近一次验证',
       ledgerDate: (d: string) => `${d}（北京时间）`,
-      ledger: { db: '数据库', server: '实际服务器', commands: '执行通过', fields: '核对字段', result: '结果', ok: '✓ 全部符合预期' },
-      ledgerNote: '「执行通过」不含按预期报错的命令。',
+      ledger: { db: '数据库', server: '实际服务器', commands: '执行通过', fields: '核对字段', result: '结果', ok: '✓ 全部符合预期', bad: (n: number) => `✕ ${n} 条不符合`, badShort: (n: number) => `✕ ${n} 条`, total: (n: number) => `合计 · ${n} 个版本` },
+      ledgerNote: '数字按次数计，同一条命令在每个版本上各算一次；「执行通过」不含按预期报错的命令。点数据库名看各版本。',
       footer: (v: number) => `改动需在 ${v} 个数据库版本上通过验证才会上线`,
     },
     // The translator's labels; {x} slots are filled in the browser.
