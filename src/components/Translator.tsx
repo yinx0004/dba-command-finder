@@ -1,6 +1,6 @@
 // The home page's translator: paste a command (or say what you want to do) on one side, get the other
 // database's commands for the reader's version, with what the lab proved about them.
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { cmdOnLine, type CmdOnLine } from '../lib/proof';
 import { createSearcher, type SearchDoc } from '../lib/search';
 import type { TCmd, TEntry, TSide } from '../lib/translate';
@@ -47,6 +47,9 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
   const ids = dbs.map((d) => d.id);
   const [q, setQ] = useState(tries[0] ?? '');
   const [typed, setTyped] = useState(false);
+  const input = useRef<HTMLTextAreaElement>(null);
+  // The example filled in on arrival is selected the first time the reader comes to it, so typing replaces it.
+  const pickedExample = useRef(false);
   // The reader's choice of databases, [from, to]; a pasted command overrides "from".
   const [pick, setPick] = useState<[string, string]>([dbs[0].id, dbs[1].id]);
   const [pref, setPref] = useState<Pref>({});
@@ -66,6 +69,12 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
     if (initial) {
       setQ(initial);
       setTyped(true);
+    }
+    // With a mouse, start in the box so the caret shows; not on touch screens, where it would pop up the keyboard.
+    try {
+      if (window.matchMedia('(pointer: fine)').matches) input.current?.focus({ preventScroll: true });
+    } catch {
+      /* matchMedia unavailable */
     }
   }, []);
   useEffect(() => {
@@ -154,23 +163,47 @@ export default function Translator({ docs, entries, dbs, tries, entryBase, issue
               {L.swap}
             </button>
           </PaneHead>
-          <label htmlFor="tr-in" className="sr-only">
-            {L.inputLabel}
-          </label>
-          <textarea
-            id="tr-in"
-            className="tr-input"
-            value={q}
-            onChange={(e) => {
-              setAnchor('');
-              type(e.target.value);
-            }}
-            placeholder={L.placeholder}
-            spellCheck={false}
-            autoCapitalize="off"
-            autoComplete="off"
-            rows={3}
-          />
+          <div className="tr-label-row">
+            <label htmlFor="tr-in" className="tr-label">
+              {L.inputLabel}
+            </label>
+            {!typed && q && <span className="tr-example">{L.example}</span>}
+          </div>
+          <div className="tr-inbox">
+            <textarea
+              id="tr-in"
+              ref={input}
+              className="tr-input"
+              value={q}
+              onChange={(e) => {
+                setAnchor('');
+                type(e.target.value);
+              }}
+              onFocus={(e) => {
+                if (typed || pickedExample.current) return;
+                pickedExample.current = true;
+                e.currentTarget.select();
+              }}
+              placeholder={L.placeholder}
+              spellCheck={false}
+              autoCapitalize="off"
+              autoComplete="off"
+              rows={3}
+            />
+            {q && (
+              <button
+                type="button"
+                className="tr-clear"
+                onClick={() => {
+                  setAnchor('');
+                  type('');
+                  input.current?.focus();
+                }}
+              >
+                {L.clear}
+              </button>
+            )}
+          </div>
           <div className="tr-below">
             {q.trim() && (
               <p className={top ? 'tr-recog' : 'tr-recog tr-miss'}>
