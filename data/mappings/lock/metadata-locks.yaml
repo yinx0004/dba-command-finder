@@ -1,0 +1,95 @@
+schema_version: 2
+id: metadata-locks
+category: lock
+title: {zh: 查看元数据锁：DDL 被谁挡住了}
+summary: {zh: ALTER TABLE 卡住不动、后面的查询也跟着堵住时，找出是哪个会话拿着这张表不放。}
+keywords:
+  zh: [元数据锁, 表锁等待, DDL 卡住, 加字段卡住, 改表卡住, 改表锁表]
+  en: [metadata lock, mdl, waiting for table metadata lock, metadata_locks, schema_table_lock_waits, accessexclusivelock, tidb_mdl_view]
+fields:
+  - {id: table, name: {zh: 哪张表}}
+  - {id: waiting, name: {zh: 在等的会话}}
+  - {id: blocking, name: {zh: 挡住它的会话}}
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: SELECT * FROM sys.schema_table_lock_waits;
+        note: {zh: 谁在等、谁挡着，最后几列直接给出 KILL 语句}
+      - cmd: SELECT OBJECT_SCHEMA, OBJECT_NAME, LOCK_TYPE, LOCK_STATUS, OWNER_THREAD_ID FROM performance_schema.metadata_locks WHERE OBJECT_TYPE = 'TABLE';
+        note: {zh: 所有表上的元数据锁，LOCK_STATUS 为 PENDING 的是在等}
+      - cmd: UPDATE performance_schema.setup_instruments SET ENABLED = 'YES', TIMED = 'YES' WHERE NAME = 'wait/lock/metadata/sql/mdl';
+        note: {zh: 5.7 默认没开这个采集，不开的话上面两条查不到东西；8.0 起默认开启}
+    fields:
+      table: object_name
+      waiting: waiting_pid
+      blocking: blocking_pid
+    notes:
+      - zh: SHOW PROCESSLIST 里状态为 Waiting for table metadata lock 的就是在等元数据锁。挡住 DDL 的常常是一个早就执行完、但事务没提交的会话，它在 PROCESSLIST 里显示为 Sleep，容易被忽略。
+      - zh: DDL 在排队时，后面对同一张表的普通查询也会排在它后面，所以一条卡住的 ALTER 会把整张表堵住。可以先设 SET SESSION lock_wait_timeout = 5 再执行 DDL，等不到锁就放弃。
+    refs:
+      - {title: 'MySQL: Metadata Locking', url: 'https://dev.mysql.com/doc/refman/8.4/en/metadata-locking.html'}
+      - {title: 'MySQL: schema_table_lock_waits', url: 'https://dev.mysql.com/doc/refman/8.4/en/sys-schema-table-lock-waits.html'}
+    verify:
+      skip_fields: {zh: 需要另一个连接上有未提交的事务挡住 DDL}
+  mongodb:
+    support: partial
+    commands:
+      - cmd: 'db.currentOp({ waitingForLock: true })'
+        note: {zh: 正在等锁的操作，看 locks 和 lockStats}
+      - cmd: 'db.adminCommand({ lockInfo: 1 })'
+        note: {zh: 当前所有的锁，以及谁持有、谁在等}
+    notes:
+      - zh: 建索引、改集合这类操作只在开始和结束时短暂拿集合的排他锁，中间不挡读写；挡住它们的通常是长时间运行的操作，用 currentOp 找出来后 killOp。
+    refs:
+      - {title: 'MongoDB: lockInfo', url: 'https://www.mongodb.com/docs/manual/reference/command/lockinfo/'}
+      - {title: 'MongoDB: db.currentOp()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.currentop/'}
+  redis:
+    support: none
+    notes:
+      - zh: 没有表结构，也就没有元数据锁。命令在单线程里一条一条执行，被堵住多半是前面有一条慢命令或者大 key 操作。
+    alternatives:
+      - title: {zh: 找出拖慢服务器的慢命令}
+        see: slow-query-log
+  postgresql:
+    support: full
+    commands:
+      - cmd: SELECT pid, pg_blocking_pids(pid) AS blocked_by, wait_event_type, state, query FROM pg_stat_activity WHERE cardinality(pg_blocking_pids(pid)) > 0;
+        note:
+          zh: 在等锁的会话，以及挡住它们的 pid
+      - cmd: SELECT pid, relation::regclass AS table_name, mode, granted FROM pg_locks WHERE locktype = 'relation' AND NOT granted;
+        note:
+          zh: 在等哪张表、要的是什么锁
+      - cmd: SET lock_timeout = '5s';
+        note:
+          zh: 执行 DDL 前设置，拿不到锁 5 秒后就放弃，免得排在后面把整张表堵住
+    fields:
+      table: table_name
+      waiting: pid
+      blocking: blocked_by
+    notes:
+      - zh: 大多数 ALTER TABLE 要拿 AccessExclusiveLock，排队期间后面对这张表的所有查询（包括 SELECT）都会排在它后面。
+    refs:
+      - {title: 'PostgreSQL: pg_locks', url: 'https://www.postgresql.org/docs/current/view-pg-locks.html'}
+      - {title: 'PostgreSQL: pg_blocking_pids', url: 'https://www.postgresql.org/docs/current/functions-info.html'}
+    verify:
+      skip_fields: {zh: 需要另一个连接上有未提交的事务挡住 DDL}
+  tidb:
+    support: full
+    commands:
+      - cmd: SELECT * FROM mysql.tidb_mdl_view;
+        note:
+          zh: 哪个 DDL 在等，被哪个会话、哪条 SQL 挡住
+      - cmd: SELECT @@tidb_enable_metadata_lock;
+        note:
+          zh: 6.3 起默认开启；关掉后 DDL 不等事务，但事务可能在提交时报 Information schema is changed
+    fields:
+      table: table_name
+      blocking: session_id
+    notes:
+      - zh: DDL 本身是在线的，不会挡住读写；它要等的是 DDL 开始前就已经打开、并且访问过这张表的事务结束。
+    refs:
+      - {title: 'TiDB: Metadata Lock', url: 'https://docs.pingcap.com/tidb/stable/metadata-lock/'}
+    verify:
+      skip_fields: {zh: 需要另一个连接上有未提交的事务挡住 DDL}
+related: [lock-waits, ddl-progress, long-transactions, kill-session]

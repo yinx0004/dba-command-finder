@@ -5,7 +5,7 @@ title: {zh: 清空表}
 summary: {zh: 删除一张表里的全部数据，但保留表本身和表结构。}
 keywords:
   zh: [清空表, 清空数据, 删除全部数据, 截断表]
-  en: [truncate, deletemany, delete all]
+  en: [truncate, deletemany, delete all, flushdb]
 databases:
   mysql:
     support: full

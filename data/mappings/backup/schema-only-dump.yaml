@@ -1,0 +1,75 @@
+schema_version: 2
+id: schema-only-dump
+category: backup
+title: {zh: 只导出表结构}
+summary: {zh: 只要建表语句、不要数据：搭测试环境、比对两边的结构、做变更评审时用。}
+keywords:
+  zh: [只导出表结构, 导出建表语句, 表结构备份, 不要数据, 导出结构]
+  en: [no-data, schema-only, ddl export, getcollectioninfos]
+databases:
+  mysql:
+    support: full
+    commands:
+      - cmd: mysqldump --no-data <db> > <db>_schema.sql
+        shell: true
+      - cmd: mysqldump --no-data --routines --triggers --events <db> > <db>_schema.sql
+        shell: true
+        note: {zh: 连存储过程、触发器和事件一起导出}
+    notes:
+      - zh: 导出的 CREATE TABLE 里带着当前的 AUTO_INCREMENT 值；拿去建空环境时，用 sed 去掉或者建完再改。
+    refs:
+      - {title: 'MySQL: mysqldump', url: 'https://dev.mysql.com/doc/refman/8.4/en/mysqldump.html'}
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a VARCHAR(10), KEY idx_a (a)); INSERT INTO t (a) VALUES ('x');
+  mongodb:
+    support: partial
+    commands:
+      - cmd: db.getCollectionInfos()
+        note: {zh: 每个集合的选项，包括 validator、collation、是否是 capped 集合}
+      - cmd: 'db.getCollectionNames().map(c => ({ collection: c, indexes: db.getCollection(c).getIndexes() }))'
+        note: {zh: 每个集合的索引定义}
+    notes:
+      - zh: 没有表结构可导出，mongodump 也没有只导结构的选项；能导出的是集合的选项和索引定义，在新环境里用 createCollection、createIndexes 重建。
+    refs:
+      - {title: 'MongoDB: db.getCollectionInfos()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.getcollectioninfos/'}
+      - {title: 'MongoDB: db.collection.getIndexes()', url: 'https://www.mongodb.com/docs/manual/reference/method/db.collection.getindexes/'}
+    verify:
+      setup: 'db.t.insertOne({ a: 1 }); db.t.createIndex({ a: 1 })'
+  redis:
+    support: none
+    notes:
+      - zh: 没有表结构，只有键；键名的规律和每种键的类型要靠应用自己的约定和文档。
+    alternatives:
+      - title: {zh: 抽样看有哪些键、各是什么类型和大小}
+        cmd: redis-cli --bigkeys
+  postgresql:
+    support: full
+    commands:
+      - cmd: pg_dump -s <db> > <db>_schema.sql
+        shell: true
+        note:
+          zh: -s 即 --schema-only；只要一张表时加 -t <table>
+      - cmd: pg_dumpall --globals-only > globals.sql
+        shell: true
+        note:
+          zh: 角色和表空间不属于某个库，要单独导出
+    refs:
+      - {title: 'PostgreSQL: pg_dump', url: 'https://www.postgresql.org/docs/current/app-pgdump.html'}
+      - {title: 'PostgreSQL: pg_dumpall', url: 'https://www.postgresql.org/docs/current/app-pg-dumpall.html'}
+    verify:
+      setup: CREATE TABLE t (id serial PRIMARY KEY, a text); CREATE INDEX idx_a ON t (a);
+  tidb:
+    support: full
+    commands:
+      - cmd: mysqldump --no-data <db> > <db>_schema.sql
+        shell: true
+      - cmd: tiup dumpling -h <host> -P 4000 -u root -B <db> --no-data -o /tmp/<db>_schema
+        shell: true
+        skip: {zh: 需要单独安装的 TiDB 工具和真实集群，lab 里没有}
+    notes:
+      - zh: 导出的建表语句里有 /*T![clustered_index] CLUSTERED */ 这类 TiDB 专有注释，导入 MySQL 时会被当成注释忽略。
+    refs:
+      - {title: 'TiDB: Dumpling', url: 'https://docs.pingcap.com/tidb/stable/dumpling-overview/'}
+    verify:
+      setup: CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a VARCHAR(10), KEY idx_a (a)); INSERT INTO t (a) VALUES ('x');
+related: [logical-backup, show-create-table, logical-restore]

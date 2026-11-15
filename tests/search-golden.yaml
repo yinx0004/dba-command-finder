@@ -387,6 +387,23 @@
 - {q: IMPORT INTO, top: import-data}
 - {q: tidb_version, top: server-version}
 
+# Batch 1: uptime, health check, metadata locks, drop database / column, schema-only dump
+- {q: uptime, top: uptime}
+- {q: 什么时候重启, top: uptime}
+- {q: pg_postmaster_start_time, top: uptime}
+- {q: mysqladmin ping, top: health-check}
+- {q: pg_isready, top: health-check}
+- {q: 探活, top: health-check}
+- {q: 元数据锁, top: metadata-locks}
+- {q: Waiting for table metadata lock, top: metadata-locks}
+- {q: tidb_mdl_view, top: metadata-locks}
+- {q: drop database, top: drop-database}
+- {q: 删库, top: drop-database}
+- {q: drop column, top: drop-column}
+- {q: 删字段, top: drop-column}
+- {q: mysqldump --no-data, top: schema-only-dump}
+- {q: 只导出表结构, top: schema-only-dump}
+
 # Batch 2: add a replica, failover, physical backup, rebuild an index
 - {q: 搭建从库, top: add-replica}
 - {q: CHANGE REPLICATION SOURCE TO, top: add-replica}
